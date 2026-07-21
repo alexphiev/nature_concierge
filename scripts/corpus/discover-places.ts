@@ -11,6 +11,9 @@ export async function discoverPlaceFiles(): Promise<PlaceFileInput[]> {
   const places: PlaceFileInput[] = [];
   for (const file of files) {
     const mod = await import(join(PLACES_DIR, file));
+    if (!mod.default) {
+      throw new Error(`${file} has no default export (expected export default definePlace({...}))`);
+    }
     places.push(mod.default as PlaceFileInput);
   }
   return places;
