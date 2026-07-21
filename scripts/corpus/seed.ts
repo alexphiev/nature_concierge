@@ -93,13 +93,12 @@ async function main() {
         decayClass: claim.decayClass,
         verifiedOn: new Date(claim.verifiedOn),
         isPublic: claim.isPublic,
-        status: "PUBLISHED" as const,
       };
 
       if (existing) {
         await prisma.claim.update({ where: { id: existing.id }, data: claimData });
       } else {
-        await prisma.claim.create({ data: claimData });
+        await prisma.claim.create({ data: { ...claimData, status: "PUBLISHED" as const } });
       }
       claimsUpserted++;
     }
