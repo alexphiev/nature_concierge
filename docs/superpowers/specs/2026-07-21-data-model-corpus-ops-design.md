@@ -35,7 +35,7 @@ author one real place as a typed file → validate with zod → seed into Postgr
 ## Scope
 
 **In:**
-- Local Postgres via docker-compose
+- Remote Neon Postgres (dev + prod, single database) — see revised Environment section below
 - `prisma/schema.prisma` — the complete schema from `01-data-model.md`
   (all models/enums, including `SignalSource` / `StatusLog` / `Request` for
   FK integrity, even though nothing seeds them yet)
@@ -55,17 +55,21 @@ author one real place as a typed file → validate with zod → seed into Postgr
 
 ## Environment
 
-`.env.dist` documents required vars (committed, no secrets):
+**Revised (2026-07-21, mid-build): local docker-compose Postgres was dropped
+in favor of a single remote Neon database used for both development and
+production.** This simplifies the MVP — one database, no local container
+lifecycle to manage, matches `08-infra.md`'s stated Neon choice from day one
+instead of deferring it to the infra step.
+
+`.env.dist` documents the required var's shape (committed, no secrets):
 
 ```
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nature_concierge
+DATABASE_URL=postgresql://<user>:<password>@<neon-host>/<database>?sslmode=require&channel_binding=require
 ```
 
-`.env.local` (gitignored) holds the actual local value, same default.
-
-`docker-compose.yml` runs a single `postgres:16` service on port 5432 with a
-named volume, matching the `.env.dist` default so `docker compose up -d` +
-`pnpm prisma migrate dev` works with zero configuration.
+`.env.local` (gitignored) holds the actual Neon connection string (EU
+region, pooled connection). There is no local database process to start —
+`pnpm prisma migrate deploy` applies migrations directly to Neon.
 
 ## Prisma setup (7.9.0 conventions)
 
@@ -165,7 +169,7 @@ src/corpus/places/*.ts  --(corpus:check)-->  zod validation  --(corpus:seed)--> 
 - `pnpm corpus:check` fails loudly on a deliberately broken fixture (e.g. a
   claim missing `conditions` without `PERMANENT` decay) — confirms the
   validator actually gates.
-- `pnpm corpus:seed` against local Postgres creates one `Place`, one
+- `pnpm corpus:seed` against Neon creates one `Place`, one
   `Source`, and the claim(s) from the file.
 - Re-running `pnpm corpus:seed` is a no-op on row count (idempotency).
 - `pnpm corpus:stats` prints a coverage line for `port-d-alon`.

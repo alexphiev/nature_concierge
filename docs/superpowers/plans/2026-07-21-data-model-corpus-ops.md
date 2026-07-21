@@ -2,11 +2,23 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Stand up local Postgres, define the full corpus Prisma schema, and prove the "knowledge enters as versioned code" loop end to end: one real place (Port d'Alon) authored as a typed file → validated by zod → seeded into Postgres → queried by a coverage report.
+> **Post-execution note (2026-07-21):** This plan has been fully executed (all
+> 9 tasks implemented and reviewed, merged to `master`). Shortly after, the
+> local docker-compose Postgres approach described in Task 1 below was
+> replaced with a single remote Neon database used for both dev and prod —
+> `docker-compose.yml` was removed, `.env.dist`/`.env.local` now hold a Neon
+> connection string, and `src/corpus/db.ts` was fixed to load `.env.local`
+> explicitly (it previously only loaded bare `.env`, silently masked by a
+> local Postgres default that no longer exists). Task 1's steps below are
+> kept as a historical record of the original build, not as current
+> instructions — see the design doc's Environment section for the current
+> setup.
 
-**Architecture:** A `prisma/schema.prisma` defines the full corpus data model (Prisma 7.9.0 conventions: `prisma.config.ts` for connection, driver adapter, generated client in `prisma/generated/`). A `src/corpus/` module holds the taxonomy, zod validation schema, and place-file authoring API (`definePlace`). Three CLI scripts (`corpus:check`, `corpus:seed`, `corpus:stats`) run against `src/corpus/places/*.ts` via `tsx`.
+**Goal:** Define the full corpus Prisma schema and prove the "knowledge enters as versioned code" loop end to end: one real place (Port d'Alon) authored as a typed file → validated by zod → seeded into Postgres → queried by a coverage report.
 
-**Tech Stack:** TypeScript, Prisma 7.9.0 + `@prisma/adapter-pg`, PostgreSQL 16 (docker-compose locally), zod, tsx, vitest (for unit-testing the zod validation logic), pnpm.
+**Architecture:** A `prisma/schema.prisma` defines the full corpus data model (Prisma 7.9.0 conventions: `prisma.config.ts` for connection, driver adapter, generated client in `prisma/generated/`). A `src/corpus/` module holds the taxonomy, zod validation schema, and place-file authoring API (`definePlace`). Three CLI scripts (`corpus:check`, `corpus:seed`, `corpus:stats`) run against `src/corpus/places/*.ts` via `tsx`. Database: a single remote Neon Postgres instance (dev + prod).
+
+**Tech Stack:** TypeScript, Prisma 7.9.0 + `@prisma/adapter-pg`, Neon PostgreSQL, zod, tsx, vitest (for unit-testing the zod validation logic), pnpm.
 
 ## Global Constraints
 

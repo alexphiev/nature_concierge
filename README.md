@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nature Concierge
 
-## Getting Started
+The local guide that no office de tourisme can be: structurally neutral,
+cross-commune, opinionated, and condition-aware. It answers "où aller dans
+la nature, là, maintenant, avec mes contraintes" for the littoral between
+Marseille and Bandol (+ Sainte-Baume) at the quality of an excellent human
+local — because its knowledge is a hand-verified corpus of claims and
+real-time access data, not open-web mush.
 
-First, run the development server:
+See `spec/00-scope.md` for the full mission, MVP scope, and non-goals.
+
+## Stack
+
+TypeScript · Next.js 16 (App Router) · PostgreSQL (Neon) · Prisma 7 ·
+Tailwind + shadcn/ui · pnpm
+
+## Setup
+
+Requires a Neon Postgres database (or any Postgres instance reachable over
+the network — the project connects via `@prisma/adapter-pg`).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.dist .env.local   # fill in DATABASE_URL with your Neon connection string
+pnpm exec prisma migrate deploy   # apply migrations
+pnpm exec prisma generate         # generate the Prisma client
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+There is no local database process to run — `.env.local` (gitignored)
+should point at your own Neon database (or branch, for isolated dev/test).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev      # start the Next.js dev server
+pnpm test     # run the test suite (vitest)
+pnpm lint     # run eslint
+pnpm build    # production build
+```
 
-## Learn More
+## Corpus
 
-To learn more about Next.js, take a look at the following resources:
+The corpus (places, claims, sources) is versioned data in the repo, authored
+as typed TypeScript files under `src/corpus/places/`, validated by zod, and
+loaded into Postgres by a seed pipeline. There is no admin UI — git is the
+audit trail. See `spec/02-corpus-ops.md` for the full design.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm corpus:check   # validate every place file (no DB required)
+pnpm corpus:seed    # validate, then upsert places/claims/sources into Postgres
+pnpm corpus:stats   # print a coverage report (claims per place, verification mix, re-verification backlog)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`corpus:seed` is idempotent (upserts by slug) and never deletes rows —
+retiring a place or claim is a manual status change in its source file, not
+a delete.
 
-## Deploy on Vercel
+## Project structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+spec/                     # the product/engineering spec, source of truth for build order
+docs/superpowers/         # design docs and implementation plans for each build step
+prisma/schema.prisma      # the corpus data model
+src/corpus/               # taxonomy, zod validation, place-file authoring API (definePlace)
+src/corpus/places/        # one file per place: place + its claims + sources
+scripts/corpus/           # corpus:check / corpus:seed / corpus:stats CLI scripts
+app/                      # Next.js App Router pages
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Build order
+
+See `spec/00-scope.md` for the full sequence. In short:
+
+1. Data model + corpus ops (schema, validation, seed pipeline) — done
+2. Public site (places index + place pages)
+3. Landing page + WhatsApp CTA
+4. Signal ops (daily status update script)
+5. Concierge ops + measurement
+6. Infra (deploy)
