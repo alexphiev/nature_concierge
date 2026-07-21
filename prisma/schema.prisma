@@ -6,3 +6,233 @@ generator client {
   provider = "prisma-client"
   output   = "./generated"
 }
+
+// ---------- Core corpus ----------
+
+model Place {
+  id                 String      @id @default(cuid())
+  slug               String      @unique
+  name               String
+  commune            String
+  departement        String
+  lat                Float
+  lng                Float
+  type               PlaceType
+  governingAuthority String?
+  officialInfoUrl    String?
+  description        String?
+  demandRank         Int         @default(999)
+  status             PlaceStatus @default(DRAFT)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  claims             Claim[]     @relation("PlaceClaims")
+  alternativeOf      Claim[]     @relation("AlternativePlace")
+  statusLogs         StatusLog[]
+  signalCoverage     SignalSourceOnPlace[]
+
+  @@index([status, demandRank])
+}
+
+enum PlaceType {
+  CALANQUE
+  PLAGE
+  MASSIF
+  SENTIER
+  SOMMET
+  SITE
+}
+
+enum PlaceStatus {
+  DRAFT
+  ACTIVE
+  RETIRED
+}
+
+model Claim {
+  id                 String       @id @default(cuid())
+  placeId            String
+  place              Place        @relation("PlaceClaims", fields: [placeId], references: [id])
+
+  claimText          String
+  claimType          ClaimType
+  conditions         String[]
+  audience           String[]
+  verdict            Verdict
+  alternativePlaceId String?
+  alternativePlace   Place?       @relation("AlternativePlace", fields: [alternativePlaceId], references: [id])
+
+  sourceId           String
+  source             Source       @relation(fields: [sourceId], references: [id])
+  verification       Verification
+  decayClass         DecayClass
+  verifiedOn         DateTime
+  isPublic           Boolean      @default(false)
+  status             ClaimStatus  @default(DRAFT)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  requestsUsedIn     RequestClaimUsed[]
+  requestsCreatedBy  RequestClaimCreated[]
+
+  @@index([placeId, status])
+}
+
+enum ClaimType {
+  ACCESS
+  CROWDING
+  SUITABILITY
+  TIP
+  AVOID
+  ALTERNATIVE
+  DECODING
+}
+
+enum Verdict {
+  GO
+  GO_IF
+  AVOID
+  ALTERNATIVE
+}
+
+enum Verification {
+  FIELD_VERIFIED
+  OFFICIAL
+  LOCAL_TESTIMONY
+  HEURISTIC
+}
+
+enum DecayClass {
+  PERMANENT
+  SEASONAL
+  ANNUAL_CHECK
+}
+
+enum ClaimStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+}
+
+model Source {
+  id            String     @id @default(cuid())
+  type          SourceType
+  urlOrRef      String?
+  dateCollected DateTime
+  reliability   Int        @default(2)
+  notes         String?
+  claims        Claim[]
+}
+
+enum SourceType {
+  OFFICIAL
+  PERSONAL_VISIT
+  LOCAL_PERSON
+  OT_CONVERSATION
+  REDDIT_LEAD
+  INSTAGRAM_LEAD
+  FACEBOOK_LEAD
+  PRESS_LEAD
+}
+
+// ---------- Real-time layer (separate lane, automatable later) ----------
+
+model SignalSource {
+  id             String     @id @default(cuid())
+  signalType     SignalType
+  provider       String
+  url            String
+  updateSchedule String
+  format         String
+  parseNotes     String
+  active         Boolean    @default(true)
+
+  covers         SignalSourceOnPlace[]
+  statusLogs     StatusLog[]
+}
+
+model SignalSourceOnPlace {
+  signalSourceId String
+  placeId        String
+  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
+  place          Place        @relation(fields: [placeId], references: [id])
+
+  @@id([signalSourceId, placeId])
+}
+
+enum SignalType {
+  FIRE_ACCESS
+  WATER_QUALITY
+  AIR_QUALITY
+  PARKING
+  RESERVATION_QUOTA
+}
+
+model StatusLog {
+  id             String       @id @default(cuid())
+  signalSourceId String
+  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
+  placeId        String
+  place          Place        @relation(fields: [placeId], references: [id])
+
+  forDate        DateTime     @db.Date
+  value          String
+  detail         String?
+  checkedAt      DateTime     @default(now())
+
+  @@unique([signalSourceId, placeId, forDate])
+  @@index([placeId, forDate])
+}
+
+// ---------- Concierge log (the validation instrument) ----------
+
+model Request {
+  id               String        @id @default(cuid())
+  date             DateTime      @default(now())
+  channel          Channel
+  userRef          String
+  requestText      String
+  requestType      String?
+  constraintsGiven String[]
+  timeSpentMin     Int?
+  outcome          Outcome       @default(ANSWERED)
+  outcomeNotes     String?
+
+  placesRecommended String[]
+  claimsUsed        RequestClaimUsed[]
+  claimsCreated      RequestClaimCreated[]
+}
+
+model RequestClaimUsed {
+  requestId String
+  claimId   String
+  request   Request @relation(fields: [requestId], references: [id])
+  claim     Claim   @relation(fields: [claimId], references: [id])
+  @@id([requestId, claimId])
+}
+
+model RequestClaimCreated {
+  requestId String
+  claimId   String
+  request   Request @relation(fields: [requestId], references: [id])
+  claim     Claim   @relation(fields: [claimId], references: [id])
+  @@id([requestId, claimId])
+}
+
+enum Channel {
+  WHATSAPP
+  FORM
+  REDDIT
+  FACEBOOK
+  CAMPING_QR
+  OTHER
+}
+
+enum Outcome {
+  ANSWERED
+  USER_WENT
+  USER_REPORTED_BACK
+  RETURNED_NEW_REQUEST
+  REFERRED_SOMEONE
+  SILENT
+}
