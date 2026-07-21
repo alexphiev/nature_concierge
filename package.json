@@ -6,13 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "corpus:check": "tsx scripts/corpus/check.ts",
+    "corpus:seed": "tsx scripts/corpus/seed.ts",
+    "corpus:stats": "tsx scripts/corpus/stats.ts",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "7.9.0",
+    "dotenv": "^17.4.2",
     "next": "16.2.10",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -23,6 +30,8 @@
     "eslint-config-next": "16.2.10",
     "prisma": "7.9.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.1",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }
