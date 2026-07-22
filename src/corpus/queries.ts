@@ -44,3 +44,33 @@ export async function getTodayStatus(
     },
   });
 }
+
+export async function getPlaceFreshness(placeId: string): Promise<Date> {
+  const [latestClaim, latestStatusLog] = await Promise.all([
+    prisma.claim.findFirst({
+      where: { placeId, isPublic: true, status: "PUBLISHED" },
+      orderBy: { updatedAt: "desc" },
+      select: { updatedAt: true },
+    }),
+    prisma.statusLog.findFirst({
+      where: { placeId },
+      orderBy: { checkedAt: "desc" },
+      select: { checkedAt: true },
+    }),
+  ]);
+
+  const candidates = [latestClaim?.updatedAt, latestStatusLog?.checkedAt].filter(
+    (d): d is Date => d !== undefined,
+  );
+
+  if (candidates.length > 0) {
+    return candidates.reduce((latest, d) => (d > latest ? d : latest));
+  }
+
+  const place = await prisma.place.findFirst({
+    where: { id: placeId },
+    select: { updatedAt: true },
+  });
+
+  return place?.updatedAt ?? new Date();
+}

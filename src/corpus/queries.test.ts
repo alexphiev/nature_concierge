@@ -1,11 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { findManyPlaceMock, findFirstPlaceMock, findFirstStatusLogMock } =
-  vi.hoisted(() => ({
-    findManyPlaceMock: vi.fn(),
-    findFirstPlaceMock: vi.fn(),
-    findFirstStatusLogMock: vi.fn(),
-  }));
+const {
+  findManyPlaceMock,
+  findFirstPlaceMock,
+  findFirstStatusLogMock,
+  findFirstClaimMock,
+} = vi.hoisted(() => ({
+  findManyPlaceMock: vi.fn(),
+  findFirstPlaceMock: vi.fn(),
+  findFirstStatusLogMock: vi.fn(),
+  findFirstClaimMock: vi.fn(),
+}));
 
 vi.mock("./db", () => ({
   prisma: {
@@ -16,15 +21,24 @@ vi.mock("./db", () => ({
     statusLog: {
       findFirst: findFirstStatusLogMock,
     },
+    claim: {
+      findFirst: findFirstClaimMock,
+    },
   },
 }));
 
-import { getActivePlaces, getPlaceBySlug, getTodayStatus } from "./queries";
+import {
+  getActivePlaces,
+  getPlaceBySlug,
+  getTodayStatus,
+  getPlaceFreshness,
+} from "./queries";
 
 beforeEach(() => {
   findManyPlaceMock.mockReset();
   findFirstPlaceMock.mockReset();
   findFirstStatusLogMock.mockReset();
+  findFirstClaimMock.mockReset();
 });
 
 describe("getActivePlaces", () => {
@@ -107,5 +121,54 @@ describe("getTodayStatus", () => {
     const result = await getTodayStatus("place-id-1");
 
     expect(result).toBeNull();
+  });
+});
+
+describe("getPlaceFreshness", () => {
+  it("returns the most recent of latest claim.updatedAt and latest StatusLog.checkedAt", async () => {
+    findFirstClaimMock.mockResolvedValue({
+      updatedAt: new Date("2026-07-20T10:00:00Z"),
+    });
+    findFirstStatusLogMock.mockResolvedValue({
+      checkedAt: new Date("2026-07-21T18:00:00Z"),
+    });
+
+    const result = await getPlaceFreshness("place-id-1");
+
+    expect(findFirstClaimMock).toHaveBeenCalledWith({
+      where: { placeId: "place-id-1", isPublic: true, status: "PUBLISHED" },
+      orderBy: { updatedAt: "desc" },
+      select: { updatedAt: true },
+    });
+    expect(result).toEqual(new Date("2026-07-21T18:00:00Z"));
+  });
+
+  it("returns the claim date when it is more recent than the status log date", async () => {
+    findFirstClaimMock.mockResolvedValue({
+      updatedAt: new Date("2026-07-21T10:00:00Z"),
+    });
+    findFirstStatusLogMock.mockResolvedValue({
+      checkedAt: new Date("2026-07-19T18:00:00Z"),
+    });
+
+    const result = await getPlaceFreshness("place-id-1");
+
+    expect(result).toEqual(new Date("2026-07-21T10:00:00Z"));
+  });
+
+  it("falls back to the place's own updatedAt when no claims or status logs exist", async () => {
+    findFirstClaimMock.mockResolvedValue(null);
+    findFirstStatusLogMock.mockResolvedValue(null);
+    findFirstPlaceMock.mockResolvedValue({
+      updatedAt: new Date("2026-07-01T00:00:00Z"),
+    });
+
+    const result = await getPlaceFreshness("place-id-1");
+
+    expect(findFirstPlaceMock).toHaveBeenCalledWith({
+      where: { id: "place-id-1" },
+      select: { updatedAt: true },
+    });
+    expect(result).toEqual(new Date("2026-07-01T00:00:00Z"));
   });
 });
