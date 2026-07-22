@@ -46,8 +46,42 @@ export default async function PlaceDetailPage({
 
   const statusLog = await getTodayStatus(place.id);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Place",
+        name: place.name,
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: place.lat,
+          longitude: place.lng,
+        },
+        containedInPlace: {
+          "@type": "AdministrativeArea",
+          name: place.commune,
+        },
+      },
+      place.claims.length > 0 && {
+        "@type": "FAQPage",
+        mainEntity: place.claims.slice(0, 3).map((claim) => ({
+          "@type": "Question",
+          name: `${claim.claimText.split(".")[0]} ?`,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: claim.claimText,
+          },
+        })),
+      },
+    ].filter(Boolean),
+  };
+
   return (
     <main className="mx-auto flex max-w-[720px] flex-col gap-8 px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <StatusBlock statusLog={statusLog} officialInfoUrl={place.officialInfoUrl} />
 
       <div>
