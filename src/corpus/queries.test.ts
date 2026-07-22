@@ -55,6 +55,9 @@ describe("getPlaceBySlug", () => {
       include: {
         claims: {
           where: { isPublic: true, status: "PUBLISHED" },
+          include: {
+            alternativePlace: { select: { slug: true, name: true } },
+          },
         },
       },
     });

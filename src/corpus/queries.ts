@@ -8,7 +8,9 @@ export async function getActivePlaces(): Promise<Place[]> {
   });
 }
 
-export type PlaceWithPublicClaims = Place & { claims: Claim[] };
+export type PlaceWithPublicClaims = Place & {
+  claims: (Claim & { alternativePlace: Pick<Place, "slug" | "name"> | null })[];
+};
 
 export async function getPlaceBySlug(
   slug: string,
@@ -18,6 +20,9 @@ export async function getPlaceBySlug(
     include: {
       claims: {
         where: { isPublic: true, status: "PUBLISHED" },
+        include: {
+          alternativePlace: { select: { slug: true, name: true } },
+        },
       },
     },
   }) as Promise<PlaceWithPublicClaims | null>;
