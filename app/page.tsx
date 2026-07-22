@@ -1,65 +1,85 @@
-import Image from "next/image";
+import Link from "next/link";
+import { LandingWhatsAppCTA } from "@/src/components/LandingWhatsAppCTA";
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="mx-auto flex max-w-[720px] flex-col gap-16 px-4 py-16">
+      <section className="flex flex-col items-start gap-6">
+        <h1 className="font-display text-3xl">
+          Le guide local qui vous dit où aller. Et où ne pas aller.
+        </h1>
+        <p className="text-lg">
+          Sorties nature entre Marseille et Bandol, conseillées comme le
+          ferait un très bon guide du coin : selon la météo, le monde, les
+          fermetures du jour — et selon vous. Gratuit, réponse en quelques
+          heures.
+        </p>
+        <LandingWhatsAppCTA />
+        <Link href="/places" className="text-mediterranee underline">
+          Voir les lieux couverts
+        </Link>
+      </section>
+
+      <section className="flex flex-col gap-6">
+        <div>
+          <h2 className="font-display text-2xl">
+            Personne ne centralise l&apos;essentiel.
+          </h2>
+          <p className="mt-2">
+            Fermetures incendie, qualité de l&apos;eau, saturation des
+            parkings : ces infos existent, éparpillées entre préfectures,
+            mairies et applis par site. On les rassemble, chaque jour.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div>
+          <h2 className="font-display text-2xl">
+            Un office de tourisme défend sa commune.
+          </h2>
+          <p className="mt-2">
+            Nous, on vous défend vous. Si Cassis sature, on vous envoie
+            ailleurs — un OT ne peut pas faire ça.
+          </p>
         </div>
-      </main>
-    </div>
+        <div>
+          <h2 className="font-display text-2xl">
+            Des conseils qu&apos;aucune IA générique ne connaît.
+          </h2>
+          <p className="mt-2">
+            Nos réponses viennent d&apos;un carnet de terrain vérifié : où se
+            garer vraiment, à quelle heure ça bascule, quoi éviter avec une
+            poussette. Pas de résumés du web.
+          </p>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="font-display text-2xl">Comment ça marche</h2>
+        <p>Écrivez-nous (qui, quand, contraintes)</p>
+        <p>On prépare votre sortie sur mesure, avec plan B</p>
+        <p>Vous y allez ; dites-nous si c&apos;était juste, ça aide le suivant.</p>
+      </section>
+
+      <section className="flex flex-col gap-6">
+        <div className="flex items-center gap-4">
+          <div
+            aria-hidden
+            className="h-16 w-16 shrink-0 rounded-full bg-calcaire-deep"
+          />
+          <p>
+            Je m&apos;appelle Alexandre, développeur et habitant de La
+            Ciotat.
+          </p>
+        </div>
+        <p>
+          Sources officielles liées, date de vérification affichée partout,
+          quand on ne sait pas, on le dit.
+        </p>
+        <p>Gratuit, pas de compte, prénom suffit.</p>
+      </section>
+
+      <section className="flex flex-col items-start gap-4">
+        <LandingWhatsAppCTA />
+      </section>
+    </main>
   );
 }
