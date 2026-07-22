@@ -25,7 +25,7 @@ export async function getPlaceBySlug(
 
 export async function getTodayStatus(
   placeId: string,
-): Promise<StatusLog | null> {
+): Promise<(StatusLog & { signalSource: { provider: string } }) | null> {
   const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
 
   return prisma.statusLog.findFirst({
@@ -34,5 +34,8 @@ export async function getTodayStatus(
       forDate: { gte: startOfToday },
     },
     orderBy: { forDate: "asc" },
+    include: {
+      signalSource: { select: { provider: true } },
+    },
   });
 }

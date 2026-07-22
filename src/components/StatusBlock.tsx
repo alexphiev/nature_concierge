@@ -5,7 +5,7 @@ export function StatusBlock({
   statusLog,
   officialInfoUrl,
 }: {
-  statusLog: StatusLog | null;
+  statusLog: (StatusLog & { signalSource: { provider: string } }) | null;
   officialInfoUrl: string | null;
 }) {
   if (!statusLog) {
@@ -41,11 +41,21 @@ export function StatusBlock({
       className={`rounded-[10px] border-l-2 bg-calcaire-deep p-4 ${colorClass}`}
     >
       <p className="font-mono uppercase">
-        ● {statusLog.value} {statusLog.detail ? `— ${statusLog.detail}` : ""}
+        <span aria-hidden>●</span> {statusLog.value}{" "}
+        {statusLog.detail ? `— ${statusLog.detail}` : ""}
       </p>
       <hr className="my-3 border-sable/40" />
-      <p>
-        <Dateline checkedAt={statusLog.checkedAt} />
+      <p className="font-mono text-[0.875rem] text-encre/70">
+        <Dateline checkedAt={statusLog.checkedAt} /> · Source officielle :{" "}
+        {statusLog.signalSource.provider}
+        {officialInfoUrl && (
+          <>
+            {" "}
+            <a href={officialInfoUrl} className="underline">
+              ↗
+            </a>
+          </>
+        )}
       </p>
     </section>
   );

@@ -75,7 +75,10 @@ describe("getPlaceBySlug", () => {
 
 describe("getTodayStatus", () => {
   it("queries the most recent StatusLog for today or later for the place", async () => {
-    findFirstStatusLogMock.mockResolvedValue({ value: "vert" });
+    findFirstStatusLogMock.mockResolvedValue({
+      value: "vert",
+      signalSource: { provider: "Préfecture du Var" },
+    });
 
     const result = await getTodayStatus("place-id-1");
 
@@ -85,8 +88,14 @@ describe("getTodayStatus", () => {
         forDate: { gte: expect.any(Date) },
       },
       orderBy: { forDate: "asc" },
+      include: {
+        signalSource: { select: { provider: true } },
+      },
     });
-    expect(result).toEqual({ value: "vert" });
+    expect(result).toEqual({
+      value: "vert",
+      signalSource: { provider: "Préfecture du Var" },
+    });
   });
 
   it("returns null when no StatusLog row exists (unverified state)", async () => {
