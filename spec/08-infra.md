@@ -28,9 +28,12 @@ runs as a deploy step so corpus edits ship like code.
 ## Secrets
 
 `DATABASE_URL`, `REVALIDATE_TOKEN` (status script → revalidation route),
-analytics domain key. No third-party API keys exist in the MVP (no LLM calls,
-no scrapers) — keep it that way; a PR adding an API key is scope creep made
-visible.
+analytics domain key, `ADMIN_PASSWORD` (private `/admin` access, see
+`10-corpus-ingestion.md`), `GEMINI_API_KEY` (Gemini Flash extraction for
+`/admin`'s corpus ingestion tool — the one deliberate exception to "no LLM
+calls" in the public-facing product; it's a private capture aid, not the
+public site or the concierge answering engine). Any other third-party API
+key beyond these is scope creep made visible.
 
 ## Backups
 
