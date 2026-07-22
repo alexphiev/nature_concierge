@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { prisma } from "@/src/corpus/db";
 import type { IngestionDraft } from "../../prisma/generated/client";
 
@@ -51,6 +52,8 @@ function DraftSection({
 }
 
 export default async function AdminDashboardPage() {
+  await connection();
+
   const drafts = await prisma.ingestionDraft.findMany({
     orderBy: { createdAt: "desc" },
   });
