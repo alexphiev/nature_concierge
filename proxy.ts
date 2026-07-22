@@ -19,7 +19,7 @@ export function proxy(request: NextRequest) {
 
   if (authHeader?.startsWith("Basic ")) {
     const decoded = Buffer.from(authHeader.slice(6), "base64").toString();
-    const [, password] = decoded.split(":");
+    const password = decoded.slice(decoded.indexOf(":") + 1);
     if (isValidPassword(password)) {
       const response = NextResponse.next();
       response.headers.set("X-Robots-Tag", "noindex");
