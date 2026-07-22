@@ -236,3 +236,22 @@ enum Outcome {
   REFERRED_SOMEONE
   SILENT
 }
+
+model IngestionDraft {
+  id             String      @id @default(cuid())
+  createdAt      DateTime    @default(now())
+  inputText      String?
+  inputImages    String[]
+  transcript     String?
+  rawModelOutput Json?
+  status         DraftStatus @default(PENDING_REVIEW)
+  draftPlace     Json?
+  draftClaims    Json
+}
+
+enum DraftStatus {
+  PENDING_REVIEW
+  ERROR
+  APPROVED
+  REJECTED
+}
