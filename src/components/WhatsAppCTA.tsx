@@ -1,5 +1,11 @@
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 
+if (!WHATSAPP_NUMBER) {
+  console.warn(
+    "WhatsAppCTA: NEXT_PUBLIC_WHATSAPP_NUMBER is not set — the WhatsApp link will be broken.",
+  );
+}
+
 export function WhatsAppCTA({ placeName }: { placeName: string }) {
   const message = `Bonjour ! Je cherche une idée de sortie nature. À propos de ${placeName} : `;
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
