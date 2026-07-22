@@ -12,7 +12,7 @@ single action. French only. Design per `09-design.md`.
   très bon guide du coin : selon la météo, le monde, les fermetures du jour —
   et selon vous. Gratuit, réponse en quelques heures."
 - Primary CTA button: "Demander un plan sur WhatsApp" → wa.me deep link.
-- Secondary link: "Voir les lieux couverts" → `/lieux`.
+- Secondary link: "Voir les lieux couverts" → `/places`.
 
 ### 2. Why this exists (structural neutrality, 3 short blocks, no icons soup)
 - **"Personne ne centralise l'essentiel."** Fermetures incendie, qualité de

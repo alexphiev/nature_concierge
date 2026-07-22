@@ -7,8 +7,8 @@ All user-facing copy in French.
 
 ```
 /                      → landing (see 05-landing.md)
-/lieux                 → places index
-/lieux/[slug]          → place detail (the SEO unit)
+/places                → places index
+/places/[slug]         → place detail (the SEO unit)
 /statut                → (optional, phase 2 of MVP) all-territory status board
 ```
 
@@ -20,7 +20,7 @@ All user-facing copy in French.
   reading today's/tomorrow's `StatusLog` with `revalidate = 900` (15 min) via ISR,
   OR static shell + small `/api/status/[slug]` fetched client-side. Choose ISR
   first (simpler, SEO-visible); switch only if update latency hurts.
-- `pnpm status:update` (see 04) triggers `revalidatePath('/lieux/[slug]')` for
+- `pnpm status:update` (see 04) triggers `revalidatePath('/places/[slug]')` for
   affected places via a revalidation route handler with a secret token.
 
 ## Place page structure (top to bottom)
@@ -75,7 +75,7 @@ PUBLISHED`. No API endpoint exposes the full corpus.
 - Visible plain-text dateline on every page: "Statut vérifié le 21 juillet 2026 à 18h12."
 - Never gate content behind JS-only rendering; status must be in server HTML.
 
-## Index page `/lieux`
+## Index page `/places`
 
 List (not map) of ACTIVE places ordered by `demandRank`: name, commune, type,
 today's status chip, one hook claim. A single quiet line at top states territory
