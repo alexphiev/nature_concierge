@@ -29,7 +29,11 @@ corpus while validating demand.
 - ❌ No AI chat/answering engine, no RAG pipeline, no embeddings.
 - ❌ No scrapers or cron automation (daily status is updated by a manual script run).
 - ❌ No user accounts, auth, or profiles.
-- ❌ No admin UI. The corpus is edited as seed files in the repo; git is the audit trail.
+- ❌ No admin UI for the public-facing product (no user accounts, no CMS for
+  visitors). A **private corpus-ingestion/review tool** at `/admin` for
+  Alexandre only is in scope — see `10-corpus-ingestion.md`. It drafts
+  Place/Claim records from pasted text or photos for manual approval; it does
+  not replace the seed-file pipeline as the system of record, it feeds it.
 - ❌ No map-and-filter explorer UI. (The index page is a list, not a map product.)
 - ❌ No multi-region anything. Territory is hardcoded: littoral 13 + Var ouest + Sainte-Baume.
 - ❌ No bookings, no payments, no partnerships features.
@@ -63,6 +67,9 @@ decision mechanical, not emotional.
 5. `04-signal-ops.md` (status update script)
 6. `06-concierge-ops.md` + `07-measurement.md` (operations)
 7. `08-infra.md` (deploy — time-boxed to 45 minutes of decisions)
+8. `10-corpus-ingestion.md` (private `/admin` capture tool — build after the
+   above are live; it's a productivity layer on top of a working seed pipeline,
+   not a dependency of it)
 
 ## Stack (fixed)
 
