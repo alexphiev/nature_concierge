@@ -44,9 +44,29 @@ The join between analytics and Requests is manual and approximate (prefill
 mentions the place); do not build attribution plumbing for this. 25 requests is
 a number you can eyeball.
 
-## Weekly metrics query (`pnpm metrics:weekly`)
+## `/admin/metrics` dashboard (replaces a CLI script — read-only, in `/admin`)
 
-Prints: requests by channel · return rate · median timeSpentMin (rolling 10) ·
-reuse rate · gap rate · top pages by whatsapp_click · SC impressions trend.
-Output pasted into a dated `journal/` md file — the decision record for end of
-August.
+Two sections on one page, inside the same `/admin` tool as ingestion, the
+daily status page, and request logging (per `10-corpus-ingestion.md`,
+`04-signal-ops.md`, `06-concierge-ops.md`):
+
+**Corpus coverage** — published claims per ACTIVE place vs. `demandRank`
+(surfaces thin coverage on high-demand places first), verification mix
+(field-verified / official / testimony / heuristic proportions), and the
+re-verification backlog (SEASONAL claims with `verifiedOn` > ~1 year old).
+
+**Concierge metrics** — requests by channel, return rate, median
+`timeSpentMin` (rolling 10), reuse rate (avg `claimsUsed` per request), gap
+rate (% of requests with `claimsCreated` > 0), and the pre-committed
+thresholds from `00-scope.md` shown against current values so progress toward
+the end-of-August decision is visible at a glance, not buried in a script's
+stdout.
+
+**Site traffic** — top pages by `whatsapp_click` (from Plausible/Umami, per
+`03-public-site.md` and `05-landing.md`) and the Search Console impressions
+trend for place-page query patterns, so a page with impressions but no clicks
+is visible as a title/description iteration candidate.
+
+Read-only page, computed live from the DB (no separate scheduled job, no
+export step) — this is purely a viewing convenience, so there's no write-safety
+concern like the ones we're careful about elsewhere in `/admin`.

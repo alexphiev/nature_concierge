@@ -9,6 +9,11 @@ turns raw input into **draft** Place/Claim records for review — it is a
 convenience layer on top of the seed-file system (`02-corpus-ops.md`), not a
 replacement for it. Human approval remains mandatory and final, forever.
 
+The same draft-then-review pattern (unstructured input → AI-drafted structured
+fields → human edits/confirms on one screen) is reused for concierge request
+logging at `/admin/requests/new` — see `06-concierge-ops.md`. It's the same
+architecture solving the same shape of problem twice, not a second system.
+
 ## Access
 
 `/admin` — protected by a single shared secret (Basic Auth or a simple
@@ -125,7 +130,7 @@ model IngestionDraft {
   id            String   @id @default(cuid())
   createdAt     DateTime @default(now())
   inputText     String?
-  inputImages   String[] // storage URLs/paths
+  inputImages   Bytes[]  // stored directly in Postgres — see storage note below
   transcript    String?  // from image extraction, editable, shown in review
   rawModelOutput Json?   // for ERROR debugging
   status        DraftStatus @default(PENDING_REVIEW)
@@ -140,6 +145,26 @@ enum DraftStatus {
   REJECTED
 }
 ```
+
+## Image storage — no dedicated object storage in the MVP
+
+The review screen needs the original photo available next to the draft claim
+so a bad transcription is easy to catch — that's the only requirement. At MVP
+volume (tens of captures/week, a few hundred KB per image), that need is met
+by storing the bytes directly on `IngestionDraft.inputImages` in the same
+Postgres database, not by adding S3/Vercel Blob/a bucket as a new infra
+dependency. No new secret, no new line in `08-infra.md`.
+
+Retention: keep image bytes while a draft is `PENDING_REVIEW` or `ERROR`
+(you still need to look at it). Once a draft reaches `APPROVED` or
+`REJECTED`, the permanent record is the text (`sourceSnippet`, `transcript`),
+not the photo — clear `inputImages` on that draft immediately, or on a
+30–90 day job if you want a short grace window to re-check something. This
+bounds database growth without a retention policy that needs its own service.
+
+**Automation trigger**: only move to real object storage (Vercel Blob, or an
+EU S3-compatible bucket) if capture volume or image sizes grow enough to
+visibly bloat the database or slow backups. Not before.
 
 (Kept as loose `Json` for draft payloads deliberately — the taxonomy will
 shift; only *approved* data needs to conform strictly to the real `Claim`

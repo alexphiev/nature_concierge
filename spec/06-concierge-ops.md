@@ -28,16 +28,30 @@ If the pre-filled template arrives incomplete, ask at most one grouping message:
 
 ## Logging discipline (same day, no exceptions)
 
-Every conversation becomes a `Request` row via `pnpm request:log` — interactive
-CLI prompting for: channel, userRef, requestText (paste), requestType,
-constraintsGiven (taxonomy picker), placesRecommended, claimsUsed (fuzzy search
-by place), claimsCreated, timeSpentMin, outcome. Outcome updates
-(`USER_REPORTED_BACK`, `RETURNED_NEW_REQUEST`, `REFERRED_SOMEONE`) are edits to
-the same row via `pnpm request:log --update <id>`.
+Every conversation becomes a `Request` row via `/admin/requests/new`, inside
+the same `/admin` tool from `10-corpus-ingestion.md`, using the same
+draft-then-review pattern: paste the WhatsApp conversation text, Gemini Flash
+drafts the structured fields — `requestType` tagged against the taxonomy,
+`constraintsGiven` extracted, `placesRecommended` and `claimsUsed` suggested
+via match against the corpus — and you edit/confirm on one screen before it
+saves. This is the highest-frequency admin task (up to 25+ times in three
+weeks, usually from a phone right after the conversation), so it gets the
+lowest-friction interface, reusing infrastructure rather than adding a new one.
+
+Fields to confirm: channel, userRef, requestText (the paste itself, kept
+verbatim), requestType, constraintsGiven, placesRecommended, claimsUsed,
+claimsCreated (any new claim written to answer this request — links back into
+the corpus), timeSpentMin (log honestly, it's a threshold metric), outcome.
+
+Outcome updates (`USER_REPORTED_BACK`, `RETURNED_NEW_REQUEST`,
+`REFERRED_SOMEONE`) are edits to the same row from `/admin/requests`, a simple
+list view with an edit action — no separate CLI path.
 
 A reported-back observation ("parking plein dès 9h30 finalement") is gold:
-log outcome AND create/refresh the corresponding claim with
-`verification: LOCAL_TESTIMONY` → upgrade to `FIELD_VERIFIED` when we confirm.
+update outcome AND create/refresh the corresponding claim with
+`verification: LOCAL_TESTIMONY` → upgrade to `FIELD_VERIFIED` when confirmed —
+this can happen directly from the request row via a "create claim from this"
+shortcut that pre-fills the ingestion draft with the observation as input text.
 
 ## Seeding plan (staggered, one channel every few days, UTM/channel tagged)
 
@@ -53,6 +67,6 @@ time-per-answer < 30 min by request #15 · ≥ 3 unprompted referrals.
 
 ## Weekly ritual (30 min, Sunday)
 
-Run `pnpm corpus:stats` + request metrics query; review: reuse rate ↗ ?
-gap rate ↘ ? which channel produced requests? which pages got impressions?
-Decide next week's field visit + claims backlog from actual gaps, not interest.
+Check `/admin/metrics` (see `07-measurement.md`) — reuse rate ↗ ? gap rate ↘ ?
+which channel produced requests? which pages got impressions? Decide next
+week's field visit + claims backlog from actual gaps, not interest.

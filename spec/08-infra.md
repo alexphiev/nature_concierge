@@ -16,8 +16,10 @@
 
 ## Environments
 
-`local` (docker-compose Postgres) and `production`. No staging — the MVP's
-blast radius is one person's reputation, protected by `pnpm corpus:check` in CI.
+`local` and `production` share a single Neon database (EU region) — local
+dev connects via `DATABASE_URL` in `.env.local`. No staging, no per-branch
+Postgres. The MVP's blast radius is one person's reputation, protected by
+`pnpm corpus:check` in CI.
 
 ## CI (GitHub Actions)
 
@@ -27,13 +29,12 @@ runs as a deploy step so corpus edits ship like code.
 
 ## Secrets
 
-`DATABASE_URL`, `REVALIDATE_TOKEN` (status script → revalidation route),
-analytics domain key, `ADMIN_PASSWORD` (private `/admin` access, see
-`10-corpus-ingestion.md`), `GEMINI_API_KEY` (Gemini Flash extraction for
-`/admin`'s corpus ingestion tool — the one deliberate exception to "no LLM
-calls" in the public-facing product; it's a private capture aid, not the
-public site or the concierge answering engine). Any other third-party API
-key beyond these is scope creep made visible.
+`DATABASE_URL`, `GEMINI_API_KEY` (extraction calls, see `10-corpus-ingestion.md`),
+`ADMIN_PASSWORD` (or session secret, see `10-corpus-ingestion.md`), analytics
+domain key. Admin-triggered revalidation reuses the admin session — no
+separate revalidation token needed. Any additional third-party API key beyond
+Gemini is scope creep made visible; there is no scraping and no other model
+provider in the MVP.
 
 ## Backups
 
