@@ -241,7 +241,7 @@ model IngestionDraft {
   id             String      @id @default(cuid())
   createdAt      DateTime    @default(now())
   inputText      String?
-  inputImages    String[]
+  inputImages    Bytes[]
   transcript     String?
   rawModelOutput Json?
   status         DraftStatus @default(PENDING_REVIEW)
