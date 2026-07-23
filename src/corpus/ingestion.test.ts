@@ -56,26 +56,28 @@ describe("runIngestion", () => {
     expect(createDraftMock).toHaveBeenCalledWith({
       data: expect.objectContaining({
         status: "ERROR",
-        rawModelOutput: expect.anything(),
+        rawModelOutput: expect.objectContaining({ rawOutput: "not valid json {{{" }),
       }),
     });
     expect(result.status).toBe("ERROR");
   });
 
   it("writes an ERROR draft when the model output fails zod validation", async () => {
-    createMock.mockResolvedValueOnce({
-      output_text: JSON.stringify({
-        place: null,
-        claims: [{ claimText: "no sourceSnippet or other required fields" }],
-        needsPlaceSelection: false,
-      }),
+    const badOutputText = JSON.stringify({
+      place: null,
+      claims: [{ claimText: "no sourceSnippet or other required fields" }],
+      needsPlaceSelection: false,
     });
+    createMock.mockResolvedValueOnce({ output_text: badOutputText });
     createDraftMock.mockResolvedValueOnce({ id: "draft-3", status: "ERROR" });
 
     const result = await runIngestion({ text: "Une observation de terrain." });
 
     expect(createDraftMock).toHaveBeenCalledWith({
-      data: expect.objectContaining({ status: "ERROR" }),
+      data: expect.objectContaining({
+        status: "ERROR",
+        rawModelOutput: expect.objectContaining({ rawOutput: badOutputText }),
+      }),
     });
     expect(result.status).toBe("ERROR");
   });

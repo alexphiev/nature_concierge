@@ -49,7 +49,7 @@ export async function transcribeImage(
   return text && text.length > 0 ? text : "aucun texte exploitable détecté";
 }
 
-async function extractFromText(combinedText: string) {
+async function extractFromText(combinedText: string): Promise<string> {
   const interaction = await client.interactions.create({
     model: MODEL,
     input: combinedText,
@@ -61,8 +61,7 @@ async function extractFromText(combinedText: string) {
     },
   });
 
-  const parsed = JSON.parse(interaction.output_text ?? "");
-  return ExtractionResultSchema.parse(parsed);
+  return interaction.output_text ?? "";
 }
 
 export async function runIngestion(input: {
@@ -71,6 +70,7 @@ export async function runIngestion(input: {
   placeSlug?: string;
 }): Promise<IngestionDraft> {
   let transcript: string | undefined;
+  let rawExtractionText: string | undefined;
 
   try {
     if (input.images && input.images.length > 0) {
@@ -81,7 +81,9 @@ export async function runIngestion(input: {
     }
 
     const combinedText = [input.text, transcript].filter(Boolean).join("\n\n");
-    const extraction = await extractFromText(combinedText);
+    rawExtractionText = await extractFromText(combinedText);
+    const parsed = JSON.parse(rawExtractionText);
+    const extraction = ExtractionResultSchema.parse(parsed);
 
     return prisma.ingestionDraft.create({
       data: {
@@ -102,6 +104,7 @@ export async function runIngestion(input: {
         status: "ERROR",
         rawModelOutput: {
           error: err instanceof Error ? err.message : String(err),
+          ...(rawExtractionText !== undefined ? { rawOutput: rawExtractionText } : {}),
         },
         draftClaims: [],
       },
