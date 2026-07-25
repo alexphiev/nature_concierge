@@ -80,7 +80,14 @@ export async function runIngestion(input: {
       transcript = transcripts.join("\n\n");
     }
 
-    const combinedText = [input.text, transcript].filter(Boolean).join("\n\n");
+    const place = input.placeSlug
+      ? await prisma.place.findUnique({ where: { slug: input.placeSlug }, select: { name: true } })
+      : null;
+
+    let combinedText = [input.text, transcript].filter(Boolean).join("\n\n");
+    if (place) {
+      combinedText = `Lieu concerné : ${place.name}\n\n${combinedText}`;
+    }
     rawExtractionText = await extractFromText(combinedText);
     const parsed = JSON.parse(rawExtractionText);
     const extraction = ExtractionResultSchema.parse(parsed);
@@ -88,9 +95,10 @@ export async function runIngestion(input: {
     return prisma.ingestionDraft.create({
       data: {
         inputText: input.text ?? null,
-        inputImages: input.images?.map((img) => img.data.toString("base64")) ?? [],
+        inputImages: input.images?.map((img) => Uint8Array.from(img.data)) ?? [],
         transcript: transcript ?? null,
         status: "PENDING_REVIEW",
+        rawModelOutput: input.placeSlug ? { suggestedPlaceSlug: input.placeSlug } : undefined,
         draftPlace: extraction.place ?? Prisma.JsonNull,
         draftClaims: extraction.claims,
       },
@@ -99,7 +107,7 @@ export async function runIngestion(input: {
     return prisma.ingestionDraft.create({
       data: {
         inputText: input.text ?? null,
-        inputImages: input.images?.map((img) => img.data.toString("base64")) ?? [],
+        inputImages: input.images?.map((img) => Uint8Array.from(img.data)) ?? [],
         transcript: transcript ?? null,
         status: "ERROR",
         rawModelOutput: {
