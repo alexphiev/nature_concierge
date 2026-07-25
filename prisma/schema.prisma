@@ -27,9 +27,10 @@ model Place {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
-  claims             Claim[]     @relation("PlaceClaims")
-  alternativeOf      Claim[]     @relation("AlternativePlace")
-  zones              ZonePlace[]
+  claims          Claim[]          @relation("PlaceClaims")
+  alternativeOf   Claim[]          @relation("AlternativePlace")
+  zones           ZonePlace[]
+  ingestionDrafts IngestionDraft[]
 
   @@index([status, demandRank])
 }
@@ -50,9 +51,9 @@ enum PlaceStatus {
 }
 
 model Claim {
-  id                 String       @id @default(cuid())
-  placeId            String
-  place              Place        @relation("PlaceClaims", fields: [placeId], references: [id])
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation("PlaceClaims", fields: [placeId], references: [id])
 
   claimText          String
   claimType          ClaimType
@@ -60,20 +61,20 @@ model Claim {
   audience           String[]
   verdict            Verdict
   alternativePlaceId String?
-  alternativePlace   Place?       @relation("AlternativePlace", fields: [alternativePlaceId], references: [id])
+  alternativePlace   Place?    @relation("AlternativePlace", fields: [alternativePlaceId], references: [id])
 
-  sourceId           String
-  source             Source       @relation(fields: [sourceId], references: [id])
-  verification       Verification
-  decayClass         DecayClass
-  verifiedOn         DateTime
-  isPublic           Boolean      @default(false)
-  status             ClaimStatus  @default(DRAFT)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  sourceId     String
+  source       Source       @relation(fields: [sourceId], references: [id])
+  verification Verification
+  decayClass   DecayClass
+  verifiedOn   DateTime
+  isPublic     Boolean      @default(false)
+  status       ClaimStatus  @default(DRAFT)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  requestsUsedIn     RequestClaimUsed[]
-  requestsCreatedBy  RequestClaimCreated[]
+  requestsUsedIn    RequestClaimUsed[]
+  requestsCreatedBy RequestClaimCreated[]
 
   @@index([placeId, status])
 }
@@ -115,13 +116,14 @@ enum ClaimStatus {
 }
 
 model Source {
-  id            String     @id @default(cuid())
-  type          SourceType
-  urlOrRef      String?
-  dateCollected DateTime
-  reliability   Int        @default(2)
-  notes         String?
-  claims        Claim[]
+  id              String           @id @default(cuid())
+  type            SourceType
+  urlOrRef        String?
+  dateCollected   DateTime
+  reliability     Int              @default(2)
+  notes           String?
+  claims          Claim[]
+  ingestionBlocks IngestionBlock[]
 }
 
 enum SourceType {
@@ -146,7 +148,7 @@ model SignalSource {
   format         String
   active         Boolean    @default(true)
 
-  zones          SignalZone[]
+  zones SignalZone[]
 
   @@unique([provider, signalType])
 }
@@ -156,13 +158,13 @@ model SignalZone {
   signalSourceId String
   signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
 
-  label          String
-  externalRef    String?
-  parseNotes     String
-  active         Boolean      @default(true)
+  label       String
+  externalRef String?
+  parseNotes  String
+  active      Boolean @default(true)
 
-  places         ZonePlace[]
-  statusLogs     StatusLog[]
+  places     ZonePlace[]
+  statusLogs StatusLog[]
 
   @@unique([signalSourceId, label])
 }
@@ -189,10 +191,10 @@ model StatusLog {
   signalZoneId String
   signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
 
-  forDate      DateTime   @db.Date
-  value        String
-  detail       String?
-  confirmedAt  DateTime   @default(now())
+  forDate     DateTime @db.Date
+  value       String
+  detail      String?
+  confirmedAt DateTime @default(now())
 
   @@unique([signalZoneId, forDate])
   @@index([forDate])
@@ -201,20 +203,20 @@ model StatusLog {
 // ---------- Concierge log (the validation instrument) ----------
 
 model Request {
-  id               String        @id @default(cuid())
-  date             DateTime      @default(now())
+  id               String   @id @default(cuid())
+  date             DateTime @default(now())
   channel          Channel
   userRef          String
   requestText      String
   requestType      String?
   constraintsGiven String[]
   timeSpentMin     Int?
-  outcome          Outcome       @default(ANSWERED)
+  outcome          Outcome  @default(ANSWERED)
   outcomeNotes     String?
 
   placesRecommended String[]
   claimsUsed        RequestClaimUsed[]
-  claimsCreated      RequestClaimCreated[]
+  claimsCreated     RequestClaimCreated[]
 }
 
 model RequestClaimUsed {
@@ -222,6 +224,7 @@ model RequestClaimUsed {
   claimId   String
   request   Request @relation(fields: [requestId], references: [id])
   claim     Claim   @relation(fields: [claimId], references: [id])
+
   @@id([requestId, claimId])
 }
 
@@ -230,6 +233,7 @@ model RequestClaimCreated {
   claimId   String
   request   Request @relation(fields: [requestId], references: [id])
   claim     Claim   @relation(fields: [claimId], references: [id])
+
   @@id([requestId, claimId])
 }
 
@@ -252,15 +256,36 @@ enum Outcome {
 }
 
 model IngestionDraft {
-  id             String      @id @default(cuid())
-  createdAt      DateTime    @default(now())
-  inputText      String?
-  inputImages    Bytes[]
-  transcript     String?
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  placeId   String
+  place     Place            @relation(fields: [placeId], references: [id])
+  status    DraftStatus      @default(PENDING_REVIEW)
+  blocks    IngestionBlock[]
+
+  @@index([status, createdAt])
+}
+
+model IngestionBlock {
+  id      String         @id @default(cuid())
+  draftId String
+  draft   IngestionDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  order   Int
+
+  inputSourceHint String?
+  inputSourceType String?
+  inputText       String?
+  inputImages     Bytes[]
+  transcript      String?
+
   rawModelOutput Json?
-  status         DraftStatus @default(PENDING_REVIEW)
-  draftPlace     Json?
+  draftSource    Json?
   draftClaims    Json
+  sourceId       String?
+  source         Source?     @relation(fields: [sourceId], references: [id])
+  status         BlockStatus @default(PENDING_REVIEW)
+
+  @@unique([draftId, order])
 }
 
 enum DraftStatus {
@@ -268,4 +293,10 @@ enum DraftStatus {
   ERROR
   APPROVED
   REJECTED
+}
+
+enum BlockStatus {
+  PENDING_REVIEW
+  ERROR
+  RESOLVED
 }
