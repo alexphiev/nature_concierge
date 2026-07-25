@@ -1,4 +1,4 @@
-type StatusValue = "vert" | "jaune" | "orange" | "rouge" | "rouge-extreme" | null;
+type StatusValue = "vert" | "jaune" | "orange" | "rouge" | "extreme" | null;
 
 const STATUS_META: Record<
   NonNullable<StatusValue>,
@@ -8,7 +8,7 @@ const STATUS_META: Record<
   jaune: { label: "Restrictions légères", colorClass: "text-statut-orange" },
   orange: { label: "Restrictions", colorClass: "text-statut-orange" },
   rouge: { label: "Accès restreint", colorClass: "text-statut-rouge" },
-  "rouge-extreme": { label: "Accès interdit", colorClass: "text-statut-rouge" },
+  extreme: { label: "Accès interdit", colorClass: "text-statut-rouge" },
 };
 
 export function StatusChip({ value }: { value: StatusValue }) {

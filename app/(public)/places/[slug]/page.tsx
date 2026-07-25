@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import {
   getActivePlaces,
   getPlaceBySlug,
-  getTodayStatus,
+  resolvePlaceStatus,
 } from "@/src/corpus/queries";
 import { StatusBlock } from "@/src/components/StatusBlock";
 import { ClaimList } from "@/src/components/ClaimList";
@@ -44,7 +44,7 @@ export default async function PlaceDetailPage({
 
   if (!place) notFound();
 
-  const statusLog = await getTodayStatus(place.id);
+  const status = await resolvePlaceStatus(place.id);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -82,7 +82,7 @@ export default async function PlaceDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <StatusBlock statusLog={statusLog} officialInfoUrl={place.officialInfoUrl} />
+      <StatusBlock status={status} officialInfoUrl={place.officialInfoUrl} />
 
       <div>
         <h1 className="font-display text-3xl">{place.name}</h1>

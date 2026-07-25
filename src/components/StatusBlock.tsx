@@ -1,14 +1,17 @@
 import { Dateline } from "./Dateline";
-import type { StatusLog } from "../../prisma/generated/client";
+import type { ResolvedStatus } from "../corpus/queries";
+
+const ACTIVE_FIRE_CAVEAT =
+  "En cas de fumée ou de consignes des secours sur place, suivez-les même si la carte indique autre chose.";
 
 export function StatusBlock({
-  statusLog,
+  status,
   officialInfoUrl,
 }: {
-  statusLog: (StatusLog & { signalSource: { provider: string } }) | null;
+  status: ResolvedStatus;
   officialInfoUrl: string | null;
 }) {
-  if (!statusLog) {
+  if (!status) {
     return (
       <section
         aria-label="Statut du jour"
@@ -27,13 +30,13 @@ export function StatusBlock({
     );
   }
 
-  const isRed = statusLog.value === "rouge" || statusLog.value === "rouge-extreme";
-  const isOrange = statusLog.value === "orange" || statusLog.value === "jaune";
-  const colorClass = isRed
+  const colorClass = !status.isOpen
     ? "border-statut-rouge text-statut-rouge"
-    : isOrange
+    : status.restricted || status.displayValue === "orange" || status.displayValue === "jaune"
       ? "border-statut-orange text-statut-orange"
       : "border-statut-vert text-statut-vert";
+
+  const showCaveat = ["orange", "rouge", "extreme"].includes(status.displayValue);
 
   return (
     <section
@@ -41,13 +44,16 @@ export function StatusBlock({
       className={`rounded-[10px] border-l-2 bg-calcaire-deep p-4 ${colorClass}`}
     >
       <p className="font-mono uppercase">
-        <span aria-hidden>●</span> {statusLog.value}{" "}
-        {statusLog.detail ? `— ${statusLog.detail}` : ""}
+        <span aria-hidden>●</span> {status.displayValue}{" "}
+        {status.detail ? `— ${status.detail}` : ""}
       </p>
+      {showCaveat && (
+        <p className="mt-2 text-sm">{ACTIVE_FIRE_CAVEAT}</p>
+      )}
       <hr className="my-3 border-sable/40" />
       <p className="font-mono text-[0.875rem] text-encre/70">
-        <Dateline checkedAt={statusLog.checkedAt} /> · Source officielle :{" "}
-        {statusLog.signalSource.provider}
+        <Dateline checkedAt={status.confirmedAt} /> · Source officielle :{" "}
+        {status.provider}
         {officialInfoUrl && (
           <>
             {" "}
