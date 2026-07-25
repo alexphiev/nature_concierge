@@ -37,6 +37,15 @@ system; it's a locked door on a private tool.
 
 ## Flow
 
+> **Superseded by `11-admin-ingestion-ui.md`.** Place management, multi-source
+> capture, and review are now three separate surfaces (`/admin/places`,
+> `/admin/ingest`, `/admin/review/[draftId]`), and extraction runs per source
+> block rather than once per capture. The flow below is kept for context on the
+> original single-flow intent; **build from file 11**, which is authoritative
+> for routes, data model, and server actions. This file remains authoritative
+> for purpose, access, extraction-prompt philosophy, image storage/retention,
+> and out-of-scope rules.
+
 ```
 1. /admin/new
    - Textarea (paste text) AND/OR image upload (1–5 images), multipart.
@@ -124,6 +133,12 @@ suggest, the quality bar from `02-corpus-ops.md`. Non-negotiable instructions:
   the source input from scratch.
 
 ## Data model additions (extends `01-data-model.md`)
+
+> **Superseded by `11-admin-ingestion-ui.md`**: `IngestionDraft` is now a
+> container scoped to one `Place`, with one `IngestionBlock` row per source
+> (each carrying its own input, extraction output, and `Source`). The
+> single-table shape below is retained only to explain the `Bytes`/retention
+> reasoning that still applies, per block.
 
 ```prisma
 model IngestionDraft {

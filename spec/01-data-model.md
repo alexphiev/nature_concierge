@@ -6,9 +6,15 @@
    Description text lives on `Place.description`, never in `Claim`.
 2. **A claim without conditions is invalid** unless `decayClass = PERMANENT`
    (topography-class facts). The seed validator enforces this.
-3. **Daily-changing facts never live in `Claim`.** They live in `StatusLog`
-   (fed by `SignalSource`). A claim may describe the *rule* ("code rouge here
-   means 8h–17h, main beach only"); the *current color* is a status.
+3. **Daily-changing facts never live in `Claim`.** They live in `StatusLog`,
+   keyed to a `SignalZone` (a source's official zone — a fire massif, a
+   monitored beach), not directly to a `Place`. Places attach to zones via
+   `ZonePlace`, assigned once at place creation. A claim may describe the *rule*
+   ("`rouge` here means 8h–17h, main beach only"); the *current level* is a
+   status resolved through the place's zone **and its `zapef` flag** — a ZAPEF
+   place stays open under restrictions at `rouge` but closes at `extreme`, like
+   everywhere else. Full resolution order in `04-signal-ops.md`; do not
+   implement status display as a plain zone lookup.
 4. **Media are leads, never content.** `Source` records where a lead came from;
    `Claim.claimText` is always authored by us. No document storage tables exist.
 5. **Enums-as-string-arrays for taxonomy fields** (`conditions`, `audience`).
@@ -44,14 +50,16 @@ model Place {
   officialInfoUrl    String?     // what the status block links to
   description        String?     // neutral, short; NOT claims
   demandRank         Int         @default(999) // 1 = head of demand curve; drives coverage priority
+  zapef              Boolean     @default(false) // Zone d'Accueil du Public en Forêt: official
+                                 // dérogation at `rouge`, but NOT at `extreme`. See 04-signal-ops.md.
   status             PlaceStatus @default(DRAFT)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
   claims             Claim[]     @relation("PlaceClaims")
   alternativeOf      Claim[]     @relation("AlternativePlace")
-  statusLogs         StatusLog[]
-  signalCoverage     SignalSourceOnPlace[]
+  zones              ZonePlace[]
+  ingestionDrafts    IngestionDraft[] // see 11-admin-ingestion-ui.md
 
   @@index([status, demandRank])
 }
@@ -167,20 +175,39 @@ model SignalSource {
   url            String
   updateSchedule String     // "daily ~18h, veille pour lendemain"
   format         String     // "carte web", "PDF", "API"
-  parseNotes     String     // human instructions today; parser spec tomorrow
   active         Boolean    @default(true)
 
-  covers         SignalSourceOnPlace[]
+  zones          SignalZone[]
+}
+
+// The unit you actually see on the official map/bulletin — a fire-risk massif
+// zone, a monitored beach, an air-quality sector. Créated rarely (setup or
+// when a new zone type appears); daily updates target zones, not places.
+model SignalZone {
+  id             String       @id @default(cuid())
+  signalSourceId String
+  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
+
+  label          String       // matches the official naming exactly, e.g. "SAINTE BAUME"
+  externalRef    String?      // the official identifier (massif number / WFS feature id) — the
+                               // join key for automated ingestion later. See 04-signal-ops.md.
+  parseNotes     String       // decoding rule for this zone, e.g. Port d'Alon red-code detail
+                               // also used as the pre-fill template for the daily detail field
+  active         Boolean      @default(true)
+
+  places         ZonePlace[]
   statusLogs     StatusLog[]
 }
 
-model SignalSourceOnPlace {
-  signalSourceId String
-  placeId        String
-  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
-  place          Place        @relation(fields: [placeId], references: [id])
+// Assigned once at setup (or when a new place is added under an existing
+// zone), never touched in the daily flow.
+model ZonePlace {
+  signalZoneId String
+  placeId      String
+  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
+  place        Place      @relation(fields: [placeId], references: [id])
 
-  @@id([signalSourceId, placeId])
+  @@id([signalZoneId, placeId])
 }
 
 enum SignalType {
@@ -192,19 +219,18 @@ enum SignalType {
 }
 
 model StatusLog {
-  id             String       @id @default(cuid())
-  signalSourceId String
-  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
-  placeId        String
-  place          Place        @relation(fields: [placeId], references: [id])
+  id           String     @id @default(cuid())
+  signalZoneId String
+  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
 
-  forDate        DateTime     @db.Date // the date the status applies to (tomorrow, for 18h checks)
-  value          String       // normalized: "vert" | "rouge" | "rouge-extreme" | "excellente" | "interdite"…
-  detail         String?      // "8h–17h, plage principale seulement"
-  checkedAt      DateTime     @default(now())
+  forDate      DateTime   @db.Date // date the status applies to (tomorrow, for 18h fire checks)
+  value        String     // normalized: "vert" | "jaune" | "orange" | "rouge" | "extreme"
+                          // (fire) / "excellente" … "interdite" (water) — see 04-signal-ops.md
+  detail       String?    // "8h–17h, plage principale seulement" — pre-filled from parseNotes, editable
+  confirmedAt  DateTime   @default(now()) // set only on explicit save, not on silent carry-forward
 
-  @@unique([signalSourceId, placeId, forDate])
-  @@index([placeId, forDate])
+  @@unique([signalZoneId, forDate])
+  @@index([forDate])
 }
 
 // ---------- Concierge log (the validation instrument) ----------

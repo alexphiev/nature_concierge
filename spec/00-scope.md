@@ -64,12 +64,14 @@ decision mechanical, not emotional.
 2. `02-corpus-ops.md` (seed pipeline + validation)
 3. `03-public-site.md` + `09-design.md` (public pages)
 4. `05-landing.md` (landing + WhatsApp CTA)
-5. `04-signal-ops.md` (status update script)
+5. `04-signal-ops.md` (daily status page inside `/admin`, zone-grouped)
 6. `06-concierge-ops.md` + `07-measurement.md` (operations)
 7. `08-infra.md` (deploy — time-boxed to 45 minutes of decisions)
-8. `10-corpus-ingestion.md` (private `/admin` capture tool — build after the
-   above are live; it's a productivity layer on top of a working seed pipeline,
-   not a dependency of it)
+8. `10-corpus-ingestion.md` (private `/admin` capture tool — purpose, access,
+   extraction philosophy, image storage) then `11-admin-ingestion-ui.md`
+   (authoritative routes, data model, server actions for `/admin/places`,
+   `/admin/ingest`, `/admin/review`). Build after the above are live; this is a
+   productivity layer on top of a working seed pipeline, not a dependency of it.
 
 ## Stack (fixed)
 
