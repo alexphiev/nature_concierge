@@ -76,6 +76,7 @@ export const PlaceFileSchema = z.object({
   officialInfoUrl: z.string().optional(),
   description: z.string().optional(),
   demandRank: z.number().int(),
+  zapef: z.boolean().default(false),
   sources: z.record(z.string(), SourceInputSchema),
   claims: z.array(ClaimInputSchema),
 });
