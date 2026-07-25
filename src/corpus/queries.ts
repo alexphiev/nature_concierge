@@ -53,14 +53,21 @@ export async function resolvePlaceStatus(
 
   if (!zonePlace) return null;
 
-  const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
+  // Every StatusLog row's forDate is "the day the status applies to" (see
+  // app/admin/statut/actions.ts's forDateFor, which writes forDate = tomorrow
+  // for FIRE_ACCESS since the admin confirms each evening off a map already
+  // published for the next day). By the time that day arrives, the row that
+  // governs it has forDate === that day, so the read side always targets
+  // today exactly, for every signal type — never an offset applied again at
+  // read time, and never "earliest date >= today" (which can silently fall
+  // forward onto a different day's row).
+  const forDate = new Date(new Date().setHours(0, 0, 0, 0));
 
   const statusLog = await prisma.statusLog.findFirst({
     where: {
       signalZoneId: zonePlace.signalZone.id,
-      forDate: { gte: startOfToday },
+      forDate,
     },
-    orderBy: { forDate: "asc" },
     select: { value: true, detail: true, confirmedAt: true },
   });
 

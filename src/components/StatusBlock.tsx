@@ -38,11 +38,18 @@ export function StatusBlock({
 
   const showCaveat = ["orange", "rouge", "extreme"].includes(status.displayValue);
 
+  const verdict = !status.isOpen
+    ? "Fermé"
+    : status.restricted
+      ? "Ouvert — accès restreint"
+      : "Ouvert";
+
   return (
     <section
       aria-label="Statut du jour"
       className={`rounded-[10px] border-l-2 bg-calcaire-deep p-4 ${colorClass}`}
     >
+      <p className="font-mono uppercase">{verdict}</p>
       <p className="font-mono uppercase">
         <span aria-hidden>●</span> {status.displayValue}{" "}
         {status.detail ? `— ${status.detail}` : ""}

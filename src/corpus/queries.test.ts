@@ -116,6 +116,41 @@ describe("resolvePlaceStatus", () => {
     expect(result).toBeNull();
   });
 
+  it("returns null when only a tomorrow-dated StatusLog row exists for a FIRE_ACCESS zone (does not surface tomorrow's forecast as today's status)", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({
+      signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Only a "tomorrow" row exists (e.g. the admin's most recent save, whose
+    // forDate is always write-day + 1 for FIRE_ACCESS); no row exists yet at
+    // forDate = today. The resolver must query the exact "today" date and
+    // must not fall forward onto the tomorrow row just because it's the
+    // earliest row >= today.
+    findFirstStatusLogMock.mockImplementation(async ({ where }) => {
+      const queriedDate = new Date(where.forDate);
+      if (queriedDate.getTime() === tomorrow.getTime()) {
+        return {
+          value: "rouge",
+          detail: null,
+          confirmedAt: new Date("2026-07-21T18:00:00Z"),
+        };
+      }
+      return null;
+    });
+
+    const result = await resolvePlaceStatus("place-id-1");
+
+    const callArgs = findFirstStatusLogMock.mock.calls[0][0];
+    const queriedForDate = new Date(callArgs.where.forDate);
+    expect(queriedForDate).toEqual(today);
+    expect(result).toBeNull();
+  });
+
   it("resolves vert as open, not restricted", async () => {
     findFirstZonePlaceMock.mockResolvedValue({
       signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
