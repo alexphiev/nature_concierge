@@ -6,12 +6,14 @@ const {
   findFirstStatusLogMock,
   findFirstClaimMock,
   findFirstZonePlaceMock,
+  findManySignalZoneMock,
 } = vi.hoisted(() => ({
   findManyPlaceMock: vi.fn(),
   findFirstPlaceMock: vi.fn(),
   findFirstStatusLogMock: vi.fn(),
   findFirstClaimMock: vi.fn(),
   findFirstZonePlaceMock: vi.fn(),
+  findManySignalZoneMock: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
@@ -29,6 +31,9 @@ vi.mock("./db", () => ({
     zonePlace: {
       findFirst: findFirstZonePlaceMock,
     },
+    signalZone: {
+      findMany: findManySignalZoneMock,
+    },
   },
 }));
 
@@ -37,6 +42,8 @@ import {
   getPlaceBySlug,
   resolvePlaceStatus,
   getPlaceFreshness,
+  getAllPlaces,
+  getSignalZones,
 } from "./queries";
 
 beforeEach(() => {
@@ -45,6 +52,7 @@ beforeEach(() => {
   findFirstStatusLogMock.mockReset();
   findFirstClaimMock.mockReset();
   findFirstZonePlaceMock.mockReset();
+  findManySignalZoneMock.mockReset();
 });
 
 describe("getActivePlaces", () => {
@@ -296,5 +304,28 @@ describe("getPlaceFreshness", () => {
       select: { updatedAt: true },
     });
     expect(result).toEqual(new Date("2026-07-01T00:00:00Z"));
+  });
+});
+
+describe("getAllPlaces", () => {
+  it("queries all places regardless of status, ordered by demandRank", async () => {
+    findManyPlaceMock.mockResolvedValue([{ slug: "port-d-alon" }]);
+    const result = await getAllPlaces();
+    expect(findManyPlaceMock).toHaveBeenCalledWith({
+      orderBy: { demandRank: "asc" },
+    });
+    expect(result).toEqual([{ slug: "port-d-alon" }]);
+  });
+});
+
+describe("getSignalZones", () => {
+  it("queries active signal zones ordered by label", async () => {
+    findManySignalZoneMock.mockResolvedValue([{ label: "SAINTE BAUME" }]);
+    const result = await getSignalZones();
+    expect(findManySignalZoneMock).toHaveBeenCalledWith({
+      where: { active: true },
+      orderBy: { label: "asc" },
+    });
+    expect(result).toEqual([{ label: "SAINTE BAUME" }]);
   });
 });
