@@ -5,11 +5,13 @@ const {
   findFirstPlaceMock,
   findFirstStatusLogMock,
   findFirstClaimMock,
+  findFirstZonePlaceMock,
 } = vi.hoisted(() => ({
   findManyPlaceMock: vi.fn(),
   findFirstPlaceMock: vi.fn(),
   findFirstStatusLogMock: vi.fn(),
   findFirstClaimMock: vi.fn(),
+  findFirstZonePlaceMock: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
@@ -24,13 +26,16 @@ vi.mock("./db", () => ({
     claim: {
       findFirst: findFirstClaimMock,
     },
+    zonePlace: {
+      findFirst: findFirstZonePlaceMock,
+    },
   },
 }));
 
 import {
   getActivePlaces,
   getPlaceBySlug,
-  getTodayStatus,
+  resolvePlaceStatus,
   getPlaceFreshness,
 } from "./queries";
 
@@ -39,6 +44,7 @@ beforeEach(() => {
   findFirstPlaceMock.mockReset();
   findFirstStatusLogMock.mockReset();
   findFirstClaimMock.mockReset();
+  findFirstZonePlaceMock.mockReset();
 });
 
 describe("getActivePlaces", () => {
@@ -90,47 +96,113 @@ describe("getPlaceBySlug", () => {
   });
 });
 
-describe("getTodayStatus", () => {
-  it("queries the most recent StatusLog for today or later for the place", async () => {
+describe("resolvePlaceStatus", () => {
+  it("returns null when the place has no zone assignment", async () => {
+    findFirstZonePlaceMock.mockResolvedValue(null);
+
+    const result = await resolvePlaceStatus("place-id-1");
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the zone has no StatusLog row for today (non vérifié)", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({
+      signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
+    });
+    findFirstStatusLogMock.mockResolvedValue(null);
+
+    const result = await resolvePlaceStatus("place-id-1");
+
+    expect(result).toBeNull();
+  });
+
+  it("resolves vert as open, not restricted", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({
+      signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
+    });
     findFirstStatusLogMock.mockResolvedValue({
       value: "vert",
-      signalSource: { provider: "Préfecture du Var" },
+      detail: null,
+      confirmedAt: new Date("2026-07-21T18:00:00Z"),
     });
+    findFirstPlaceMock.mockResolvedValue({ zapef: false });
 
-    const result = await getTodayStatus("place-id-1");
+    const result = await resolvePlaceStatus("place-id-1");
 
-    expect(findFirstStatusLogMock).toHaveBeenCalledWith({
-      where: {
-        placeId: "place-id-1",
-        forDate: { gte: expect.any(Date) },
-      },
-      orderBy: { forDate: "asc" },
-      include: {
-        signalSource: { select: { provider: true } },
-      },
-    });
     expect(result).toEqual({
-      value: "vert",
-      signalSource: { provider: "Préfecture du Var" },
+      zoneValue: "vert",
+      displayValue: "vert",
+      isOpen: true,
+      restricted: false,
+      detail: null,
+      confirmedAt: new Date("2026-07-21T18:00:00Z"),
+      zoneLabel: "SAINTE BAUME",
+      provider: "Préfecture du Var",
     });
   });
 
-  it("returns null when no StatusLog row exists (unverified state)", async () => {
-    findFirstStatusLogMock.mockResolvedValue(null);
+  it("resolves rouge + zapef=true as open and restricted", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({
+      signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
+    });
+    findFirstStatusLogMock.mockResolvedValue({
+      value: "rouge",
+      detail: "8h–17h, pinède + plage principale, parking réduit",
+      confirmedAt: new Date("2026-07-21T18:00:00Z"),
+    });
+    findFirstPlaceMock.mockResolvedValue({ zapef: true });
 
-    const result = await getTodayStatus("place-id-1");
+    const result = await resolvePlaceStatus("place-id-1");
 
-    expect(result).toBeNull();
+    expect(result?.isOpen).toBe(true);
+    expect(result?.restricted).toBe(true);
+    expect(result?.displayValue).toBe("rouge");
+  });
+
+  it("resolves rouge + zapef=false as closed", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({
+      signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
+    });
+    findFirstStatusLogMock.mockResolvedValue({
+      value: "rouge",
+      detail: null,
+      confirmedAt: new Date("2026-07-21T18:00:00Z"),
+    });
+    findFirstPlaceMock.mockResolvedValue({ zapef: false });
+
+    const result = await resolvePlaceStatus("place-id-1");
+
+    expect(result?.isOpen).toBe(false);
+    expect(result?.restricted).toBe(false);
+  });
+
+  it("resolves extreme as closed regardless of zapef=true", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({
+      signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
+    });
+    findFirstStatusLogMock.mockResolvedValue({
+      value: "extreme",
+      detail: null,
+      confirmedAt: new Date("2026-07-21T18:00:00Z"),
+    });
+    findFirstPlaceMock.mockResolvedValue({ zapef: true });
+
+    const result = await resolvePlaceStatus("place-id-1");
+
+    expect(result?.isOpen).toBe(false);
+    expect(result?.restricted).toBe(false);
+    expect(result?.displayValue).toBe("extreme");
   });
 });
 
 describe("getPlaceFreshness", () => {
-  it("returns the most recent of latest claim.updatedAt and latest StatusLog.checkedAt", async () => {
+  it("returns the most recent of latest claim.updatedAt and latest StatusLog.confirmedAt", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({ signalZoneId: "zone-1" });
     findFirstClaimMock.mockResolvedValue({
       updatedAt: new Date("2026-07-20T10:00:00Z"),
     });
     findFirstStatusLogMock.mockResolvedValue({
-      checkedAt: new Date("2026-07-21T18:00:00Z"),
+      confirmedAt: new Date("2026-07-21T18:00:00Z"),
     });
 
     const result = await getPlaceFreshness("place-id-1");
@@ -140,15 +212,21 @@ describe("getPlaceFreshness", () => {
       orderBy: { updatedAt: "desc" },
       select: { updatedAt: true },
     });
+    expect(findFirstStatusLogMock).toHaveBeenCalledWith({
+      where: { signalZoneId: "zone-1" },
+      orderBy: { confirmedAt: "desc" },
+      select: { confirmedAt: true },
+    });
     expect(result).toEqual(new Date("2026-07-21T18:00:00Z"));
   });
 
   it("returns the claim date when it is more recent than the status log date", async () => {
+    findFirstZonePlaceMock.mockResolvedValue({ signalZoneId: "zone-1" });
     findFirstClaimMock.mockResolvedValue({
       updatedAt: new Date("2026-07-21T10:00:00Z"),
     });
     findFirstStatusLogMock.mockResolvedValue({
-      checkedAt: new Date("2026-07-19T18:00:00Z"),
+      confirmedAt: new Date("2026-07-19T18:00:00Z"),
     });
 
     const result = await getPlaceFreshness("place-id-1");
@@ -156,7 +234,20 @@ describe("getPlaceFreshness", () => {
     expect(result).toEqual(new Date("2026-07-21T10:00:00Z"));
   });
 
+  it("skips the StatusLog lookup when the place has no zone assignment", async () => {
+    findFirstZonePlaceMock.mockResolvedValue(null);
+    findFirstClaimMock.mockResolvedValue({
+      updatedAt: new Date("2026-07-20T10:00:00Z"),
+    });
+
+    const result = await getPlaceFreshness("place-id-1");
+
+    expect(findFirstStatusLogMock).not.toHaveBeenCalled();
+    expect(result).toEqual(new Date("2026-07-20T10:00:00Z"));
+  });
+
   it("falls back to the place's own updatedAt when no claims or status logs exist", async () => {
+    findFirstZonePlaceMock.mockResolvedValue(null);
     findFirstClaimMock.mockResolvedValue(null);
     findFirstStatusLogMock.mockResolvedValue(null);
     findFirstPlaceMock.mockResolvedValue({

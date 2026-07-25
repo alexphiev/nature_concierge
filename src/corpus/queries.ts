@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import type { Place, Claim, StatusLog } from "../../prisma/generated/client";
+import type { Place, Claim } from "../../prisma/generated/client";
 
 export async function getActivePlaces(): Promise<Place[]> {
   return prisma.place.findMany({
@@ -28,38 +28,97 @@ export async function getPlaceBySlug(
   }) as Promise<PlaceWithPublicClaims | null>;
 }
 
-export async function getTodayStatus(
+export type ResolvedStatus = {
+  zoneValue: string;
+  displayValue: "vert" | "jaune" | "orange" | "rouge" | "extreme";
+  isOpen: boolean;
+  restricted: boolean;
+  detail: string | null;
+  confirmedAt: Date;
+  zoneLabel: string;
+  provider: string;
+} | null;
+
+export async function resolvePlaceStatus(
   placeId: string,
-): Promise<(StatusLog & { signalSource: { provider: string } }) | null> {
+): Promise<ResolvedStatus> {
+  const zonePlace = await prisma.zonePlace.findFirst({
+    where: { placeId },
+    include: {
+      signalZone: {
+        include: { signalSource: { select: { provider: true } } },
+      },
+    },
+  });
+
+  if (!zonePlace) return null;
+
   const startOfToday = new Date(new Date().setHours(0, 0, 0, 0));
 
-  return prisma.statusLog.findFirst({
+  const statusLog = await prisma.statusLog.findFirst({
     where: {
-      placeId,
+      signalZoneId: zonePlace.signalZone.id,
       forDate: { gte: startOfToday },
     },
     orderBy: { forDate: "asc" },
-    include: {
-      signalSource: { select: { provider: true } },
-    },
+    select: { value: true, detail: true, confirmedAt: true },
   });
+
+  if (!statusLog) return null;
+
+  const place = await prisma.place.findFirst({
+    where: { id: placeId },
+    select: { zapef: true },
+  });
+
+  const displayValue = statusLog.value as NonNullable<ResolvedStatus>["displayValue"];
+
+  let isOpen: boolean;
+  let restricted = false;
+
+  if (displayValue === "extreme") {
+    isOpen = false;
+  } else if (displayValue === "rouge") {
+    isOpen = place?.zapef === true;
+    restricted = isOpen;
+  } else {
+    isOpen = true;
+  }
+
+  return {
+    zoneValue: statusLog.value,
+    displayValue,
+    isOpen,
+    restricted,
+    detail: statusLog.detail,
+    confirmedAt: statusLog.confirmedAt,
+    zoneLabel: zonePlace.signalZone.label,
+    provider: zonePlace.signalZone.signalSource.provider,
+  };
 }
 
 export async function getPlaceFreshness(placeId: string): Promise<Date> {
+  const zonePlace = await prisma.zonePlace.findFirst({
+    where: { placeId },
+    select: { signalZoneId: true },
+  });
+
   const [latestClaim, latestStatusLog] = await Promise.all([
     prisma.claim.findFirst({
       where: { placeId, isPublic: true, status: "PUBLISHED" },
       orderBy: { updatedAt: "desc" },
       select: { updatedAt: true },
     }),
-    prisma.statusLog.findFirst({
-      where: { placeId },
-      orderBy: { checkedAt: "desc" },
-      select: { checkedAt: true },
-    }),
+    zonePlace
+      ? prisma.statusLog.findFirst({
+          where: { signalZoneId: zonePlace.signalZoneId },
+          orderBy: { confirmedAt: "desc" },
+          select: { confirmedAt: true },
+        })
+      : Promise.resolve(null),
   ]);
 
-  const candidates = [latestClaim?.updatedAt, latestStatusLog?.checkedAt].filter(
+  const candidates = [latestClaim?.updatedAt, latestStatusLog?.confirmedAt].filter(
     (d): d is Date => d !== undefined,
   );
 
