@@ -12,6 +12,7 @@ function basePlace(overrides: Partial<PlaceFileInput> = {}): PlaceFileInput {
     lng: 5.6,
     type: "CALANQUE",
     demandRank: 1,
+    zapef: false,
     sources: {
       src1: {
         type: "OT_CONVERSATION",
