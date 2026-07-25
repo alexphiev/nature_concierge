@@ -22,14 +22,14 @@ model Place {
   officialInfoUrl    String?
   description        String?
   demandRank         Int         @default(999)
+  zapef              Boolean     @default(false)
   status             PlaceStatus @default(DRAFT)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
   claims             Claim[]     @relation("PlaceClaims")
   alternativeOf      Claim[]     @relation("AlternativePlace")
-  statusLogs         StatusLog[]
-  signalCoverage     SignalSourceOnPlace[]
+  zones              ZonePlace[]
 
   @@index([status, demandRank])
 }
@@ -144,20 +144,36 @@ model SignalSource {
   url            String
   updateSchedule String
   format         String
-  parseNotes     String
   active         Boolean    @default(true)
 
-  covers         SignalSourceOnPlace[]
-  statusLogs     StatusLog[]
+  zones          SignalZone[]
+
+  @@unique([provider, signalType])
 }
 
-model SignalSourceOnPlace {
+model SignalZone {
+  id             String       @id @default(cuid())
   signalSourceId String
-  placeId        String
   signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
-  place          Place        @relation(fields: [placeId], references: [id])
 
-  @@id([signalSourceId, placeId])
+  label          String
+  externalRef    String?
+  parseNotes     String
+  active         Boolean      @default(true)
+
+  places         ZonePlace[]
+  statusLogs     StatusLog[]
+
+  @@unique([signalSourceId, label])
+}
+
+model ZonePlace {
+  signalZoneId String
+  placeId      String
+  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
+  place        Place      @relation(fields: [placeId], references: [id])
+
+  @@id([signalZoneId, placeId])
 }
 
 enum SignalType {
@@ -169,19 +185,17 @@ enum SignalType {
 }
 
 model StatusLog {
-  id             String       @id @default(cuid())
-  signalSourceId String
-  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
-  placeId        String
-  place          Place        @relation(fields: [placeId], references: [id])
+  id           String     @id @default(cuid())
+  signalZoneId String
+  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
 
-  forDate        DateTime     @db.Date
-  value          String
-  detail         String?
-  checkedAt      DateTime     @default(now())
+  forDate      DateTime   @db.Date
+  value        String
+  detail       String?
+  confirmedAt  DateTime   @default(now())
 
-  @@unique([signalSourceId, placeId, forDate])
-  @@index([placeId, forDate])
+  @@unique([signalZoneId, forDate])
+  @@index([forDate])
 }
 
 // ---------- Concierge log (the validation instrument) ----------
