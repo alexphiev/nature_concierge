@@ -76,79 +76,77 @@ public-facing, SEO-relevant page, correctness beats the extra API call.
 ```prisma
 model Place {
   // ...existing fields...
-  googlePlaceId  String?  // stable Google resource id, e.g. "ChIJ..." — safe to store long-term
-  googleMapsUri  String?  // direct link to the place on Google Maps — safe to store long-term
+  googlePlaceId  String?  // stable Google resource id, e.g. "ChIJ..." — pasted in manually by the operator
 }
 ```
 
-Nothing photo-specific is stored. The photo `name` (format
-`places/{id}/photos/{photo}`) is fetched fresh at read time, per Google's
-own guidance to always retrieve it from a live API response.
+Only the id. Everything else Google-related (photo, Maps link) is fetched
+fresh at read time, per Google's own guidance to always retrieve the photo
+`name` from a live API response.
 
-### `/admin/places` — Google Places lookup (new capability)
+### `/admin/places` — manual field, no lookup UI (deliberately simple)
 
-Adding a place today has no connection to Google's data. This adds one:
+No Google search/picker for this pass — the operator finds the place on
+Google Maps themselves and pastes its place id into one new text field on
+`PlaceForm` ("Identifiant Google Places (optionnel)"). No new server
+action, no new API call from the admin surface at all. `googlePlaceId` is
+read/written by the existing `createPlace`/`updatePlace` actions exactly
+like every other plain text field on that form already is.
 
-- On the create/edit form, a new "Rechercher sur Google Places" action
-  (server action) takes the place name (pre-filled from the `name` field)
-  and calls **Places API (New) Text Search**
-  (`POST https://places.googleapis.com/v1/places:searchText`, header
-  `X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.googleMapsUri`,
-  body `{ "textQuery": "<name> <commune>" }`).
-- Returns a short list of candidates (name, formatted address, id) for the
-  operator to pick from — never auto-selects, since two calanques can
-  share a near-identical name.
-- On selection: writes `googlePlaceId` and `googleMapsUri` onto the
-  (possibly not-yet-saved) place form state, shown as read-only confirmed
-  fields once selected. No photo call happens at this step — photos are
-  fetched lazily, only when the public page actually renders one (see
-  below), which is also fewer Google API calls overall than fetching a
-  photo for every admin edit whether or not it's ever viewed publicly.
+### Photo + Maps link lookup — `src/corpus/google-places.ts` + a redirect route
 
-### Photo lookup — `src/corpus/google-places.ts` + a redirect route
-
-All decision-making (does a photo exist? what's its URL?) happens
+All decision-making (does a photo exist? what's the Maps link?) happens
 **server-side**, in the page component, before rendering — both `/places`
 and `/places/[slug]` stay full server components, no client JS.
 
-**`getPlacePhoto(googlePlaceId: string | null): Promise<PlacePhoto | null>`**
+**`getGooglePlaceDetails(googlePlaceId: string | null): Promise<GooglePlaceDetails | null>`**
 (new function in `src/corpus/google-places.ts`, called directly by
 `PlaceCard` and the detail hero, cached via Next.js `fetch` caching):
 
 1. If `googlePlaceId` is null → return `null` immediately (no API call).
 2. Call **Place Details (New)**:
    `GET https://places.googleapis.com/v1/places/{googlePlaceId}` with
-   header `X-Goog-FieldMask: photos`, using Next.js's extended `fetch`
-   with `{ next: { revalidate: 604800 } }` (**7 days** — well inside
-   Google's "don't treat this as permanent" guidance, while cutting
-   Places API calls from once-per-page-view to roughly once-per-week-per-
-   place; a stale reference expiring mid-week just means the next
-   request after the cache window gets a fresh one, self-healing with no
-   manual intervention).
-3. If the call fails, or `photos` is empty → return `null`.
-4. Return `{ mediaUrl, attribution }` where `mediaUrl` is
-   `https://places.googleapis.com/v1/{photos[0].name}/media?key=${GOOGLE_PLACES_API_KEY}&maxWidthPx=1200`
+   header `X-Goog-FieldMask: photos,googleMapsUri`, using Next.js's
+   extended `fetch` with `{ next: { revalidate: 604800 } }` (**7 days** —
+   well inside Google's "don't treat this as permanent" guidance for the
+   photo `name`, while cutting Places API calls from once-per-page-view
+   to roughly once-per-week-per-place; a stale photo reference expiring
+   mid-week just means the next request after the cache window gets a
+   fresh one, self-healing with no manual intervention — `googleMapsUri`
+   itself is a stable link and doesn't expire, it's just fetched in the
+   same call since it's free once we're already calling Place Details for
+   the photo).
+3. If the call fails → return `null`.
+4. Return `{ photo, googleMapsUri }` where `googleMapsUri` is the raw
+   field from the response (or `null` if absent), and `photo` is `null`
+   if `photos` is empty, else `{ mediaUrl, attribution }` where `mediaUrl`
+   is `https://places.googleapis.com/v1/{photos[0].name}/media?key=${GOOGLE_PLACES_API_KEY}&maxWidthPx=1200`
    and `attribution` is `photos[0].authorAttributions[0]?.displayName ?? null`.
 
 **`app/places/[slug]/photo/route.ts`**: a thin GET route that calls
-`getPlacePhoto` and issues a `307` redirect to `mediaUrl` (or a `404` if
-`null`). This is what the `<img src>` actually points to — the browser,
-not this app's server, fetches the image bytes from Google's CDN. The
-route exists only so the API key never reaches the client and so the same
-7-day-cached lookup isn't duplicated between "does a photo exist" (used
-to decide layout) and "what URL does the img tag use" (the redirect
-target) — both call the same cached `getPlacePhoto`.
+`getGooglePlaceDetails` and issues a `307` redirect to `photo.mediaUrl`
+(or a `404` if `photo` is `null`). This is what the `<img src>` actually
+points to — the browser, not this app's server, fetches the image bytes
+from Google's CDN. The route exists only so the API key never reaches the
+client and so the same 7-day-cached lookup isn't duplicated between "does
+a photo exist" (used to decide layout) and "what URL does the img tag
+use" (the redirect target) — both call the same cached
+`getGooglePlaceDetails`.
 
-### Fallback behavior (no Google match, or Google returns nothing)
+### Fallback behavior (no id set, or Google returns nothing)
 
-Both `PlaceCard` and the detail hero call `getPlacePhoto(place.googlePlaceId)`
-directly, server-side, and branch synchronously on the result:
-- `null` → render the quiet `--calcaire-deep` hatch panel with the place
-  type label (existing spec 09 rule) — covers both "never looked up" and
-  "Google has no photos for this place."
-- non-null → render `<img src="/places/{slug}/photo" width=… height=…>`
-  (pointing at the redirect route above) plus, if `attribution` is
-  non-null, a small corner overlay with the credit text.
+Both `PlaceCard` and the detail hero call
+`getGooglePlaceDetails(place.googlePlaceId)` directly, server-side, and
+branch synchronously on the result:
+- `photo` is `null` → render the quiet `--calcaire-deep` hatch panel with
+  the place type label (existing spec 09 rule) — covers both "no id set"
+  and "Google has no photos for this place."
+- `photo` is non-null → render `<img src="/places/{slug}/photo" width=…
+  height=…>` (pointing at the redirect route above) plus, if `attribution`
+  is non-null, a small corner overlay with the credit text.
+- The detail page additionally renders a "Voir sur Google Maps ↗" link
+  next to the official-source link in the relevé panel's meta column,
+  only when `googleMapsUri` is non-null.
 
 ## New environment variable
 
@@ -164,9 +162,13 @@ user before implementation/testing.
 - No multi-photo galleries — one hero photo per place (`photos[0]`), per
   the approved mockup's single-hero-image layout.
 - No Google reviews, ratings, or other Place Details fields — only
-  `googlePlaceId`, `googleMapsUri`, and photos, per this redesign's scope.
-  (`googlePlaceId` is stored specifically so a later feature — reviews,
-  richer details — doesn't need a second lookup.)
+  `photos` and `googleMapsUri` are fetched, per this redesign's scope.
+  (`googlePlaceId` is the only field stored, specifically so a later
+  feature — reviews, richer details — doesn't need a second lookup.)
+- No `/admin/places` Google search/picker UI — the operator finds the
+  place id manually and pastes it in as a plain text field, deliberately
+  simple for this pass. A search/picker is a reasonable later addition if
+  manual lookup proves tedious, but is not part of this scope.
 - No changes to `/admin/statut`, `/admin/ingest`, `/admin/review`, or any
   other already-shipped admin surface.
 - No dark-mode-specific asset handling beyond what the existing CSS custom
