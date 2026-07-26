@@ -1,21 +1,35 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import Link from "next/link";
 import { prisma } from "@/src/corpus/db";
-import type { IngestionDraft } from "../../prisma/generated/client";
 
 export const metadata: Metadata = {
   title: "Admin — Nature Concierge",
   robots: { index: false, follow: false },
 };
 
-function draftPreview(draft: IngestionDraft): string {
-  if (draft.inputText) {
-    return draft.inputText.length > 80
-      ? `${draft.inputText.slice(0, 80)}…`
-      : draft.inputText;
-  }
-  if (draft.inputImages.length > 0) return "Capture image";
-  return "(entrée vide)";
+type DraftWithRelations = {
+  id: string;
+  createdAt: Date;
+  status: string;
+  place: {
+    name: string;
+    slug: string;
+  };
+  blocks: Array<{
+    status: string;
+    draftClaims: unknown;
+  }>;
+};
+
+function draftPreview(draft: DraftWithRelations): string {
+  const blockCount = draft.blocks.length;
+  const claimCount = draft.blocks.reduce((sum, block) => {
+    const claims = Array.isArray(block.draftClaims) ? block.draftClaims : [];
+    return sum + claims.length;
+  }, 0);
+
+  return `${blockCount} source${blockCount > 1 ? "s" : ""} · ${claimCount} revendication${claimCount > 1 ? "s" : ""}`;
 }
 
 function DraftSection({
@@ -23,7 +37,7 @@ function DraftSection({
   drafts,
 }: {
   title: string;
-  drafts: IngestionDraft[];
+  drafts: DraftWithRelations[];
 }) {
   return (
     <section>
@@ -40,9 +54,15 @@ function DraftSection({
               className="rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 text-sm"
             >
               <span className="font-mono text-xs text-encre/70">
-                {draft.createdAt.toISOString()}
+                {draft.createdAt.toISOString().slice(0, 10)}
               </span>
-              <p>{draftPreview(draft)}</p>
+              <Link
+                href={`/admin/review/${draft.id}`}
+                className="block text-mediterranee underline hover:no-underline"
+              >
+                <p className="font-medium">{draft.place.name}</p>
+              </Link>
+              <p className="text-xs text-encre/70">{draftPreview(draft)}</p>
             </li>
           ))}
         </ul>
@@ -56,6 +76,14 @@ export default async function AdminDashboardPage() {
 
   const drafts = await prisma.ingestionDraft.findMany({
     orderBy: { createdAt: "desc" },
+    include: {
+      place: {
+        select: { name: true, slug: true },
+      },
+      blocks: {
+        select: { status: true, draftClaims: true },
+      },
+    },
   });
 
   const byStatus = {
