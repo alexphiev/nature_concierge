@@ -25,10 +25,13 @@ function makeContext(slug: string) {
 }
 
 describe("GET /places/[slug]/photo", () => {
-  it("redirects to the photo mediaUrl when a photo exists", async () => {
+  it("redirects to the public photoUri when a photo exists", async () => {
     getPlaceBySlugMock.mockResolvedValue({ id: "place-1", googlePlaceId: "ChIJexample" });
     getGooglePlaceDetailsMock.mockResolvedValue({
-      photo: { mediaUrl: "https://places.googleapis.com/v1/places/ChIJexample/photos/abc/media?key=x&maxWidthPx=1200", attribution: null },
+      photo: {
+        photoUri: "https://lh3.googleusercontent.com/place-photos/abc123=s4800-w1200",
+        attribution: null,
+      },
       googleMapsUri: null,
     });
 
@@ -36,7 +39,7 @@ describe("GET /places/[slug]/photo", () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
-      "https://places.googleapis.com/v1/places/ChIJexample/photos/abc/media?key=x&maxWidthPx=1200",
+      "https://lh3.googleusercontent.com/place-photos/abc123=s4800-w1200",
     );
   });
 

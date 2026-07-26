@@ -18,5 +18,8 @@ export async function GET(
     return new Response(null, { status: 404 });
   }
 
-  return Response.redirect(details.photo.mediaUrl, 307);
+  // photoUri is a genuinely public lh3.googleusercontent.com URL with its
+  // own embedded token — it never contains GOOGLE_PLACES_API_KEY, so
+  // redirecting the browser straight to it is safe.
+  return Response.redirect(details.photo.photoUri, 307);
 }

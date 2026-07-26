@@ -99,6 +99,20 @@ All decision-making (does a photo exist? what's the Maps link?) happens
 **server-side**, in the page component, before rendering — both `/places`
 and `/places/[slug]` stay full server components, no client JS.
 
+**Key design point, easy to get wrong**: the Place Photo media endpoint
+(`.../media?key=...`) requires `GOOGLE_PLACES_API_KEY` as a query
+parameter to authenticate the request — but that endpoint's *default*
+behavior (an HTTP redirect straight to the image) is not what this app
+uses, because the key would then travel to the browser as part of a
+`Location` header. Instead, the endpoint is called with
+`skipHttpRedirect=true`, which makes it respond with JSON containing a
+`photoUri` field — a genuinely public, keyless
+`lh3.googleusercontent.com` URL with its own embedded token, verified
+empirically (a real request with a real key, followed by fetching the
+returned `photoUri` with zero authentication, returned a real image).
+That `photoUri` is what's safe to send to the browser; the `key=...`
+media URL is not, and this module never constructs or exposes it.
+
 **`getGooglePlaceDetails(googlePlaceId: string | null): Promise<GooglePlaceDetails | null>`**
 (new function in `src/corpus/google-places.ts`, called directly by
 `PlaceCard` and the detail hero, cached via Next.js `fetch` caching):
@@ -107,52 +121,32 @@ and `/places/[slug]` stay full server components, no client JS.
 2. Call **Place Details (New)**:
    `GET https://places.googleapis.com/v1/places/{googlePlaceId}` with
    header `X-Goog-FieldMask: photos,googleMapsUri`, using Next.js's
-   extended `fetch` with `{ next: { revalidate: 604800 } }` (**7 days** —
-   well inside Google's "don't treat this as permanent" guidance for the
-   photo `name`, while cutting Places API calls from once-per-page-view
-   to roughly once-per-week-per-place; a stale photo reference expiring
-   mid-week just means the next request after the cache window gets a
-   fresh one, self-healing with no manual intervention — `googleMapsUri`
-   itself is a stable link and doesn't expire, it's just fetched in the
-   same call since it's free once we're already calling Place Details for
-   the photo).
+   extended `fetch` with `{ next: { revalidate: 604800 } }` (**7 days**).
 3. If the call fails → return `null`.
-4. Return `{ photo, googleMapsUri }` where `googleMapsUri` is the raw
-   field from the response (or `null` if absent), and `photo` is `null`
-   if `photos` is empty, else `{ mediaUrl, attribution }` where `mediaUrl`
-   is `https://places.googleapis.com/v1/{photos[0].name}/media?key=${GOOGLE_PLACES_API_KEY}&maxWidthPx=1200`
-   and `attribution` is `photos[0].authorAttributions[0]?.displayName ?? null`.
+4. If `photos` is non-empty, call the **Place Photo media endpoint** for
+   `photos[0].name`:
+   `GET https://places.googleapis.com/v1/{photos[0].name}/media?key=${GOOGLE_PLACES_API_KEY}&maxWidthPx=1200&skipHttpRedirect=true`,
+   also cached with `{ next: { revalidate: 604800 } }` (**7 days** — well
+   inside Google's "don't treat this as permanent" guidance for both the
+   photo `name` and the returned `photoUri`, neither of which document a
+   TTL; a stale reference expiring mid-week just means the next request
+   past the cache window gets a fresh one, self-healing with no manual
+   intervention). Extract `photoUri` from the JSON response — if absent
+   or the call fails, the photo resolves to `null` rather than throwing.
+5. Return `{ photo, googleMapsUri }` where `googleMapsUri` is the raw
+   field from the Place Details response (or `null` if absent), and
+   `photo` is `null` if step 4 didn't resolve a `photoUri`, else
+   `{ photoUri, attribution }` where `attribution` is
+   `photos[0].authorAttributions[0]?.displayName ?? null`.
 
 **`app/places/[slug]/photo/route.ts`**: a thin GET route that calls
-`getGooglePlaceDetails` and issues a `307` redirect to `photo.mediaUrl`
+`getGooglePlaceDetails` and issues a `307` redirect to `photo.photoUri`
 (or a `404` if `photo` is `null`). This is what the `<img src>` actually
-points to — the browser, not this app's server, fetches the image bytes
-from Google's CDN.
-
-**Important caveat: the API key IS visible to the browser.** The route
-does *not* hide `GOOGLE_PLACES_API_KEY` from the client — it exists so
-the 7-day-cached `getGooglePlaceDetails` lookup isn't duplicated between
-"does a photo exist" (used to decide layout) and "what URL does the img
-tag use" (the redirect target), both of which call the same cached
-function. But `photo.mediaUrl` itself is
-`https://places.googleapis.com/v1/{photos[0].name}/media?key=${GOOGLE_PLACES_API_KEY}&maxWidthPx=1200`,
-and the `307` response sends that full URL — key included — back to the
-browser as a `Location` header. The browser then follows the redirect
-directly, so the key is visible in the Network tab and in the final
-image request URL. This isn't a bug: Google's Place Photo Media (New)
-endpoint is designed as a browser-facing CDN link, not a proxied byte
-stream, so any client that wants to display the photo without running
-its own image proxy has to expose this key. Given that, treat this key
-as public-facing and mitigate accordingly — either configure it in
-Google Cloud Console with HTTP referrer restrictions scoped to this
-site's domain(s), or accept that it's publicly visible and monitor/
-rate-limit it. Note the tension if referrer restrictions are added: the
-*same* key is also used server-side for the Place Details header-based
-call (`X-Goog-FieldMask`), and referrer-restricted keys typically aren't
-usable for server-to-server calls without also allowlisting the
-server's IP(s) — Google Cloud Console does support combining both
-restriction types on one key, so this is solvable, just worth flagging
-before locking the key down.
+points to — the browser follows the redirect straight to Google's
+`lh3.googleusercontent.com` CDN, no bytes pass through this app's server,
+and `GOOGLE_PLACES_API_KEY` never appears anywhere in that request chain
+(confirmed directly: `photoUri` was checked to not contain the key
+string, and fetching it with no auth returned a real image).
 
 ### Fallback behavior (no id set, or Google returns nothing)
 
@@ -171,15 +165,14 @@ branch synchronously on the result:
 
 ## New environment variable
 
-`GOOGLE_PLACES_API_KEY` — read server-side only (both the admin lookup
-and the photo route read it from server code), but **not** hidden from
-the client: the photo route's `307` redirect hands the browser a
-`photo.mediaUrl` that embeds this key, so it is visible in the browser's
-Network tab. See the caveat above for the recommended mitigation
-(referrer-restricted key, optionally combined with an IP allowlist for
-the server-side Place Details call). Added to `.env.dist` as a
-placeholder, real value added to `.env.local` by the user before
-implementation/testing.
+`GOOGLE_PLACES_API_KEY` — read server-side only, in `src/corpus/google-places.ts`
+alone. It is used as a request parameter to authenticate two
+server-to-server calls to Google (Place Details, Place Photo media with
+`skipHttpRedirect=true`) and never appears in any value returned to a
+page component, never appears in the `photoUri` the browser is ultimately
+redirected to, and is not sent to the client in any other form. Added to
+`.env.dist` as a placeholder, real value added to `.env.local` by the
+user before implementation/testing.
 
 ## Out of scope
 
