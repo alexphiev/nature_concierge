@@ -13,11 +13,19 @@ export function WhatsAppCTA({ placeName }: { placeName: string }) {
   // TODO(07-measurement): fire whatsapp_click { slug } analytics event on click.
 
   return (
-    <a
-      href={href}
-      className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white sm:w-auto"
-    >
-      Besoin d&apos;un plan sur mesure ? Écrivez-moi sur WhatsApp — gratuit
-    </a>
+    <div className="sticky top-6 rounded-2xl bg-mediterranee p-6 text-calcaire">
+      <h3 className="font-display text-xl leading-snug">
+        Besoin d&apos;un plan sur mesure ?
+      </h3>
+      <p className="mt-2.5 text-sm text-calcaire/85">
+        Enfants, chien, mistral, plan B si ça sature — écrivez-moi, gratuit.
+      </p>
+      <a
+        href={href}
+        className="mt-4.5 flex items-center justify-center gap-2 rounded-[10px] bg-calcaire px-5 py-3.5 font-semibold text-mediterranee-deep"
+      >
+        Écrire sur WhatsApp
+      </a>
+    </div>
   );
 }

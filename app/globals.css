@@ -5,6 +5,7 @@
   --calcaire-deep: #F1EBDE;
   --encre: #1C2B33;
   --mediterranee: #0F4C5C;
+  --mediterranee-deep: #0A343F;
   --pin: #4A6B4D;
   --sable: #B8A98C;
 
@@ -19,6 +20,7 @@
   --color-calcaire-deep: var(--calcaire-deep);
   --color-encre: var(--encre);
   --color-mediterranee: var(--mediterranee);
+  --color-mediterranee-deep: var(--mediterranee-deep);
   --color-pin: var(--pin);
   --color-sable: var(--sable);
 

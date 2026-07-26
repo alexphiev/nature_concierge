@@ -7,15 +7,17 @@ const ACTIVE_FIRE_CAVEAT =
 export function StatusBlock({
   status,
   officialInfoUrl,
+  googleMapsUri,
 }: {
   status: ResolvedStatus;
   officialInfoUrl: string | null;
+  googleMapsUri?: string | null;
 }) {
   if (!status) {
     return (
       <section
         aria-label="Statut du jour"
-        className="rounded-[10px] border border-dashed border-statut-inconnu bg-calcaire-deep p-4"
+        className="rounded-xl border border-dashed border-statut-inconnu bg-calcaire-deep p-5"
       >
         <p className="font-mono text-statut-inconnu">
           Données non vérifiées aujourd&apos;hui — consultez la carte
@@ -31,10 +33,10 @@ export function StatusBlock({
   }
 
   const colorClass = !status.isOpen
-    ? "border-statut-rouge text-statut-rouge"
+    ? "text-statut-rouge border-l-statut-rouge"
     : status.restricted || status.displayValue === "orange" || status.displayValue === "jaune"
-      ? "border-statut-orange text-statut-orange"
-      : "border-statut-vert text-statut-vert";
+      ? "text-statut-orange border-l-statut-orange"
+      : "text-statut-vert border-l-statut-vert";
 
   const showCaveat = ["orange", "rouge", "extreme"].includes(status.displayValue);
 
@@ -47,29 +49,45 @@ export function StatusBlock({
   return (
     <section
       aria-label="Statut du jour"
-      className={`rounded-[10px] border-l-2 bg-calcaire-deep p-4 ${colorClass}`}
+      className={`grid grid-cols-1 items-center gap-5 rounded-xl border border-sable/45 border-l-[3px] bg-calcaire-deep p-5 sm:grid-cols-[auto_1fr_auto] sm:gap-6 ${colorClass}`}
     >
-      <p className="font-mono uppercase">{verdict}</p>
-      <p className="font-mono uppercase">
-        <span aria-hidden>●</span> {status.displayValue}{" "}
-        {status.detail ? `— ${status.detail}` : ""}
-      </p>
-      {showCaveat && (
-        <p className="mt-2 text-sm">{ACTIVE_FIRE_CAVEAT}</p>
-      )}
-      <hr className="my-3 border-sable/40" />
-      <p className="font-mono text-[0.875rem] text-encre/70">
-        <Dateline checkedAt={status.confirmedAt} /> · Source officielle :{" "}
-        {status.provider}
+      <div className="border-b border-sable/30 pb-3 text-center font-mono sm:border-r sm:border-b-0 sm:pr-6 sm:pb-0">
+        <span className="block text-[0.7rem] font-semibold tracking-wide uppercase">
+          {verdict}
+        </span>
+        <span className="mt-0.5 block text-2xl font-semibold uppercase">
+          {status.displayValue}
+        </span>
+      </div>
+
+      <div>
+        {status.detail && <p className="text-[0.95rem] text-encre">{status.detail}</p>}
+        {showCaveat && (
+          <p className="mt-2 text-sm text-encre/70 italic">{ACTIVE_FIRE_CAVEAT}</p>
+        )}
+      </div>
+
+      <div className="font-mono text-xs whitespace-nowrap text-encre/60">
+        <Dateline checkedAt={status.confirmedAt} />
+        <br />
+        Source officielle : {status.provider}
         {officialInfoUrl && (
           <>
             {" "}
-            <a href={officialInfoUrl} className="underline">
+            <a href={officialInfoUrl} className="text-mediterranee underline">
               ↗
             </a>
           </>
         )}
-      </p>
+        {googleMapsUri && (
+          <>
+            <br />
+            <a href={googleMapsUri} className="text-mediterranee underline">
+              Voir sur Google Maps ↗
+            </a>
+          </>
+        )}
+      </div>
     </section>
   );
 }

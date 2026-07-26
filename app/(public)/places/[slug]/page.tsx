@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import {
   getActivePlaces,
   getPlaceBySlug,
   resolvePlaceStatus,
 } from "@/src/corpus/queries";
+import { getGooglePlaceDetails } from "@/src/corpus/google-places";
 import { StatusBlock } from "@/src/components/StatusBlock";
 import { ClaimList } from "@/src/components/ClaimList";
 import { WhatsAppCTA } from "@/src/components/WhatsAppCTA";
@@ -44,7 +46,10 @@ export default async function PlaceDetailPage({
 
   if (!place) notFound();
 
-  const status = await resolvePlaceStatus(place.id);
+  const [status, googleDetails] = await Promise.all([
+    resolvePlaceStatus(place.id),
+    getGooglePlaceDetails(place.googlePlaceId),
+  ]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -77,24 +82,83 @@ export default async function PlaceDetailPage({
   };
 
   return (
-    <main className="mx-auto flex max-w-[720px] flex-col gap-8 px-4 py-12">
+    <main className="mx-auto max-w-[1100px] px-4 pt-7 pb-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <StatusBlock status={status} officialInfoUrl={place.officialInfoUrl} />
 
-      <div>
-        <h1 className="font-display text-3xl">{place.name}</h1>
-        <p className="text-sm text-encre/70">{place.commune}</p>
-        {place.description && <p className="mt-3">{place.description}</p>}
+      <p className="font-mono text-xs tracking-wide text-encre/60">
+        <Link href="/places" className="underline decoration-dotted underline-offset-2">
+          ← Les lieux
+        </Link>
+      </p>
+
+      <div className="mt-5 grid grid-cols-1 items-end gap-10 md:grid-cols-[1.15fr_0.85fr]">
+        <div
+          className="relative flex aspect-[16/10] items-end overflow-hidden rounded-2xl border border-sable/40 bg-calcaire-deep p-5"
+          style={
+            !googleDetails?.photo
+              ? {
+                  backgroundImage:
+                    "repeating-linear-gradient(135deg, transparent, transparent 14px, color-mix(in srgb, var(--pin) 7%, transparent) 14px, color-mix(in srgb, var(--pin) 7%, transparent) 15px)",
+                }
+              : undefined
+          }
+        >
+          {googleDetails?.photo && (
+            <>
+              <img
+                src={`/places/${place.slug}/photo`}
+                alt=""
+                width={1200}
+                height={750}
+                className="absolute inset-0 size-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-encre/35 to-transparent to-60%" />
+              {googleDetails.photo.attribution && (
+                <span className="absolute right-3 bottom-3 rounded bg-encre/50 px-2 py-0.5 font-mono text-[0.65rem] text-calcaire">
+                  Photo : {googleDetails.photo.attribution}
+                </span>
+              )}
+            </>
+          )}
+          {!googleDetails?.photo && (
+            <span className="relative font-mono text-xs tracking-wide text-calcaire/90 uppercase">
+              {place.type} · photo à venir
+            </span>
+          )}
+        </div>
+
+        <div className="pb-1">
+          <p className="mb-2.5 flex items-center gap-2 font-mono text-xs tracking-wide text-pin uppercase before:size-1.25 before:rounded-full before:bg-pin before:content-['']">
+            {place.commune} · {place.departement}
+          </p>
+          <h1 className="font-display text-4xl leading-[1.05] text-balance">
+            {place.name}
+          </h1>
+          {place.description && (
+            <p className="mt-2.5 max-w-[52ch] text-encre/80">{place.description}</p>
+          )}
+        </div>
       </div>
 
-      <ClaimList claims={place.claims} />
+      <div className="mt-9">
+        <StatusBlock
+          status={status}
+          officialInfoUrl={place.officialInfoUrl}
+          googleMapsUri={googleDetails?.googleMapsUri ?? null}
+        />
+      </div>
 
-      <WhatsAppCTA placeName={place.name} />
+      <div className="mt-14 grid grid-cols-1 gap-12 md:grid-cols-[1fr_320px]">
+        <ClaimList claims={place.claims} />
 
-      <AlternativeCallout claims={place.claims} />
+        <aside>
+          <WhatsAppCTA placeName={place.name} />
+          <AlternativeCallout claims={place.claims} />
+        </aside>
+      </div>
     </main>
   );
 }
