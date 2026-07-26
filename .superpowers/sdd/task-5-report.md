@@ -1,243 +1,70 @@
-# Task 5 Report: `/admin/statut` daily status page + save action
+# Task 5 Report: `PlaceCard` redesign — "Spécimen de terrain" + status bug fix
 
 ## Status: DONE
 
+Commit: `21046c647cd12dc25708f81e75ac36ccaa978af5`
+"Redesign PlaceCard to Specimen de terrain layout; fix hardcoded null status bug"
+
 ## What was done
 
-1. Read the task brief (`.superpowers/sdd/task-5-brief.md`) and the referenced
-   context: schema (`prisma/schema.prisma`), generated Prisma types
-   (`prisma/generated/models/StatusLog.ts`), `resolvePlaceStatus` /
-   `getPlaceFreshness` (`src/corpus/queries.ts`), the existing admin pages
-   (`app/admin/page.tsx`, `app/admin/new/page.tsx`), the Prisma-mock test
-   convention (`src/corpus/ingestion.test.ts`), and spec `04-signal-ops.md`
-   (daily page section) + `01-data-model.md` (`parseNotes` / `StatusLog.detail`
-   field comments) for the freshness and pre-fill semantics.
+1. **`src/components/PlaceCard.tsx`** — rewritten exactly per the brief's Step 2 code.
+   - `PlaceCard` now takes `{ place, status, photo }` instead of just `{ place }`.
+   - The previous hardcoded `<StatusChip value={null} />` bug is fixed: status is now a real prop (`ResolvedStatus` from `src/corpus/queries.ts`), rendered by a new local `StatusPill` component that maps `status.isOpen` / `status.restricted` to the correct label ("Fermé" / "Ouvert — restreint" / "Ouvert") and color class, with a distinct dashed "Non vérifié" fallback when `status` is `null`.
+   - New photo panel: `aspect-[4/3]` container, `<img src="/places/{slug}/photo" />` when `photo` is present, gradient overlay for text legibility, and a diagonal-hatch `repeating-linear-gradient` fallback background (using `color-mix(in srgb, var(--pin) 6%, transparent)`) when there's no photo.
+   - Floating translucent status pill (`backdrop-blur-sm` + alpha-mixed background) positioned top-right over the photo, plus a type-label pill bottom-left.
+   - Footer with place name, commune/département, and hover lift (`-translate-y-0.5`) + border color shift (`hover:border-mediterranee`) + shadow on the whole card, focus-visible outline preserved.
+   - `hookClaim` is declared exactly as the brief specifies: `const hookClaim = null as {claimType: string; claimText: string} | null;` with the brief's explanatory comment kept verbatim. The `{hookClaim && (...)}` block is present unchanged, so it never renders. **I did not write a query, add a Prisma call, or otherwise attempt to populate `hookClaim`.** This remains explicitly out of scope per the brief and needs a deliberate follow-up task to decide the query shape (one public/published claim per place, batched across a grid).
 
-2. **Verified the compound-unique-key name** in
-   `prisma/generated/models/StatusLog.ts`: Prisma generated
-   `signalZoneId_forDate` (see `StatusLogWhereUniqueInput` and
-   `StatusLogSignalZoneIdForDateCompoundUniqueInput`), confirming the brief's
-   assumed `where` shape was correct — no change needed there.
+2. **`app/(public)/places/page.tsx`** — rewritten exactly per the brief's Step 1 code.
+   - Fetches `getActivePlaces()`, then for each place runs `Promise.all([resolvePlaceStatus(place.id), getGooglePlaceDetails(place.googlePlaceId)])` in parallel (avoiding a status→photo waterfall within a place), and all places' fetches are themselves wrapped in an outer `Promise.all` (avoiding a place-by-place waterfall across the grid).
+   - Passes `status` and `photo` down to `PlaceCard` as props; `PlaceCard` itself remains fully synchronous/presentational.
+   - Grid gap widened from `gap-4` to `gap-6` (24px) to match the approved mockup's `.grid-a { gap: 24px }`.
 
-3. Found that `app/admin/statut/{actions.ts,actions.test.ts,page.tsx}`
-   already existed on disk, untracked, from an earlier pass in this worktree.
-   Rather than trust them blindly, I verified them through the TDD loop the
-   brief mandates:
-   - Confirmed `actions.test.ts` matches the brief's Step 2 code verbatim.
-   - Ran the tests — 3/3 passed.
-   - Temporarily removed `actions.ts` and re-ran the tests to confirm they
-     fail for the right reason (`Cannot find module './actions'`), matching
-     the brief's expected Step 3 output, then restored `actions.ts`
-     (byte-for-byte identical to the brief's Step 4 code) and re-ran — 3/3
-     passed again. This satisfies the brief's "write failing test, confirm
-     failure, implement, confirm pass" sequence.
+## Pre-implementation checks
 
-4. **Reviewed `page.tsx` against the brief and spec, found and fixed one real
-   deviation**: the detail `<textarea>`'s `defaultValue` was sourced only
-   from the prior `StatusLog.detail` (falling back to `""`), with
-   `zone.parseNotes` used merely as an HTML `placeholder` (never submitted,
-   so a first-ever save for a zone would submit an empty detail). Both the
-   brief ("a plain `defaultValue` on the detail field sourced from the zone's
-   `parseNotes`") and spec `01-data-model.md`'s field comment ("`parseNotes`
-   ... also used as the pre-fill template for the daily detail field"; on
-   `StatusLog.detail`: "pre-filled from parseNotes, editable") establish that
-   `parseNotes` should be the *fallback default value*, not just a hint.
-   Fixed in `app/admin/statut/page.tsx`: `defaultDetail` now falls back to
-   `zone.parseNotes` in all three freshness branches (confirmed/carried/
-   unchecked) instead of `""`, while still preferring a previously-saved
-   `detail` when one exists (so an operator's edits survive across days,
-   consistent with "carried forward" semantics for the value field).
+- Confirmed `ResolvedStatus`'s shape in `src/corpus/queries.ts` (`{ zoneValue, displayValue, isOpen, restricted, detail, confirmedAt, zoneLabel, provider } | null`) and `GooglePlacePhoto` in `src/corpus/google-places.ts` match what the brief's `PlaceCard` code assumes. Neither module was modified.
+- Confirmed `Place.departement` and `Place.googlePlaceId` exist on the Prisma schema (`prisma/schema.prisma`).
+- Confirmed the CSS custom properties / Tailwind theme tokens used (`--pin`, `--calcaire-deep`, `--mediterranee`, `--statut-inconnu`, plus `statut-vert`/`statut-orange`/`statut-rouge`) already exist in `app/globals.css` — no new theme tokens were needed.
+- `grep`'d the whole repo for `PlaceCard` usages: only `app/(public)/places/page.tsx` consumes it, so no other call site needed updating.
 
-5. Ran `pnpm exec tsc --noEmit` — clean, no errors.
+## Test file check (Step 3)
 
-6. Ran the full `pnpm exec vitest run` suite — 5 test files, 38 tests, all
-   passed.
+Ran `find src/components -iname "PlaceCard.test.*"` before making changes — no existing test file. Per the brief and the project's established pattern (zone-status-model plan's precedent for `StatusBlock`/`StatusChip`: presentational components with no existing tests do not get new test infrastructure added just because their implementation changed), **no new test file was created**.
 
-7. Committed `app/admin/statut/` (all three files) in one commit.
+## Verification
 
-## Files
+- `pnpm exec tsc --noEmit` — clean, no errors, project-wide.
+- `pnpm exec vitest run` — 10 test files, 85 tests, all passing.
+- `git status` / `git diff --stat` before commit showed only the two intended files changed (`app/(public)/places/page.tsx`, `src/components/PlaceCard.tsx`); nothing else was touched or left staged.
 
-- `app/admin/statut/page.tsx` (new) — server component, the daily status
-  form.
-- `app/admin/statut/actions.ts` (new) — `saveStatus` server action, exact
-  code from the brief's Step 4.
-- `app/admin/statut/actions.test.ts` (new) — exact test code from the
-  brief's Step 2.
+## Explicit confirmation: hookClaim was NOT implemented
 
-## Commands run and key output
+Per the brief's explicit instruction and the task instructions given to me, I did **not**:
+- write a new query for hook claims,
+- add a Prisma call to fetch a claim,
+- remove or alter the `{hookClaim && (...)}` guard block.
 
-```
-$ pnpm exec vitest run app/admin/statut/actions.test.ts
- Test Files  1 passed (1)
-      Tests  3 passed (3)
-```
+`hookClaim` is left exactly as `null` (typed as `{ claimType: string; claimText: string } | null`), so that block never renders on any card. This is flagged here, as instructed, as a possible follow-up task rather than something I implemented: fetching "one representative public, published claim per place" efficiently across a whole grid (avoiding N+1 queries) is a real query-shape decision that should be made explicitly in its own task, not guessed at here.
 
-Fail-first check (actions.ts temporarily moved aside):
-```
-$ pnpm exec vitest run app/admin/statut/actions.test.ts
-FAIL  app/admin/statut/actions.test.ts
-Error: Cannot find module '/app/admin/statut/actions' imported from
-.../app/admin/statut/actions.test.ts
-```
+## Manual test steps (no browser automation was run — project owner tests UI manually)
 
-Post-fix full suite:
-```
-$ pnpm exec tsc --noEmit
-(no output — clean)
+Navigate to `/places` in a dev server and check:
 
-$ pnpm exec vitest run
- Test Files  5 passed (5)
-      Tests  38 passed (38)
-```
-
-Commit:
-```
-$ git add app/admin/statut
-$ git commit -m "Add /admin/statut daily zone status page and saveStatus server action"
-[worktree-zone-status-model 1cdbe6a] Add /admin/statut daily zone status page and saveStatus server action
- 3 files changed, 293 insertions(+)
- create mode 100644 app/admin/statut/actions.test.ts
- create mode 100644 app/admin/statut/actions.ts
- create mode 100644 app/admin/statut/page.tsx
-```
-
-Commit SHA: `1cdbe6a`
-
-## Implementation details
-
-**`app/admin/statut/actions.ts`** — `saveStatus(formData)`:
-- Discovers submitted zone IDs by matching `zone-(.+)-value` keys in the
-  FormData (so zones with no submitted value, or never rendered, are
-  skipped — satisfies "skips zones with no submitted value" test).
-- Computes `forDate` per zone's `signalType`: tomorrow (midnight) for
-  `FIRE_ACCESS`, today (midnight) for everything else.
-- `upsert`s one `StatusLog` per zone on `{ signalZoneId_forDate: { signalZoneId, forDate } }`,
-  setting `confirmedAt: new Date()` on update (create relies on the schema
-  default `@default(now())`).
-- Revalidates `/places/{slug}` (tag `"page"`) for every `Place` under the
-  zone via `ZonePlace`, for every submitted zone — not just changed ones,
-  matching the brief's exact code (the brief's prose in spec 04 says "changed"
-  but the brief's literal Step-4 code — which the task instructions say is
-  authoritative and non-optional — revalidates unconditionally per submitted
-  zone; I followed the literal code as instructed).
-
-**`app/admin/statut/page.tsx`** — server component:
-- Calls `await connection()` first, forcing dynamic rendering (matches
-  `app/admin/page.tsx` / `app/admin/new/page.tsx` convention; this was the
-  exact mistake flagged as a past incident in the task context, so verified
-  explicitly).
-- Queries all `active: true` `SignalZone` rows with `signalSource` (for
-  `signalType`), ordered by `label`.
-- For each zone: looks up the `StatusLog` at the target `forDate`
-  (`findUnique` on the compound key) and the most recent `StatusLog` for the
-  zone regardless of date (`findFirst` ordered by `forDate desc`), in
-  parallel.
-- Freshness (three states, exactly per spec `04-signal-ops.md` line ~120 and
-  the brief):
-  - **confirmed**: a row exists at the target `forDate` AND its
-    `confirmedAt` falls on today's calendar date.
-  - **carried**: no such row yet, but a previous `StatusLog` exists for the
-    zone — its value/detail pre-fill the form.
-  - **unchecked**: no `StatusLog` row has ever existed for this zone.
-  - Rendered as a plain text label (`Confirmé aujourd'hui` /
-    `Reporté (non confirmé)` / `Jamais vérifié`) — no color-only signal,
-    per spec `03-public-site.md`'s accessibility floor ("color-independent
-    status (icon + label, never color alone)").
-- One `<li>` per zone: zone label, signal-type text, freshness label, a
-  hidden `zone-{id}-signalType` input, a native `<select name="zone-{id}-value">`
-  pre-selected to the carried/confirmed value (options per signal type:
-  fire = vert/jaune/orange/rouge/extreme; water =
-  excellente/bonne/suffisante/insuffisante/interdite; air =
-  bon/moyen/degrade/mauvais/tres-mauvais/extremement-mauvais), and a
-  `<textarea name="zone-{id}-detail">` defaulting to the previously-saved
-  detail or, absent one, `zone.parseNotes`.
-- Single `<form action={saveStatus}>` wrapping the whole list, one submit
-  button "Confirmer / Enregistrer".
-- Field naming (`zone-{id}-value`, `zone-{id}-signalType`, `zone-{id}-detail`)
-  matches `actions.ts`'s parsing regex and the test file exactly.
-
-## Manual test steps (do this yourself — no browser automation was used, per
-the task's standing instruction)
-
-Prerequisites: a local Postgres reachable per `.env.local`, migrated and
-seeded (`pnpm prisma migrate deploy` / whatever this project's seed command
-is — Tasks 1-2 already did this on this branch, so if you've been testing
-the public place pages already, your DB should already have the 9 Var fire
-zones + 4 `SignalSource`s + Port d'Alon linked to SAINTE BAUME).
-
-1. Start the dev server: `pnpm dev` (in the worktree directory:
-   `/Users/alexandrephiev/Projects/nature_concierge/.claude/worktrees/zone-status-model`).
-2. Open `http://localhost:3000/admin/statut` in a browser.
-3. Your browser will show a Basic Auth prompt. Username: anything (it isn't
-   checked, e.g. leave blank or type `admin`). Password: the value of
-   `ADMIN_PASSWORD` in `.env.local`.
-4. **Expected**: the page loads with heading "Statut du jour" and a list of
-   zone rows — you should see 9 rows if all seeded Var fire zones are
-   `active: true` (plus any water/air zones seeded). Each row shows:
-   - the zone's label (e.g. "SAINTE BAUME") and a signal-type tag
-     ("Feu / accès massif" / "Qualité de l'eau" / "Qualité de l'air"),
-   - a freshness line — on a fresh DB with no `StatusLog` rows yet, this
-     should read **"Jamais vérifié"** for every zone,
-   - a "Niveau" `<select>` — should show "— Non renseigné —" selected (no
-     prior value to carry forward) with the zone's own level options below
-     it (fire zones: vert/jaune/orange/rouge/extreme),
-   - a "Détail" `<textarea>` — should be pre-filled with the zone's
-     `parseNotes` text. For the SAINTE BAUME row specifically, confirm this
-     shows the Port d'Alon-specific decoding context (the ZAPEF red-code
-     detail) that Task 2's seed data put in that zone's `parseNotes`.
-5. Change the SAINTE BAUME row's "Niveau" select to `rouge`, edit the
-   "Détail" textarea to something like `test admin statut`, leave other
-   zones untouched (or set one more, your choice), then click
-   **"Confirmer / Enregistrer"**.
-6. **Expected**: no error page/toast; the browser should return to
-   `/admin/statut` (server action re-render). The SAINTE BAUME row's
-   freshness label should now read **"Confirmé aujourd'hui"**, its select
-   should show `rouge` selected, and the textarea should show your edited
-   detail text.
-7. Refresh the page (hard reload) to confirm persistence: SAINTE BAUME
-   should still show "Confirmé aujourd'hui" / `rouge` / your detail text
-   after a full page reload (proves the `StatusLog` row was actually
-   written, not just client-side state).
-8. Open `http://localhost:3000/places/port-d-alon` in a new tab (or the
-   correct slug for Port d'Alon if different). Because Port d'Alon has
-   `zapef=true` and you just set SAINTE BAUME to `rouge`, the public page's
-   status block should show the ZAPEF-aware "open, restricted" framing
-   (per Task 3/4's `resolvePlaceStatus` logic) rather than a hard "closed" —
-   this confirms the admin save round-trips into the public page via
-   `resolvePlaceStatus`/`revalidatePath`. Note: since fire's `forDate` is
-   *tomorrow*, and `resolvePlaceStatus` queries `forDate >= startOfToday`
-   ordered ascending, verify what the public page shows lines up with
-   whichever `StatusLog` row (today's leftover, if any, or the new
-   tomorrow-dated one) actually has the earliest qualifying `forDate` — if
-   nothing was seeded for today, the new tomorrow row should be the one
-   picked up.
-9. Reload `/admin/statut` once more and confirm a *water* or *air* zone (if
-   seeded) behaves the same way but with `forDate` = today instead of
-   tomorrow — i.e. saving it should make its own row show "Confirmé
-   aujourd'hui" immediately (no one-day lag), since water/air `forDate` is
-   today, not tomorrow.
-10. Optional: submit the form again without touching any zone (all selects
-    left at their now-carried/confirmed values) and confirm no server error
-    — this exercises the "carried forward" → re-save path and
-    `confirmedAt` update branch of `saveStatus`.
+1. **Photo rendering**: For places with a resolvable Google Place (valid `googlePlaceId` and a photo available), the card should show a real photo filling the 4:3 panel, with a subtle dark gradient at the bottom for text contrast. For places with no `googlePlaceId` or no photo returned, the panel should show the `calcaire-deep` background with a subtle diagonal hatch texture (faint, olive/pin-tinted diagonal lines) instead of a blank box.
+2. **Status pill correctness** — for a place with:
+   - No `ZonePlace`/`StatusLog` at all → dashed-border grey "Non vérifié" pill.
+   - A `StatusLog` where `isOpen: true, restricted: false` → green pill, "Ouvert".
+   - A `StatusLog` where `isOpen: true, restricted: true` → orange pill, "Ouvert — restreint".
+   - A `StatusLog` where `isOpen: false` → red pill, "Fermé".
+   - This is the actual bug fix: previously every card always showed "Non vérifié" regardless of real data (hardcoded `<StatusChip value={null} />`). Verify against a place you know has an active `StatusLog` for today (`forDate` = today) that the pill now reflects real status, not always "Non vérifié".
+3. **Type label pill**: bottom-left over the photo, showing the correct French label (Calanque/Plage/Massif/Sentier/Sommet/Site) for each place's `type`.
+4. **Hook claim**: confirm the divider/claim line under the commune/département text never appears on any card (expected — `hookClaim` is hardcoded `null`).
+5. **Hover/focus behavior**: hovering a card should lift it slightly (`-translate-y-0.5`), shift the border to the Méditerranée teal color, and add a shadow. Tab-focusing a card (keyboard nav) should show a visible 2px teal outline offset from the card edge.
+6. **Grid spacing**: gap between cards should look slightly wider than before (24px vs previous 16px) — 1 column on mobile, 2 on `sm`, 3 on `lg`.
+7. **No console/network errors**: confirm the `/places/{slug}/photo` route (Task 3, already merged) actually serves an image for places with photos, and that missing photos don't throw — they should just fall through to no `<img>` tag being rendered (the `photo &&` guard).
 
 ## Concerns
 
-- **None blocking.** Automated tests (`pnpm exec vitest run`: 38/38) and
-  `pnpm exec tsc --noEmit` are both clean.
-- One judgment call worth flagging explicitly: `saveStatus`'s
-  `revalidatePath` call runs for every place under every *submitted* zone,
-  not only zones whose value actually changed from the prior day (spec
-  `04-signal-ops.md` says "revalidates every place under any zone whose
-  value or detail changed"). I followed the brief's literal Step-4 code,
-  which the task instructions marked as non-optional/verbatim, over the
-  spec's looser prose. Practical impact is minimal — revalidating a page
-  whose content didn't change just wastes a bit of ISR work, no correctness
-  issue — but flagging the discrepancy since it's a real difference between
-  the spec prose and the shipped code.
-- The pre-existing `app/admin/statut/*` files found untracked in the
-  worktree at the start of this task were not written by me during this
-  session; I treated them as an unverified draft, ran them through the
-  brief's mandated TDD checkpoints myself (fail-first, then pass), reviewed
-  every line against the brief and spec, and fixed one real bug (the
-  `parseNotes` default-value fallback described above) before committing.
+- None blocking. `pnpm exec tsc --noEmit` and `pnpm exec vitest run` (85/85) are both clean, and the diff touches only the two files specified in the brief.
+- The Tailwind LSP/linter flagged two "canonical class" suggestions (`aspect-[4/3]` → `aspect-4/3`, `bg-gradient-to-t` → `bg-linear-to-t`) — both are purely stylistic, the brief's specified classes still work correctly in Tailwind v4, so I left them exactly as written in the brief rather than substituting the linter's preferred spelling.
+- Reiterating per the task instructions: the `hookClaim` gap is a deliberate, unresolved scope boundary from the brief, not an oversight. Flagging it as a follow-up decision point, not something I attempted to resolve.
