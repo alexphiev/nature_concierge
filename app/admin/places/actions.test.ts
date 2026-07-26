@@ -92,6 +92,33 @@ describe("createPlace", () => {
     expect(createManyZonePlaceMock).not.toHaveBeenCalled();
     expect(redirectMock).toHaveBeenCalledWith("/admin/places");
   });
+
+  it("persists googlePlaceId when provided", async () => {
+    createPlaceMock.mockResolvedValue({ id: "place-1" });
+    const formData = baseFormData();
+    formData.set("googlePlaceId", "ChIJexample123");
+
+    await createPlace(formData);
+
+    expect(createPlaceMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ googlePlaceId: "ChIJexample123" }),
+      }),
+    );
+  });
+
+  it("stores null googlePlaceId when left blank", async () => {
+    createPlaceMock.mockResolvedValue({ id: "place-1" });
+    const formData = baseFormData();
+
+    await createPlace(formData);
+
+    expect(createPlaceMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ googlePlaceId: null }),
+      }),
+    );
+  });
 });
 
 describe("updatePlace", () => {

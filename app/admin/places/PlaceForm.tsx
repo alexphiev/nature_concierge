@@ -103,6 +103,19 @@ export function PlaceForm({
       </label>
 
       <label className="flex flex-col gap-1">
+        <span className="text-sm text-encre/70">
+          Identifiant Google Places (optionnel)
+        </span>
+        <input
+          type="text"
+          name="googlePlaceId"
+          defaultValue={place?.googlePlaceId ?? ""}
+          placeholder="ChIJ..."
+          className={inputClass}
+        />
+      </label>
+
+      <label className="flex flex-col gap-1">
         <span className="text-sm text-encre/70">Description</span>
         <textarea
           name="description"
