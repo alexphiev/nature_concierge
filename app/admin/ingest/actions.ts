@@ -9,6 +9,17 @@ export async function createCapture(formData: FormData): Promise<void> {
   const place = await prisma.place.findUniqueOrThrow({ where: { id: placeId } });
 
   const blockCount = Number(formData.get("blockCount") ?? 0);
+
+  for (let i = 0; i < blockCount; i++) {
+    const text = String(formData.get(`block-${i}-text`) ?? "") || undefined;
+    const hasImages = formData
+      .getAll(`block-${i}-images`)
+      .some((f): f is File => f instanceof File && f.size > 0);
+    if (!text && !hasImages) {
+      throw new Error(`Block ${i} must have at least text or an image`);
+    }
+  }
+
   const draft = await prisma.ingestionDraft.create({
     data: { placeId, status: "PENDING_REVIEW" },
   });
@@ -67,6 +78,9 @@ export async function addBlock(draftId: string, formData: FormData): Promise<voi
   const imageFiles = formData
     .getAll("images")
     .filter((f): f is File => f instanceof File && f.size > 0);
+  if (!text && imageFiles.length === 0) {
+    throw new Error("Block must have at least text or an image");
+  }
   const images = await Promise.all(
     imageFiles.map(async (file) => ({
       data: Buffer.from(await file.arrayBuffer()),

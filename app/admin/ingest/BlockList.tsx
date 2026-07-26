@@ -49,6 +49,8 @@ export function BlockList({ sourceTypes }: { sourceTypes: readonly string[] }) {
             </select>
           </label>
 
+          <p className="text-xs text-encre/50">Texte ou images requis (au moins l&apos;un des deux).</p>
+
           <label className="flex flex-col gap-1">
             <span className="text-sm text-encre/70">Texte</span>
             <textarea name={`block-${index}-text`} rows={5} className={inputClass} />

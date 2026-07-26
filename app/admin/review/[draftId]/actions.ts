@@ -8,6 +8,7 @@ import {
   VerdictSchema,
   VerificationSchema,
   DecayClassSchema,
+  SourceTypeSchema,
 } from "@/src/corpus/schema";
 import { ConditionSchema, AudienceSchema } from "@/src/corpus/taxonomy";
 import type { Prisma } from "../../../../prisma/generated/client";
@@ -43,16 +44,7 @@ const EditedClaimSchema = z
   });
 
 const EditedSourceSchema = z.object({
-  type: z.enum([
-    "OFFICIAL",
-    "PERSONAL_VISIT",
-    "LOCAL_PERSON",
-    "OT_CONVERSATION",
-    "REDDIT_LEAD",
-    "INSTAGRAM_LEAD",
-    "FACEBOOK_LEAD",
-    "PRESS_LEAD",
-  ]),
+  type: SourceTypeSchema,
   urlOrRef: z.string().nullable().optional(),
   dateCollected: z.coerce.date(),
   reliability: z.number().int().min(1).max(3),

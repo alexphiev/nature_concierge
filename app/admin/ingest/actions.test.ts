@@ -238,6 +238,40 @@ describe("createCapture", () => {
     expect(block0Data.rawModelOutput).toBeTruthy();
     expect(block0Data.draftClaims).toEqual([]);
   });
+
+  it("rejects the whole submission (no IngestionDraft/IngestionBlock created) when any block has neither text nor images", async () => {
+    extractBlockMock.mockResolvedValue(validExtractionResult("Claim."));
+
+    const fd = new FormData();
+    fd.set("placeId", PLACE.id);
+    fd.set("blockCount", "2");
+    fd.set("block-0-text", "Le parking ferme à 19h.");
+    // block-1 has neither text nor images.
+
+    await expect(createCapture(fd)).rejects.toThrow();
+
+    expect(createDraftMock).not.toHaveBeenCalled();
+    expect(createBlockMock).not.toHaveBeenCalled();
+    expect(extractBlockMock).not.toHaveBeenCalled();
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts a block with images only (no text)", async () => {
+    extractBlockMock.mockResolvedValue(validExtractionResult("Claim from image."));
+    transcribeImageMock.mockResolvedValue("Panneau: accès interdit.");
+
+    const fd = new FormData();
+    fd.set("placeId", PLACE.id);
+    fd.set("blockCount", "1");
+    const imageFile = new File([new Uint8Array([1, 2, 3, 4])], "sign.jpg", { type: "image/jpeg" });
+    fd.append("block-0-images", imageFile);
+
+    await createCapture(fd);
+
+    expect(createDraftMock).toHaveBeenCalledTimes(1);
+    expect(createBlockMock).toHaveBeenCalledTimes(1);
+    expect(redirectMock).toHaveBeenCalledWith("/admin/review/draft-1");
+  });
 });
 
 describe("addBlock", () => {
@@ -291,5 +325,22 @@ describe("addBlock", () => {
 
     const callArg = createBlockMock.mock.calls[0][0];
     expect(callArg.data.order).toBe(0);
+  });
+
+  it("rejects when the block has neither text nor images, without creating an IngestionBlock", async () => {
+    findUniqueOrThrowDraftMock.mockResolvedValue({
+      id: "draft-1",
+      place: PLACE,
+      blocks: [{ order: 0 }],
+    });
+
+    const fd = new FormData();
+    fd.set("sourceHint", "post reddit");
+
+    await expect(addBlock("draft-1", fd)).rejects.toThrow();
+
+    expect(createBlockMock).not.toHaveBeenCalled();
+    expect(extractBlockMock).not.toHaveBeenCalled();
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 });

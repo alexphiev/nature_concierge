@@ -57,6 +57,21 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Mirrors EditedSourceSchema's required fields (app/admin/review/[draftId]/actions.ts):
+// type, dateCollected, reliability. "Tout approuver" sends the raw draftSource
+// unedited, so bulk approval is only safe when that snapshot already satisfies
+// the schema (or the block already has a resolved sourceId).
+function isSourceCompleteForBulkApproval(draftSource: DraftSource | null): boolean {
+  if (!draftSource) return false;
+  return (
+    Boolean(draftSource.type) &&
+    Boolean(draftSource.dateCollected) &&
+    typeof draftSource.reliability === "number" &&
+    draftSource.reliability >= 1 &&
+    draftSource.reliability <= 3
+  );
+}
+
 // inputImages doesn't retain original mimeType (Task 6's IngestionBlock.inputImages
 // is a bare Bytes[]), so we assume JPEG — the common case for phone-camera captures.
 // Not reliable for e.g. PNG screenshots; a real mimeType column would fix this.
@@ -389,6 +404,7 @@ export default async function AdminReviewDraftPage({
         const claims = block.draftClaims as unknown as DraftClaim[];
         const draftSource = block.draftSource as unknown as DraftSource | null;
         const blockPending = claims.filter((c) => c.resolution === "pending");
+        const canBulkApprove = Boolean(block.sourceId) || isSourceCompleteForBulkApproval(draftSource);
 
         return (
           <section key={block.id} className="flex flex-col gap-4 rounded-[10px] border border-sable/40 p-4">
@@ -437,41 +453,50 @@ export default async function AdminReviewDraftPage({
                   ))}
 
                   {blockPending.length > 0 && (
-                    <div className="flex gap-2">
-                      <form
-                        action={approveAllInBlock.bind(
-                          null,
-                          block.id,
-                          blockPending.map((claim) => ({
-                            id: claim.id,
-                            claimText: claim.claimText,
-                            claimType: claim.claimType,
-                            conditions: claim.conditions,
-                            audience: claim.audience,
-                            verdict: claim.verdict,
-                            verification: claim.verification,
-                            decayClass: claim.decayClass,
-                            verifiedOn: todayIso(),
-                            isPublic: false,
-                            editedSource: draftSource ?? undefined,
-                          })),
+                    <div className="flex flex-col gap-2">
+                      {!canBulkApprove && (
+                        <p className="text-xs text-encre/60">
+                          Complétez la source ci-dessus avant d&apos;utiliser « Tout approuver ».
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        {canBulkApprove && (
+                          <form
+                            action={approveAllInBlock.bind(
+                              null,
+                              block.id,
+                              blockPending.map((claim) => ({
+                                id: claim.id,
+                                claimText: claim.claimText,
+                                claimType: claim.claimType,
+                                conditions: claim.conditions,
+                                audience: claim.audience,
+                                verdict: claim.verdict,
+                                verification: claim.verification,
+                                decayClass: claim.decayClass,
+                                verifiedOn: todayIso(),
+                                isPublic: false,
+                                editedSource: draftSource ?? undefined,
+                              })),
+                            )}
+                          >
+                            <button
+                              type="submit"
+                              className="rounded-[10px] bg-mediterranee px-4 py-2 text-sm text-white"
+                            >
+                              Tout approuver
+                            </button>
+                          </form>
                         )}
-                      >
-                        <button
-                          type="submit"
-                          className="rounded-[10px] bg-mediterranee px-4 py-2 text-sm text-white"
-                        >
-                          Tout approuver
-                        </button>
-                      </form>
-                      <form action={rejectAllInBlock.bind(null, block.id)}>
-                        <button
-                          type="submit"
-                          className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm"
-                        >
-                          Tout rejeter
-                        </button>
-                      </form>
+                        <form action={rejectAllInBlock.bind(null, block.id)}>
+                          <button
+                            type="submit"
+                            className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm"
+                          >
+                            Tout rejeter
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   )}
                 </div>
