@@ -23,6 +23,7 @@ model Place {
   description        String?
   demandRank         Int         @default(999)
   zapef              Boolean     @default(false)
+  googlePlaceId      String?
   status             PlaceStatus @default(DRAFT)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
