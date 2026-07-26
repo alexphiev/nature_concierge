@@ -1,5 +1,6 @@
 import { Dateline } from "./Dateline";
 import type { ResolvedStatus } from "../corpus/queries";
+import { presentStatus } from "../corpus/status-presentation";
 
 const ACTIVE_FIRE_CAVEAT =
   "En cas de fumée ou de consignes des secours sur place, suivez-les même si la carte indique autre chose.";
@@ -32,19 +33,16 @@ export function StatusBlock({
     );
   }
 
-  const colorClass = !status.isOpen
-    ? "text-statut-rouge border-l-statut-rouge"
-    : status.restricted || status.displayValue === "orange" || status.displayValue === "jaune"
-      ? "text-statut-orange border-l-statut-orange"
-      : "text-statut-vert border-l-statut-vert";
+  const { colorTone, verdict } = presentStatus(status);
+
+  const colorClass =
+    colorTone === "rouge"
+      ? "text-statut-rouge border-l-statut-rouge"
+      : colorTone === "orange"
+        ? "text-statut-orange border-l-statut-orange"
+        : "text-statut-vert border-l-statut-vert";
 
   const showCaveat = ["orange", "rouge", "extreme"].includes(status.displayValue);
-
-  const verdict = !status.isOpen
-    ? "Fermé"
-    : status.restricted
-      ? "Ouvert — accès restreint"
-      : "Ouvert";
 
   return (
     <section

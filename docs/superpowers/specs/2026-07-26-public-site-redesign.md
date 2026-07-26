@@ -127,11 +127,32 @@ and `/places/[slug]` stay full server components, no client JS.
 `getGooglePlaceDetails` and issues a `307` redirect to `photo.mediaUrl`
 (or a `404` if `photo` is `null`). This is what the `<img src>` actually
 points to — the browser, not this app's server, fetches the image bytes
-from Google's CDN. The route exists only so the API key never reaches the
-client and so the same 7-day-cached lookup isn't duplicated between "does
-a photo exist" (used to decide layout) and "what URL does the img tag
-use" (the redirect target) — both call the same cached
-`getGooglePlaceDetails`.
+from Google's CDN.
+
+**Important caveat: the API key IS visible to the browser.** The route
+does *not* hide `GOOGLE_PLACES_API_KEY` from the client — it exists so
+the 7-day-cached `getGooglePlaceDetails` lookup isn't duplicated between
+"does a photo exist" (used to decide layout) and "what URL does the img
+tag use" (the redirect target), both of which call the same cached
+function. But `photo.mediaUrl` itself is
+`https://places.googleapis.com/v1/{photos[0].name}/media?key=${GOOGLE_PLACES_API_KEY}&maxWidthPx=1200`,
+and the `307` response sends that full URL — key included — back to the
+browser as a `Location` header. The browser then follows the redirect
+directly, so the key is visible in the Network tab and in the final
+image request URL. This isn't a bug: Google's Place Photo Media (New)
+endpoint is designed as a browser-facing CDN link, not a proxied byte
+stream, so any client that wants to display the photo without running
+its own image proxy has to expose this key. Given that, treat this key
+as public-facing and mitigate accordingly — either configure it in
+Google Cloud Console with HTTP referrer restrictions scoped to this
+site's domain(s), or accept that it's publicly visible and monitor/
+rate-limit it. Note the tension if referrer restrictions are added: the
+*same* key is also used server-side for the Place Details header-based
+call (`X-Goog-FieldMask`), and referrer-restricted keys typically aren't
+usable for server-to-server calls without also allowlisting the
+server's IP(s) — Google Cloud Console does support combining both
+restriction types on one key, so this is solvable, just worth flagging
+before locking the key down.
 
 ### Fallback behavior (no id set, or Google returns nothing)
 
@@ -150,10 +171,15 @@ branch synchronously on the result:
 
 ## New environment variable
 
-`GOOGLE_PLACES_API_KEY` — server-only (never exposed to the client; both
-the admin lookup and the photo route are server-side). Added to
-`.env.dist` as a placeholder, real value added to `.env.local` by the
-user before implementation/testing.
+`GOOGLE_PLACES_API_KEY` — read server-side only (both the admin lookup
+and the photo route read it from server code), but **not** hidden from
+the client: the photo route's `307` redirect hands the browser a
+`photo.mediaUrl` that embeds this key, so it is visible in the browser's
+Network tab. See the caveat above for the recommended mitigation
+(referrer-restricted key, optionally combined with an IP allowlist for
+the server-side Place Details call). Added to `.env.dist` as a
+placeholder, real value added to `.env.local` by the user before
+implementation/testing.
 
 ## Out of scope
 

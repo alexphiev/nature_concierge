@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Place } from "../../prisma/generated/client";
 import type { ResolvedStatus } from "../corpus/queries";
 import type { GooglePlacePhoto } from "../corpus/google-places";
+import { presentStatus } from "../corpus/status-presentation";
 
 const TYPE_LABELS: Record<Place["type"], string> = {
   CALANQUE: "Calanque",
@@ -32,24 +33,21 @@ function StatusPill({ status }: { status: ResolvedStatus }) {
     );
   }
 
-  const colorClass = !status.isOpen
-    ? "text-statut-rouge bg-statut-rouge/15"
-    : status.restricted
-      ? "text-statut-orange bg-statut-orange/15"
-      : "text-statut-vert bg-statut-vert/15";
+  const { colorTone, verdict } = presentStatus(status);
 
-  const label = !status.isOpen
-    ? "Fermé"
-    : status.restricted
-      ? "Ouvert — restreint"
-      : "Ouvert";
+  const colorClass =
+    colorTone === "rouge"
+      ? "text-statut-rouge bg-statut-rouge/15"
+      : colorTone === "orange"
+        ? "text-statut-orange bg-statut-orange/15"
+        : "text-statut-vert bg-statut-vert/15";
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[0.7rem] uppercase tracking-wide backdrop-blur-sm ${colorClass}`}
     >
       <span aria-hidden className="size-1.5 rounded-full bg-current" />
-      {label}
+      {verdict}
     </span>
   );
 }
