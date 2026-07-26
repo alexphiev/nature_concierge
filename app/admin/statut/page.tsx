@@ -45,6 +45,23 @@ const FRESHNESS_LABEL: Record<Freshness, string> = {
   unchecked: "Jamais vérifié",
 };
 
+const FRESHNESS_STYLE: Record<Freshness, string> = {
+  confirmed: "text-statut-vert bg-statut-vert/15",
+  carried: "text-statut-orange bg-statut-orange/15",
+  unchecked: "text-statut-inconnu bg-statut-inconnu/15",
+};
+
+function FreshnessPill({ freshness }: { freshness: Freshness }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[0.7rem] uppercase tracking-wide ${FRESHNESS_STYLE[freshness]}`}
+    >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {FRESHNESS_LABEL[freshness]}
+    </span>
+  );
+}
+
 export default async function AdminStatutPage() {
   await connection();
 
@@ -110,7 +127,7 @@ export default async function AdminStatutPage() {
           {rows.map(({ zone, signalType, freshness, defaultValue, defaultDetail }) => (
             <li
               key={zone.id}
-              className="flex flex-col gap-2 rounded-[10px] border border-sable/40 bg-calcaire-deep p-4"
+              className="flex flex-col gap-2 rounded-2xl border border-sable/45 bg-calcaire-deep p-4"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="font-display text-lg">{zone.label}</span>
@@ -119,7 +136,7 @@ export default async function AdminStatutPage() {
                 </span>
               </div>
 
-              <p className="font-mono text-sm">{FRESHNESS_LABEL[freshness]}</p>
+              <FreshnessPill freshness={freshness} />
 
               <input type="hidden" name={`zone-${zone.id}-signalType`} value={signalType} />
 
@@ -128,7 +145,7 @@ export default async function AdminStatutPage() {
                 <select
                   name={`zone-${zone.id}-value`}
                   defaultValue={defaultValue}
-                  className="rounded-[10px] border border-sable/40 bg-calcaire p-2"
+                  className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
                 >
                   <option value="">— Non renseigné —</option>
                   {(VALUE_OPTIONS[signalType] ?? []).map((value) => (
@@ -146,7 +163,7 @@ export default async function AdminStatutPage() {
                   rows={2}
                   defaultValue={defaultDetail}
                   placeholder={zone.parseNotes}
-                  className="rounded-[10px] border border-sable/40 bg-calcaire p-2"
+                  className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
                 />
               </label>
             </li>
@@ -155,7 +172,7 @@ export default async function AdminStatutPage() {
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white sm:w-auto"
+          className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white transition-colors hover:bg-mediterranee-deep sm:w-auto"
         >
           Confirmer / Enregistrer
         </button>

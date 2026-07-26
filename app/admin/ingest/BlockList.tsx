@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
+const inputClass =
+  "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee";
 
 export function BlockList({ sourceTypes }: { sourceTypes: readonly string[] }) {
   const [blockKeys, setBlockKeys] = useState<number[]>([0]);
@@ -13,7 +14,10 @@ export function BlockList({ sourceTypes }: { sourceTypes: readonly string[] }) {
       <input type="hidden" name="blockCount" value={blockKeys.length} />
 
       {blockKeys.map((key, index) => (
-        <fieldset key={key} className="flex flex-col gap-3 rounded-[10px] border border-sable/40 p-4">
+        <fieldset
+          key={key}
+          className="flex flex-col gap-3 rounded-[10px] border border-sable/40 bg-calcaire-deep/60 p-4"
+        >
           <div className="flex items-center justify-between">
             <legend className="text-sm font-medium text-encre/70">Source {index + 1}</legend>
             {blockKeys.length > 1 && (

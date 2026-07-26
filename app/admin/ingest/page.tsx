@@ -10,7 +10,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
+const inputClass =
+  "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee";
 
 export default async function AdminIngestPage() {
   await connection();
@@ -22,7 +23,10 @@ export default async function AdminIngestPage() {
     <main className="flex flex-col gap-6">
       <h1 className="font-display text-2xl">Nouvelle capture</h1>
 
-      <form action={createCapture} className="flex flex-col gap-6">
+      <form
+        action={createCapture}
+        className="flex flex-col gap-6 rounded-2xl border border-sable/45 bg-calcaire p-5"
+      >
         <label className="flex flex-col gap-1">
           <span className="text-sm text-encre/70">Lieu</span>
           <div className="flex items-center gap-3">
@@ -44,7 +48,7 @@ export default async function AdminIngestPage() {
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white sm:w-auto"
+          className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white transition-colors hover:bg-mediterranee-deep sm:w-auto"
         >
           Lancer l&apos;extraction
         </button>
