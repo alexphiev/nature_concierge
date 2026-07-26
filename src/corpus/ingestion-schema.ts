@@ -4,15 +4,16 @@ import {
   VerdictSchema,
   VerificationSchema,
   DecayClassSchema,
+  SourceTypeSchema,
 } from "./schema";
 import { ConditionSchema, AudienceSchema } from "./taxonomy";
 
-export const DraftPlaceSchema = z.object({
-  name: z.string(),
-  commune: z.string(),
-  departement: z.enum(["13", "83"]),
-  type: z.enum(["CALANQUE", "PLAGE", "MASSIF", "SENTIER", "SOMMET", "SITE"]),
-  description: z.string().optional(),
+export const DraftSourceSchema = z.object({
+  type: SourceTypeSchema,
+  urlOrRef: z.string().nullable(),
+  dateCollected: z.string(),
+  reliability: z.number().int().min(1).max(3),
+  notes: z.string().nullable(),
 });
 
 const BaseDraftClaimSchema = z.object({
@@ -26,6 +27,7 @@ const BaseDraftClaimSchema = z.object({
   sourceSnippet: z.string().min(1),
   reasoning: z.string().nullable(),
   needsReview: z.boolean(),
+  placeMismatch: z.boolean(),
 });
 
 export const DraftClaimSchema = BaseDraftClaimSchema.refine(
@@ -36,14 +38,13 @@ export const DraftClaimSchema = BaseDraftClaimSchema.refine(
   },
 );
 
-export const ExtractionResultSchema = z.object({
-  place: DraftPlaceSchema.nullable(),
+export const BlockExtractionResultSchema = z.object({
+  source: DraftSourceSchema.nullable(),
   claims: z.array(DraftClaimSchema),
-  needsPlaceSelection: z.boolean(),
 });
 
-export type DraftPlace = z.infer<typeof DraftPlaceSchema>;
+export type DraftSource = z.infer<typeof DraftSourceSchema>;
 export type DraftClaim = z.infer<typeof DraftClaimSchema>;
-export type ExtractionResult = z.infer<typeof ExtractionResultSchema>;
+export type BlockExtractionResult = z.infer<typeof BlockExtractionResultSchema>;
 
-export const EXTRACTION_JSON_SCHEMA = z.toJSONSchema(ExtractionResultSchema);
+export const BLOCK_EXTRACTION_JSON_SCHEMA = z.toJSONSchema(BlockExtractionResultSchema);

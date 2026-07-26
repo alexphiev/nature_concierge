@@ -1,10 +1,23 @@
 import { prisma } from "./db";
-import type { Place, Claim } from "../../prisma/generated/client";
+import type { Place, Claim, SignalZone } from "../../prisma/generated/client";
 
 export async function getActivePlaces(): Promise<Place[]> {
   return prisma.place.findMany({
     where: { status: "ACTIVE" },
     orderBy: { demandRank: "asc" },
+  });
+}
+
+export async function getAllPlaces(): Promise<Place[]> {
+  return prisma.place.findMany({
+    orderBy: { demandRank: "asc" },
+  });
+}
+
+export async function getSignalZones(): Promise<SignalZone[]> {
+  return prisma.signalZone.findMany({
+    where: { active: true },
+    orderBy: { label: "asc" },
   });
 }
 
