@@ -9,9 +9,7 @@ if (!WHATSAPP_NUMBER) {
 }
 
 export function LandingWhatsAppCTA() {
-  const message = `Bonjour ! Je cherche une idée de sortie nature.
-Quand : … / Qui : … (enfants, chien, mobilité…) / Où en gros : … /
-Contraintes : … (météo, marche, parking…)`;
+  const message = "Bonjour ! Je cherche une idée de sortie nature. Je pense y aller …";
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
   // TODO(07-measurement): fire whatsapp_click { source: "landing" } analytics event on click.

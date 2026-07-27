@@ -117,6 +117,48 @@ export async function resolvePlaceStatus(
   };
 }
 
+export type TodayStatusCounts = {
+  closed: number;
+  total: number;
+  latestConfirmedAt: Date;
+} | null;
+
+export async function getTodayStatusCounts(): Promise<TodayStatusCounts> {
+  const forDate = new Date(new Date().setHours(0, 0, 0, 0));
+
+  const statusLogs = await prisma.statusLog.findMany({
+    where: { forDate },
+    select: { value: true, confirmedAt: true },
+  });
+
+  if (statusLogs.length === 0) return null;
+
+  const closed = statusLogs.filter(
+    (log) => log.value === "rouge" || log.value === "extreme",
+  ).length;
+
+  const latestConfirmedAt = statusLogs.reduce(
+    (latest, log) => (log.confirmedAt > latest ? log.confirmedAt : latest),
+    statusLogs[0].confirmedAt,
+  );
+
+  return { closed, total: statusLogs.length, latestConfirmedAt };
+}
+
+export type CoverageCounts = {
+  placeCount: number;
+  claimCount: number;
+};
+
+export async function getCoverageCounts(): Promise<CoverageCounts> {
+  const [placeCount, claimCount] = await Promise.all([
+    prisma.place.count({ where: { status: "ACTIVE" } }),
+    prisma.claim.count({ where: { isPublic: true, status: "PUBLISHED" } }),
+  ]);
+
+  return { placeCount, claimCount };
+}
+
 export async function getPlaceFreshness(placeId: string): Promise<Date> {
   const zonePlace = await prisma.zonePlace.findFirst({
     where: { placeId },

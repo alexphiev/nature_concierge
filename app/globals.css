@@ -29,7 +29,7 @@
   --color-statut-rouge: var(--statut-rouge);
   --color-statut-inconnu: var(--statut-inconnu);
 
-  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-display: var(--font-bricolage-grotesque), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-public-sans);
   --font-mono: var(--font-ibm-plex-mono);
 }
