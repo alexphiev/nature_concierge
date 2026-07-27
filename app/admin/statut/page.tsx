@@ -10,8 +10,21 @@ export const metadata: Metadata = {
 
 const VALUE_OPTIONS: Record<string, string[]> = {
   FIRE_ACCESS: ["vert", "jaune", "orange", "rouge", "extreme"],
-  WATER_QUALITY: ["excellente", "bonne", "suffisante", "insuffisante", "interdite"],
-  AIR_QUALITY: ["bon", "moyen", "degrade", "mauvais", "tres-mauvais", "extremement-mauvais"],
+  WATER_QUALITY: [
+    "excellente",
+    "bonne",
+    "suffisante",
+    "insuffisante",
+    "interdite",
+  ],
+  AIR_QUALITY: [
+    "bon",
+    "moyen",
+    "degrade",
+    "mauvais",
+    "tres-mauvais",
+    "extremement-mauvais",
+  ],
 };
 
 const SIGNAL_TYPE_LABEL: Record<string, string> = {
@@ -20,13 +33,8 @@ const SIGNAL_TYPE_LABEL: Record<string, string> = {
   AIR_QUALITY: "Qualité de l'air",
 };
 
-function forDateFor(signalType: string): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  if (signalType === "FIRE_ACCESS") {
-    d.setDate(d.getDate() + 1);
-  }
-  return d;
+function todayUtcDateString(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function isSameCalendarDate(a: Date, b: Date): boolean {
@@ -75,11 +83,11 @@ export default async function AdminStatutPage() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const forDate = new Date(`${todayUtcDateString()}T00:00:00.000Z`);
 
   const rows = await Promise.all(
     zones.map(async (zone) => {
       const signalType = zone.signalSource.signalType;
-      const forDate = forDateFor(signalType);
 
       const [logForTarget, latestLog] = await Promise.all([
         prisma.statusLog.findUnique({
@@ -111,7 +119,6 @@ export default async function AdminStatutPage() {
       return {
         zone,
         signalType,
-        forDate,
         freshness,
         defaultValue,
         defaultDetail,
@@ -123,52 +130,63 @@ export default async function AdminStatutPage() {
     <main className="flex flex-col gap-6">
       <h1 className="font-display text-2xl">Statut du jour</h1>
       <form action={saveStatus} className="flex flex-col gap-4">
-        <ul className="flex flex-col gap-4">
-          {rows.map(({ zone, signalType, freshness, defaultValue, defaultDetail }) => (
-            <li
-              key={zone.id}
-              className="flex flex-col gap-2 rounded-2xl border border-sable/45 bg-calcaire-deep p-4"
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="font-display text-lg">{zone.label}</span>
-                <span className="font-mono text-xs text-encre/70">
-                  {SIGNAL_TYPE_LABEL[signalType] ?? signalType}
-                </span>
-              </div>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {rows.map(
+            ({ zone, signalType, freshness, defaultValue, defaultDetail }) => (
+              <li
+                key={zone.id}
+                className="flex flex-col gap-2 rounded-2xl border border-sable/45 bg-calcaire-deep p-4"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="font-display text-lg">{zone.label}</span>
+                  <span className="font-mono text-xs text-encre/70">
+                    {SIGNAL_TYPE_LABEL[signalType] ?? signalType}
+                  </span>
+                </div>
 
-              <FreshnessPill freshness={freshness} />
+                <FreshnessPill freshness={freshness} />
 
-              <input type="hidden" name={`zone-${zone.id}-signalType`} value={signalType} />
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm text-encre/70">Niveau</span>
+                  <select
+                    name={`zone-${zone.id}-value`}
+                    defaultValue={defaultValue}
+                    className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                  >
+                    <option value="">— Non renseigné —</option>
+                    {(VALUE_OPTIONS[signalType] ?? []).map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label className="flex flex-col gap-1">
-                <span className="text-sm text-encre/70">Niveau</span>
-                <select
-                  name={`zone-${zone.id}-value`}
-                  defaultValue={defaultValue}
-                  className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
-                >
-                  <option value="">— Non renseigné —</option>
-                  {(VALUE_OPTIONS[signalType] ?? []).map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="text-sm text-encre/70">Détail</span>
-                <textarea
-                  name={`zone-${zone.id}-detail`}
-                  rows={2}
-                  defaultValue={defaultDetail}
-                  placeholder={zone.parseNotes}
-                  className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
-                />
-              </label>
-            </li>
-          ))}
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm text-encre/70">Détail</span>
+                  <textarea
+                    name={`zone-${zone.id}-detail`}
+                    rows={2}
+                    defaultValue={defaultDetail}
+                    placeholder={zone.parseNotes}
+                    className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                  />
+                </label>
+              </li>
+            ),
+          )}
         </ul>
+
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-encre/70">Date du statut</span>
+          <input
+            type="date"
+            name="forDate"
+            required
+            defaultValue={todayUtcDateString()}
+            className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+          />
+        </label>
 
         <button
           type="submit"

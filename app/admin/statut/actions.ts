@@ -3,16 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/corpus/db";
 
-function forDateFor(signalType: string): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  if (signalType === "FIRE_ACCESS") {
-    d.setDate(d.getDate() + 1);
-  }
-  return d;
-}
-
 export async function saveStatus(formData: FormData): Promise<void> {
+  const forDateInput = formData.get("forDate");
+  if (typeof forDateInput !== "string" || forDateInput.length === 0) {
+    throw new Error("forDate is required");
+  }
+  const forDate = new Date(`${forDateInput}T00:00:00.000Z`);
+
   const zoneIds = new Set<string>();
   for (const key of formData.keys()) {
     const match = key.match(/^zone-(.+)-value$/);
@@ -21,13 +18,9 @@ export async function saveStatus(formData: FormData): Promise<void> {
 
   for (const zoneId of zoneIds) {
     const value = formData.get(`zone-${zoneId}-value`);
-    const signalType = formData.get(`zone-${zoneId}-signalType`);
     const detail = formData.get(`zone-${zoneId}-detail`);
 
     if (typeof value !== "string" || value.length === 0) continue;
-    if (typeof signalType !== "string") continue;
-
-    const forDate = forDateFor(signalType);
 
     await prisma.statusLog.upsert({
       where: { signalZoneId_forDate: { signalZoneId: zoneId, forDate } },
@@ -52,4 +45,6 @@ export async function saveStatus(formData: FormData): Promise<void> {
       revalidatePath(`/places/${zp.place.slug}`, "page");
     }
   }
+
+  revalidatePath("/admin/statut", "page");
 }

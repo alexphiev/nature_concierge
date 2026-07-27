@@ -7,7 +7,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto flex max-w-[1100px] flex-col gap-8 px-4 py-8">
+    <div className="mx-auto flex w-full max-w-275 flex-col gap-8 px-4 py-8">
       <header className="flex flex-col gap-4 border-b border-sable/40 pb-5">
         <div className="flex items-baseline justify-between gap-4">
           <h1 className="font-display text-2xl">Admin</h1>
@@ -20,7 +20,7 @@ export default function AdminLayout({
         </div>
         <AdminNav />
       </header>
-      {children}
+      <div className="w-full min-w-0">{children}</div>
     </div>
   );
 }
