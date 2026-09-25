@@ -18,7 +18,7 @@ import { PlaceGallery } from "@/src/components/PlaceGallery";
 import { SpotCard } from "@/src/components/SpotCard";
 import { ExpandableText } from "@/src/components/ExpandableText";
 import { PracticalImages } from "@/src/components/PracticalImages";
-import { SITE_URL } from "@/src/site";
+import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
 import { placeTitle, placeDescription, buildPlaceJsonLd } from "@/src/seo/place-jsonld";
 import { nearbyPlaces } from "@/src/corpus/nearby";
 
@@ -49,10 +49,10 @@ export async function generateMetadata({
     description,
     alternates: { canonical: `/lieux/${slug}` },
     openGraph: {
+      ...BASE_OPEN_GRAPH,
       title,
       description,
       url: `/lieux/${slug}`,
-      type: "website",
     },
   };
 }
@@ -95,12 +95,10 @@ export default async function PlaceDetailPage({
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
   ].filter((item): item is string => Boolean(item));
 
-  const photoUrl = googleDetails?.photo ? `${SITE_URL}/lieux/${slug}/photo` : null;
   const jsonLd = buildPlaceJsonLd({
     place,
     parent,
     url: `${SITE_URL}/lieux/${slug}`,
-    photoUrl,
   });
 
   return (

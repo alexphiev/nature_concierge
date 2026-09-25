@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
-import { SITE_URL, SITE_NAME } from "@/src/site";
+import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",
@@ -28,11 +28,7 @@ export const metadata: Metadata = {
   },
   description:
     "Le guide local qui vous dit où aller en nature entre Marseille et Bandol — et où ne pas aller.",
-  openGraph: {
-    siteName: SITE_NAME,
-    locale: "fr_FR",
-    type: "website",
-  },
+  openGraph: BASE_OPEN_GRAPH,
   twitter: {
     card: "summary_large_image",
   },

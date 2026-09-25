@@ -4,13 +4,14 @@ import { getActivePlaces } from "@/src/corpus/queries";
 import { getGooglePlaceDetails } from "@/src/corpus/google-places";
 import { PlaceCard } from "@/src/components/PlaceCard";
 import { LiveStatusPill, StatusPillFallback } from "@/src/components/LiveStatus";
-import { SITE_URL } from "@/src/site";
+import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
 
 export const metadata: Metadata = {
   title: "Les lieux",
   description:
     "Calanques, plages, massifs et sentiers entre Marseille et Bandol, avec leur statut du jour.",
   alternates: { canonical: "/lieux" },
+  openGraph: { ...BASE_OPEN_GRAPH, url: "/lieux" },
 };
 
 export default async function PlacesIndexPage() {

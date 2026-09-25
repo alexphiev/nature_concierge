@@ -12,10 +12,11 @@ import {
   getCoverageCounts,
   getTodayStatusCounts,
 } from "@/src/corpus/queries";
-import { SITE_URL, SITE_NAME } from "@/src/site";
+import { SITE_URL, SITE_NAME, BASE_OPEN_GRAPH } from "@/src/site";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
+  openGraph: { ...BASE_OPEN_GRAPH, url: "/" },
 };
 
 const jsonLd = {
