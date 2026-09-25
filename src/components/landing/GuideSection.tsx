@@ -38,7 +38,7 @@ export function GuideSection({ cards, placeCount }: { cards: GuideCard[]; placeC
             {placesLabel(placeCount)} pour l’instant, et ça grandit avec vos suggestions.
           </p>
         </div>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 whitespace-nowrap [scrollbar-width:none] md:mx-0 md:flex-wrap md:justify-end md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
+        <div className="-my-1 -mr-[max(1rem,env(safe-area-inset-right))] -ml-[max(1rem,env(safe-area-inset-left))] flex gap-2 overflow-x-auto py-1 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] whitespace-nowrap [scrollbar-width:none] md:mx-0 md:flex-wrap md:justify-end md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
           {FILTERS.map((label, index) => {
             const active = index === 0;
             return (
@@ -46,7 +46,7 @@ export function GuideSection({ cards, placeCount }: { cards: GuideCard[]; placeC
                 key={label}
                 type="button"
                 aria-pressed={active}
-                className={`h-11 shrink-0 rounded-full border-[1.5px] px-4 text-[15px] md:px-4.5 ${
+                className={`h-[47px] shrink-0 rounded-full border-[1.5px] px-4 text-[15px] md:px-4.5 ${
                   active
                     ? "border-[#0E4B5A] bg-[#0E4B5A] font-semibold text-white"
                     : "border-[#C9BCA6] bg-[#FFFDF8] font-medium text-[#1D2A2E]"
@@ -59,7 +59,7 @@ export function GuideSection({ cards, placeCount }: { cards: GuideCard[]; placeC
         </div>
       </div>
 
-      <ul className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+      <ul role="list" className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-6 lg:grid-cols-4">
         {cards.map(({ place, photo }, index) => (
           <li key={place.id} className={index >= MOBILE_CARD_COUNT ? "hidden md:flex" : "flex"}>
             <Link
@@ -100,7 +100,7 @@ export function GuideSection({ cards, placeCount }: { cards: GuideCard[]; placeC
 
       <Link
         href="/lieux"
-        className={`mt-1 flex h-12.5 items-center justify-center gap-2 rounded-full border-[1.5px] border-[#C9BCA6] text-[16px] font-semibold text-[#1D2A2E] md:hidden ${FOCUS_RING}`}
+        className={`mt-1 flex h-[53px] items-center justify-center gap-2 rounded-full border-[1.5px] border-[#C9BCA6] text-[16px] font-semibold text-[#1D2A2E] md:hidden ${FOCUS_RING}`}
       >
         {placeCount > 1 ? `Voir les ${placeCount} lieux` : "Voir le lieu"}
         <ArrowIcon className="size-4.5" />

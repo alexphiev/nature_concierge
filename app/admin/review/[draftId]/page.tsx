@@ -23,7 +23,7 @@ import {
 } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Relecture — Admin — Guide Nature de La Ciotat",
+  title: "Relecture — Admin",
   robots: { index: false, follow: false },
 };
 

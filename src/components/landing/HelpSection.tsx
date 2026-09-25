@@ -58,7 +58,7 @@ export function HelpSection() {
           </a>
           <a
             href={SHARE_TIP_HREF}
-            className={`flex h-12.5 items-center justify-center gap-2 rounded-full border-[1.5px] border-[#A34A25] text-[16px] font-semibold text-[#A34A25] md:h-13 ${FOCUS_RING}`}
+            className={`flex h-[53px] items-center justify-center gap-2 rounded-full border-[1.5px] border-[#A34A25] text-[16px] font-semibold text-[#A34A25] md:h-[55px] ${FOCUS_RING}`}
           >
             <BulbIcon className="size-4.5" />
             Partager une astuce

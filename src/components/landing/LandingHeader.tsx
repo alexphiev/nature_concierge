@@ -5,8 +5,8 @@ import { ABOUT_HREF, ASK_HREF, CONTAINER, FOCUS_RING, PROPOSE_PLACE_HREF } from 
 
 export function LandingHeader() {
   return (
-    <header className="border-b border-[#E4DACA]">
-      <div className={`${CONTAINER} flex h-15 items-center justify-between md:h-20`}>
+    <header className="h-15 border-b border-[#E4DACA] md:h-20">
+      <div className={`${CONTAINER} flex h-full items-center justify-between`}>
         <Link
           href="/"
           className={`flex items-center gap-2 text-[#1D2A2E] md:gap-2.5 ${FOCUS_RING}`}

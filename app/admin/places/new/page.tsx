@@ -5,7 +5,7 @@ import { PlaceForm } from "../PlaceForm";
 import { createPlace } from "../actions";
 
 export const metadata: Metadata = {
-  title: "Nouveau lieu — Admin — Guide Nature de La Ciotat",
+  title: "Nouveau lieu — Admin",
   robots: { index: false, follow: false },
 };
 

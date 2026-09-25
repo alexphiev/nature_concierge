@@ -22,6 +22,7 @@ export const STORY_HREF = "#";
 export const COFFEE_HREF = "#";
 export const ACCESS_MAP_HREF = "#";
 
-export const CONTAINER = "mx-auto box-content max-w-[1200px] px-4 md:px-8";
+export const CONTAINER =
+  "mx-auto box-content max-w-[1200px] pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] md:pr-[max(2rem,env(safe-area-inset-right))] md:pl-[max(2rem,env(safe-area-inset-left))]";
 export const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0E4B5A]";

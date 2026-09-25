@@ -1,7 +1,11 @@
+import type { Viewport } from "next";
 import { Figtree, Fraunces } from "next/font/google";
 import { LandingHeader } from "@/src/components/landing/LandingHeader";
 import { LandingFooter } from "@/src/components/landing/LandingFooter";
 import { MobileStickyBar } from "@/src/components/landing/MobileStickyBar";
+
+// Without cover, env(safe-area-inset-*) is always 0 on notched phones.
+export const viewport: Viewport = { viewportFit: "cover" };
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
