@@ -10,7 +10,13 @@ const THEME_LABELS: Record<Claim["claimType"], string> = {
   DECODING: "Décryptage",
 };
 
-export function ClaimList({ claims }: { claims: Claim[] }) {
+export function ClaimList({
+  claims,
+  title = "Le conseil du guide",
+}: {
+  claims: Claim[];
+  title?: string;
+}) {
   if (claims.length === 0) return null;
 
   const grouped = new Map<Claim["claimType"], Claim[]>();
@@ -21,8 +27,8 @@ export function ClaimList({ claims }: { claims: Claim[] }) {
   }
 
   return (
-    <section aria-label="Le conseil du guide">
-      <h2 className="font-display text-2xl">Le conseil du guide</h2>
+    <section aria-label={title}>
+      <h2 className="font-display text-2xl">{title}</h2>
       <div className="mt-5 flex flex-col gap-6">
         {Array.from(grouped.entries()).map(([claimType, themeClaims]) => (
           <div key={claimType}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CommuneSuggestion } from "@/src/corpus/geo";
+import type { SignalZone } from "../../../prisma/generated/client";
 
 const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
 
@@ -12,6 +13,8 @@ export function PlaceLocationFields({
   defaultLat,
   defaultLng,
   defaultGooglePlaceId,
+  zones,
+  selectedZoneIds,
 }: {
   defaultName?: string;
   defaultCommune?: string;
@@ -19,6 +22,8 @@ export function PlaceLocationFields({
   defaultLat?: number;
   defaultLng?: number;
   defaultGooglePlaceId?: string | null;
+  zones: Pick<SignalZone, "id" | "label" | "departement">[];
+  selectedZoneIds: string[];
 }) {
   const [name, setName] = useState(defaultName ?? "");
   const [commune, setCommune] = useState(defaultCommune ?? "");
@@ -32,11 +37,11 @@ export function PlaceLocationFields({
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeError, setGeocodeError] = useState(false);
 
+  const canSuggest = commune.trim().length >= 2;
+  const departementZones = zones.filter((z) => z.departement === departement);
+
   useEffect(() => {
-    if (commune.trim().length < 2) {
-      setSuggestions([]);
-      return;
-    }
+    if (!canSuggest) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       fetch(`/api/geo/communes?q=${encodeURIComponent(commune)}`, { signal: controller.signal })
@@ -48,7 +53,7 @@ export function PlaceLocationFields({
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [commune]);
+  }, [commune, canSuggest]);
 
   function selectCommune(suggestion: CommuneSuggestion) {
     setCommune(suggestion.name);
@@ -104,18 +109,25 @@ export function PlaceLocationFields({
           value={commune}
           onChange={(e) => {
             setCommune(e.target.value);
+            setDepartement("");
             setShowSuggestions(true);
           }}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => {
             setTimeout(() => setShowSuggestions(false), 150);
+            if (!departement) {
+              const exact = suggestions.find(
+                (s) => s.name.toLowerCase() === commune.trim().toLowerCase(),
+              );
+              if (exact) selectCommune(exact);
+            }
             runGeocode();
           }}
           autoComplete="off"
           required
           className={inputClass}
         />
-        {showSuggestions && suggestions.length > 0 && (
+        {showSuggestions && canSuggest && suggestions.length > 0 && (
           <div
             ref={suggestionsRef}
             className="absolute top-full z-10 mt-1 w-full rounded-[10px] border border-sable/40 bg-calcaire-deep shadow-md"
@@ -184,6 +196,35 @@ export function PlaceLocationFields({
           className={inputClass}
         />
       </label>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm text-encre/70">
+          Zones de signal{departement ? ` (département ${departement})` : ""}
+        </legend>
+        {!departement ? (
+          <p className="text-sm text-encre/70">
+            Sélectionnez la commune dans la liste pour afficher ses zones.
+          </p>
+        ) : departementZones.length === 0 ? (
+          <p className="text-sm text-encre/70">Aucune zone active pour ce département.</p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {departementZones.map((zone) => (
+              <li key={zone.id}>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="zoneIds"
+                    value={zone.id}
+                    defaultChecked={selectedZoneIds.includes(zone.id)}
+                  />
+                  <span className="text-sm">{zone.label}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+      </fieldset>
     </>
   );
 }

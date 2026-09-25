@@ -17,6 +17,7 @@ export default async function AdminIngestPage() {
   await connection();
 
   const places = await getAllPlaces();
+  const nameById = new Map(places.map((p) => [p.id, p.name]));
   const sourceTypes = SourceTypeSchema.options;
 
   return (
@@ -34,7 +35,7 @@ export default async function AdminIngestPage() {
               <option value="">— choisir un lieu —</option>
               {places.map((place) => (
                 <option key={place.id} value={place.id}>
-                  {place.name} ({place.commune})
+                  {`${place.parentId ? `${nameById.get(place.parentId)} › ` : ""}${place.name} (${place.commune})`}
                 </option>
               ))}
             </select>

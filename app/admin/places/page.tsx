@@ -29,7 +29,10 @@ function PlaceStatusPill({ status }: { status: string }) {
 export default async function AdminPlacesPage() {
   await connection();
 
-  const places = await getAllPlaces();
+  const allPlaces = await getAllPlaces();
+  const places = allPlaces
+    .filter((p) => !p.parentId)
+    .flatMap((p) => [p, ...allPlaces.filter((c) => c.parentId === p.id)]);
 
   const claimCounts = await prisma.claim.groupBy({
     by: ["placeId"],
@@ -71,7 +74,8 @@ export default async function AdminPlacesPage() {
                   key={place.id}
                   className="border-b border-sable/20 last:border-b-0 hover:bg-calcaire/60"
                 >
-                  <td className="p-3">
+                  <td className={place.parentId ? "p-3 pl-8" : "p-3"}>
+                    {place.parentId && <span className="mr-1.5 text-encre/40">↳</span>}
                     <Link
                       href={`/admin/places/${place.id}`}
                       className="text-mediterranee underline hover:no-underline"

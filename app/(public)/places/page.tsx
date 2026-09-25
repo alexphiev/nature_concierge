@@ -10,7 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default async function PlacesIndexPage() {
-  const places = await getActivePlaces();
+  const activePlaces = await getActivePlaces();
+  const activeIds = new Set(activePlaces.map((p) => p.id));
+  // Spots are listed on their parent's page, unless the parent isn't public.
+  const places = activePlaces.filter((p) => !p.parentId || !activeIds.has(p.parentId));
 
   const cards = await Promise.all(
     places.map(async (place) => {

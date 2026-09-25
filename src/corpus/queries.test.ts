@@ -78,14 +78,22 @@ describe("getPlaceBySlug", () => {
 
     const result = await getPlaceBySlug("port-d-alon");
 
+    const publicClaims = {
+      where: { isPublic: true, status: "PUBLISHED" },
+      include: {
+        alternativePlace: { select: { slug: true, name: true } },
+      },
+    };
     expect(findFirstPlaceMock).toHaveBeenCalledWith({
       where: { slug: "port-d-alon", status: "ACTIVE" },
       include: {
-        claims: {
-          where: { isPublic: true, status: "PUBLISHED" },
-          include: {
-            alternativePlace: { select: { slug: true, name: true } },
-          },
+        claims: publicClaims,
+        parent: {
+          select: { id: true, slug: true, name: true, status: true, claims: publicClaims },
+        },
+        children: {
+          where: { status: "ACTIVE" },
+          orderBy: { demandRank: "asc" },
         },
       },
     });
@@ -217,6 +225,36 @@ describe("resolvePlaceStatus", () => {
 
     expect(result?.isOpen).toBe(false);
     expect(result?.restricted).toBe(false);
+  });
+
+  it("inherits the parent's zone when a spot has no zone of its own", async () => {
+    findFirstZonePlaceMock.mockImplementation(async ({ where }) =>
+      where.placeId === "parent-id"
+        ? { signalZone: { id: "zone-13", label: "CAP CANAILLE", signalSource: { provider: "Préfecture des Bouches-du-Rhône" } } }
+        : null,
+    );
+    findFirstPlaceMock.mockImplementation(async ({ select }) =>
+      select.parentId ? { parentId: "parent-id" } : { zapef: false },
+    );
+    findFirstStatusLogMock.mockResolvedValue({
+      value: "vert",
+      detail: null,
+      confirmedAt: new Date("2026-07-21T18:00:00Z"),
+    });
+
+    const result = await resolvePlaceStatus("spot-id");
+
+    expect(findFirstStatusLogMock.mock.calls[0][0].where.signalZoneId).toBe("zone-13");
+    expect(result?.zoneLabel).toBe("CAP CANAILLE");
+  });
+
+  it("returns null when neither the spot nor its parent has a zone", async () => {
+    findFirstZonePlaceMock.mockResolvedValue(null);
+    findFirstPlaceMock.mockResolvedValue({ parentId: "parent-id" });
+
+    const result = await resolvePlaceStatus("spot-id");
+
+    expect(result).toBeNull();
   });
 
   it("resolves extreme as closed regardless of zapef=true", async () => {

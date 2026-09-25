@@ -21,9 +21,20 @@ export async function getSignalZones(): Promise<SignalZone[]> {
   });
 }
 
+type PublicClaim = Claim & { alternativePlace: Pick<Place, "slug" | "name"> | null };
+
 export type PlaceWithPublicClaims = Place & {
-  claims: (Claim & { alternativePlace: Pick<Place, "slug" | "name"> | null })[];
+  claims: PublicClaim[];
+  parent: (Pick<Place, "id" | "slug" | "name" | "status"> & { claims: PublicClaim[] }) | null;
+  children: Place[];
 };
+
+const publicClaimsInclude = {
+  where: { isPublic: true, status: "PUBLISHED" },
+  include: {
+    alternativePlace: { select: { slug: true, name: true } },
+  },
+} as const;
 
 export async function getPlaceBySlug(
   slug: string,
@@ -31,14 +42,42 @@ export async function getPlaceBySlug(
   return prisma.place.findFirst({
     where: { slug, status: "ACTIVE" },
     include: {
-      claims: {
-        where: { isPublic: true, status: "PUBLISHED" },
-        include: {
-          alternativePlace: { select: { slug: true, name: true } },
-        },
+      claims: publicClaimsInclude,
+      parent: {
+        select: { id: true, slug: true, name: true, status: true, claims: publicClaimsInclude },
+      },
+      children: {
+        where: { status: "ACTIVE" },
+        orderBy: { demandRank: "asc" },
       },
     },
   }) as Promise<PlaceWithPublicClaims | null>;
+}
+
+const zonePlaceInclude = {
+  signalZone: {
+    include: { signalSource: { select: { provider: true } } },
+  },
+} as const;
+
+// Spots inherit their parent's signal zone unless they have one of their own.
+async function findZonePlace(placeId: string) {
+  const own = await prisma.zonePlace.findFirst({
+    where: { placeId },
+    include: zonePlaceInclude,
+  });
+  if (own) return own;
+
+  const place = await prisma.place.findFirst({
+    where: { id: placeId },
+    select: { parentId: true },
+  });
+  if (!place?.parentId) return null;
+
+  return prisma.zonePlace.findFirst({
+    where: { placeId: place.parentId },
+    include: zonePlaceInclude,
+  });
 }
 
 export type ResolvedStatus = {
@@ -55,14 +94,7 @@ export type ResolvedStatus = {
 export async function resolvePlaceStatus(
   placeId: string,
 ): Promise<ResolvedStatus> {
-  const zonePlace = await prisma.zonePlace.findFirst({
-    where: { placeId },
-    include: {
-      signalZone: {
-        include: { signalSource: { select: { provider: true } } },
-      },
-    },
-  });
+  const zonePlace = await findZonePlace(placeId);
 
   if (!zonePlace) return null;
 
@@ -160,10 +192,7 @@ export async function getCoverageCounts(): Promise<CoverageCounts> {
 }
 
 export async function getPlaceFreshness(placeId: string): Promise<Date> {
-  const zonePlace = await prisma.zonePlace.findFirst({
-    where: { placeId },
-    select: { signalZoneId: true },
-  });
+  const zonePlace = await findZonePlace(placeId);
 
   const [latestClaim, latestStatusLog] = await Promise.all([
     prisma.claim.findFirst({

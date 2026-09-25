@@ -11,14 +11,38 @@ export function PlaceForm({
   place,
   zones,
   selectedZoneIds,
+  parentOptions,
+  hasChildren = false,
 }: {
   action: (formData: FormData) => Promise<void>;
   place?: Place;
   zones: SignalZone[];
   selectedZoneIds?: Set<string>;
+  parentOptions: Pick<Place, "id" | "name" | "commune">[];
+  hasChildren?: boolean;
 }) {
   return (
     <form action={action} className="flex flex-col gap-4">
+      {hasChildren ? (
+        <p className="text-sm text-encre/70">
+          Ce lieu a des spots : il ne peut pas lui-même avoir de lieu parent.
+        </p>
+      ) : (
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-encre/70">
+            Lieu parent (optionnel — si c&apos;est un spot d&apos;un lieu plus large)
+          </span>
+          <select name="parentId" defaultValue={place?.parentId ?? ""} className={inputClass}>
+            <option value="">— aucun (lieu principal) —</option>
+            {parentOptions.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.commune})
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
       <PlaceLocationFields
         defaultName={place?.name}
         defaultCommune={place?.commune}
@@ -26,6 +50,8 @@ export function PlaceForm({
         defaultLat={place?.lat}
         defaultLng={place?.lng}
         defaultGooglePlaceId={place?.googlePlaceId}
+        zones={zones.map(({ id, label, departement }) => ({ id, label, departement }))}
+        selectedZoneIds={[...(selectedZoneIds ?? [])]}
       />
 
       <label className="flex flex-col gap-1">
@@ -99,29 +125,6 @@ export function PlaceForm({
         <input type="checkbox" name="zapef" defaultChecked={place?.zapef ?? false} />
         <span className="text-sm text-encre/70">ZAPEF (accessible même en rouge)</span>
       </label>
-
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm text-encre/70">Zones de signal</legend>
-        {zones.length === 0 ? (
-          <p className="text-sm text-encre/70">Aucune zone active.</p>
-        ) : (
-          <ul className="flex flex-col gap-1">
-            {zones.map((zone) => (
-              <li key={zone.id}>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="zoneIds"
-                    value={zone.id}
-                    defaultChecked={selectedZoneIds?.has(zone.id) ?? false}
-                  />
-                  <span className="text-sm">{zone.label}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-      </fieldset>
 
       <button
         type="submit"

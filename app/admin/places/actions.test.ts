@@ -1,19 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { createPlaceMock, updatePlaceMock, createManyZonePlaceMock, deleteManyZonePlaceMock, redirectMock } =
-  vi.hoisted(() => ({
-    createPlaceMock: vi.fn(),
-    updatePlaceMock: vi.fn(),
-    createManyZonePlaceMock: vi.fn(),
-    deleteManyZonePlaceMock: vi.fn(),
-    redirectMock: vi.fn(),
-  }));
+const {
+  createPlaceMock,
+  updatePlaceMock,
+  findUniqueOrThrowPlaceMock,
+  countPlaceMock,
+  createManyZonePlaceMock,
+  deleteManyZonePlaceMock,
+  redirectMock,
+} = vi.hoisted(() => ({
+  createPlaceMock: vi.fn(),
+  updatePlaceMock: vi.fn(),
+  findUniqueOrThrowPlaceMock: vi.fn(),
+  countPlaceMock: vi.fn(),
+  createManyZonePlaceMock: vi.fn(),
+  deleteManyZonePlaceMock: vi.fn(),
+  redirectMock: vi.fn(),
+}));
 
 vi.mock("@/src/corpus/db", () => ({
   prisma: {
     place: {
       create: createPlaceMock,
       update: updatePlaceMock,
+      findUniqueOrThrow: findUniqueOrThrowPlaceMock,
+      count: countPlaceMock,
     },
     zonePlace: {
       createMany: createManyZonePlaceMock,
@@ -45,6 +56,8 @@ function baseFormData(): FormData {
 beforeEach(() => {
   createPlaceMock.mockReset();
   updatePlaceMock.mockReset();
+  findUniqueOrThrowPlaceMock.mockReset();
+  countPlaceMock.mockReset();
   createManyZonePlaceMock.mockReset();
   deleteManyZonePlaceMock.mockReset();
   redirectMock.mockReset();
@@ -152,5 +165,58 @@ describe("updatePlace", () => {
 
     expect(deleteManyZonePlaceMock).toHaveBeenCalledWith({ where: { placeId: "place-1" } });
     expect(createManyZonePlaceMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("parent place (two levels max)", () => {
+  it("stores parentId when the parent is a top-level place", async () => {
+    createPlaceMock.mockResolvedValue({ id: "spot-1" });
+    findUniqueOrThrowPlaceMock.mockResolvedValue({ parentId: null });
+    const formData = baseFormData();
+    formData.set("parentId", "mugel");
+
+    await createPlace(formData);
+
+    expect(createPlaceMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ parentId: "mugel" }) }),
+    );
+  });
+
+  it("stores null parentId when left blank", async () => {
+    createPlaceMock.mockResolvedValue({ id: "place-1" });
+
+    await createPlace(baseFormData());
+
+    expect(findUniqueOrThrowPlaceMock).not.toHaveBeenCalled();
+    expect(createPlaceMock).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ parentId: null }) }),
+    );
+  });
+
+  it("rejects a parent that is itself a spot", async () => {
+    findUniqueOrThrowPlaceMock.mockResolvedValue({ parentId: "mugel" });
+    const formData = baseFormData();
+    formData.set("parentId", "anse-du-sec");
+
+    await expect(createPlace(formData)).rejects.toThrow("2 niveaux maximum");
+    expect(createPlaceMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a place as its own parent", async () => {
+    const formData = baseFormData();
+    formData.set("parentId", "place-1");
+
+    await expect(updatePlace("place-1", formData)).rejects.toThrow("son propre parent");
+    expect(updatePlaceMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects giving a parent to a place that already has spots", async () => {
+    findUniqueOrThrowPlaceMock.mockResolvedValue({ parentId: null });
+    countPlaceMock.mockResolvedValue(2);
+    const formData = baseFormData();
+    formData.set("parentId", "other-place");
+
+    await expect(updatePlace("place-1", formData)).rejects.toThrow("déjà des spots");
+    expect(updatePlaceMock).not.toHaveBeenCalled();
   });
 });

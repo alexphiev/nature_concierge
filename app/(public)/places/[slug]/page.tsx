@@ -11,6 +11,7 @@ import { StatusBlock } from "@/src/components/StatusBlock";
 import { ClaimList } from "@/src/components/ClaimList";
 import { WhatsAppCTA } from "@/src/components/WhatsAppCTA";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
+import { PlaceCard } from "@/src/components/PlaceCard";
 
 export const revalidate = 900;
 
@@ -46,9 +47,20 @@ export default async function PlaceDetailPage({
 
   if (!place) notFound();
 
-  const [status, googleDetails] = await Promise.all([
+  const parent = place.parent?.status === "ACTIVE" ? place.parent : null;
+
+  const [status, googleDetails, spotCards] = await Promise.all([
     resolvePlaceStatus(place.id),
     getGooglePlaceDetails(place.googlePlaceId),
+    Promise.all(
+      place.children.map(async (spot) => {
+        const [spotStatus, spotDetails] = await Promise.all([
+          resolvePlaceStatus(spot.id),
+          getGooglePlaceDetails(spot.googlePlaceId),
+        ]);
+        return { spot, status: spotStatus, photo: spotDetails?.photo ?? null };
+      }),
+    ),
   ]);
 
   const jsonLd = {
@@ -62,10 +74,9 @@ export default async function PlaceDetailPage({
           latitude: place.lat,
           longitude: place.lng,
         },
-        containedInPlace: {
-          "@type": "AdministrativeArea",
-          name: place.commune,
-        },
+        containedInPlace: parent
+          ? { "@type": "Place", name: parent.name }
+          : { "@type": "AdministrativeArea", name: place.commune },
       },
       place.claims.length > 0 && {
         "@type": "FAQPage",
@@ -92,6 +103,17 @@ export default async function PlaceDetailPage({
         <Link href="/places" className="underline decoration-dotted underline-offset-2">
           ← Les lieux
         </Link>
+        {parent && (
+          <>
+            {" / "}
+            <Link
+              href={`/places/${parent.slug}`}
+              className="underline decoration-dotted underline-offset-2"
+            >
+              {parent.name}
+            </Link>
+          </>
+        )}
       </p>
 
       <div className="mt-5 grid grid-cols-1 items-end gap-10 md:grid-cols-[1.15fr_0.85fr]">
@@ -152,13 +174,29 @@ export default async function PlaceDetailPage({
       </div>
 
       <div className="mt-14 grid grid-cols-1 gap-12 md:grid-cols-[1fr_320px]">
-        <ClaimList claims={place.claims} />
+        <div className="flex flex-col gap-12">
+          <ClaimList claims={place.claims} />
+          {parent && (
+            <ClaimList claims={parent.claims} title={`Valable pour tout ${parent.name}`} />
+          )}
+        </div>
 
         <aside>
           <WhatsAppCTA placeName={place.name} />
-          <AlternativeCallout claims={place.claims} />
+          <AlternativeCallout claims={[...place.claims, ...(parent?.claims ?? [])]} />
         </aside>
       </div>
+
+      {spotCards.length > 0 && (
+        <section aria-label={`Les spots de ${place.name}`} className="mt-16">
+          <h2 className="font-display text-2xl">Les spots de {place.name}</h2>
+          <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {spotCards.map(({ spot, status: spotStatus, photo }) => (
+              <PlaceCard key={spot.id} place={spot} status={spotStatus} photo={photo} />
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

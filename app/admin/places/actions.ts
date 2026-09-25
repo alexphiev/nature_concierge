@@ -29,12 +29,30 @@ function readPlaceFields(formData: FormData) {
     demandRank: Number(formData.get("demandRank") ?? 999),
     zapef: formData.get("zapef") === "on",
     status: String(formData.get("status") ?? "DRAFT"),
+    parentId: String(formData.get("parentId") ?? "") || null,
     zoneIds,
   };
 }
 
+async function assertValidParent(parentId: string | null, placeId?: string): Promise<void> {
+  if (!parentId) return;
+  if (parentId === placeId) throw new Error("Un lieu ne peut pas être son propre parent");
+
+  const parent = await prisma.place.findUniqueOrThrow({
+    where: { id: parentId },
+    select: { parentId: true },
+  });
+  if (parent.parentId) throw new Error("Le parent choisi est déjà un spot (2 niveaux maximum)");
+
+  if (placeId) {
+    const childCount = await prisma.place.count({ where: { parentId: placeId } });
+    if (childCount > 0) throw new Error("Ce lieu a déjà des spots : il ne peut pas avoir de parent");
+  }
+}
+
 export async function createPlace(formData: FormData): Promise<void> {
   const fields = readPlaceFields(formData);
+  await assertValidParent(fields.parentId);
   const place = await prisma.place.create({
     data: {
       name: fields.name,
@@ -51,6 +69,7 @@ export async function createPlace(formData: FormData): Promise<void> {
       demandRank: fields.demandRank,
       zapef: fields.zapef,
       status: fields.status as never,
+      parentId: fields.parentId,
     },
   });
 
@@ -65,6 +84,7 @@ export async function createPlace(formData: FormData): Promise<void> {
 
 export async function updatePlace(placeId: string, formData: FormData): Promise<void> {
   const fields = readPlaceFields(formData);
+  await assertValidParent(fields.parentId, placeId);
   await prisma.place.update({
     where: { id: placeId },
     data: {
@@ -82,6 +102,7 @@ export async function updatePlace(placeId: string, formData: FormData): Promise<
       demandRank: fields.demandRank,
       zapef: fields.zapef,
       status: fields.status as never,
+      parentId: fields.parentId,
     },
   });
 

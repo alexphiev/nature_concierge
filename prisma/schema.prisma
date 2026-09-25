@@ -28,12 +28,18 @@ model Place {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
+  // Two levels max: a place (e.g. Calanque du Mugel) and its spots (e.g. Anse du Sec).
+  parentId String?
+  parent   Place?  @relation("PlaceHierarchy", fields: [parentId], references: [id])
+  children Place[] @relation("PlaceHierarchy")
+
   claims          Claim[]          @relation("PlaceClaims")
   alternativeOf   Claim[]          @relation("AlternativePlace")
   zones           ZonePlace[]
   ingestionDrafts IngestionDraft[]
 
   @@index([status, demandRank])
+  @@index([parentId])
 }
 
 enum PlaceStatus {
@@ -140,6 +146,7 @@ model SignalZone {
   signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
 
   label       String
+  departement String
   externalRef String?
   parseNotes  String
   active      Boolean @default(true)

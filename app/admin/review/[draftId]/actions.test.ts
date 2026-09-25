@@ -52,6 +52,10 @@ vi.mock("@/src/corpus/block-extraction", () => ({
   transcribeImage: transcribeImageMock,
 }));
 
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 import { approveClaim, rejectClaim, retryExtraction, approveAllInBlock, rejectAllInBlock } from "./actions";
 
 const PLACE_ID = "place-1";

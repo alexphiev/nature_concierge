@@ -134,10 +134,12 @@ async function main() {
         create: {
           signalSourceId: dbSource.id,
           label: zone.label,
+          departement: zone.departement,
           externalRef: zone.externalRef,
           parseNotes: zone.parseNotes,
         },
         update: {
+          departement: zone.departement,
           externalRef: zone.externalRef,
           parseNotes: zone.parseNotes,
         },
