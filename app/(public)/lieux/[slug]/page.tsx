@@ -20,6 +20,12 @@ import { ExpandableText } from "@/src/components/ExpandableText";
 import { PracticalImages } from "@/src/components/PracticalImages";
 import { SITE_URL } from "@/src/site";
 import { placeTitle, placeDescription, buildPlaceJsonLd } from "@/src/seo/place-jsonld";
+import { nearbyPlaces } from "@/src/corpus/nearby";
+
+const kmFormatter = new Intl.NumberFormat("fr-FR", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 export async function generateStaticParams() {
   const places = await getActivePlaces();
@@ -66,7 +72,7 @@ export default async function PlaceDetailPage({
   const parent = place.parent?.status === "ACTIVE" ? place.parent : null;
   const typeLabel = TYPE_LABELS[place.type] ?? place.type;
 
-  const [googleDetails, spotCards] = await Promise.all([
+  const [googleDetails, spotCards, activePlaces] = await Promise.all([
     getGooglePlaceDetails(place.googlePlaceId),
     Promise.all(
       place.children.map(async (spot) => {
@@ -74,7 +80,10 @@ export default async function PlaceDetailPage({
         return { spot, photo: spotDetails?.photo ?? null };
       }),
     ),
+    getActivePlaces(),
   ]);
+
+  const nearby = nearbyPlaces(place, activePlaces);
 
   const mapsUrl = googleMapsUrl(`${place.name}, ${place.commune}`, place.googlePlaceId);
   const galleryTiles = spotCards
@@ -211,6 +220,27 @@ export default async function PlaceDetailPage({
                       </Suspense>
                     }
                   />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {nearby.length > 0 && (
+            <section aria-label="À proximité" className="flex flex-col gap-5">
+              <h2 className={SECTION_TITLE}>À proximité</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {nearby.map(({ place: nearbyPlace, km }) => (
+                  <Link
+                    key={nearbyPlace.id}
+                    href={`/lieux/${nearbyPlace.slug}`}
+                    className="flex flex-col gap-1 rounded-[14px] border border-sable/50 p-3 transition-colors hover:border-mediterranee focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                  >
+                    <span className="leading-snug font-semibold">{nearbyPlace.name}</span>
+                    <span className="text-[0.8125rem] text-encre/70">
+                      {TYPE_LABELS[nearbyPlace.type] ?? nearbyPlace.type} · {nearbyPlace.commune} ·
+                      à {kmFormatter.format(km)} km
+                    </span>
+                  </Link>
                 ))}
               </div>
             </section>
