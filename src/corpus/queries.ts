@@ -6,7 +6,7 @@ import type { Place, Claim, SignalZone, PlaceImage } from "../../prisma/generate
 export async function getActivePlaces(): Promise<Place[]> {
   "use cache";
   cacheTag("corpus");
-  cacheLife("max");
+  cacheLife("corpus");
   return prisma.place.findMany({
     where: { status: "ACTIVE" },
     orderBy: { demandRank: "asc" },
@@ -57,7 +57,7 @@ export async function getPlaceBySlug(
 ): Promise<PlaceWithPublicClaims | null> {
   "use cache";
   cacheTag("corpus");
-  cacheLife("max");
+  cacheLife("corpus");
   return prisma.place.findFirst({
     where: { slug, status: "ACTIVE" },
     include: {
@@ -205,7 +205,7 @@ export type CoverageCounts = {
 export async function getCoverageCounts(): Promise<CoverageCounts> {
   "use cache";
   cacheTag("corpus");
-  cacheLife("max");
+  cacheLife("corpus");
   const [placeCount, claimCount] = await Promise.all([
     prisma.place.count({ where: { status: "ACTIVE" } }),
     prisma.claim.count({ where: { isPublic: true, status: "PUBLISHED" } }),

@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  cacheLife: {
+    corpus: {
+      stale: 300,
+      revalidate: 3600,
+      expire: 2592000,
+    },
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",

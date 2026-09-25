@@ -83,7 +83,7 @@ describe("getActivePlaces", () => {
     await getActivePlaces();
 
     expect(cacheTagMock).toHaveBeenCalledWith("corpus");
-    expect(cacheLifeMock).toHaveBeenCalledWith("max");
+    expect(cacheLifeMock).toHaveBeenCalledWith("corpus");
   });
 });
 
