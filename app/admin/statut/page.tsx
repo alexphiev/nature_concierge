@@ -34,14 +34,6 @@ const SIGNAL_TYPE_LABEL: Record<string, string> = {
   AIR_QUALITY: "Qualité de l'air",
 };
 
-function isSameCalendarDate(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
 type Freshness = "confirmed" | "carried" | "unchecked";
 
 const FRESHNESS_LABEL: Record<Freshness, string> = {
@@ -99,7 +91,7 @@ export default async function AdminStatutPage() {
       let defaultValue = "";
       let defaultDetail = "";
 
-      if (logForTarget && isSameCalendarDate(logForTarget.confirmedAt, today)) {
+      if (logForTarget && parisDateString(logForTarget.confirmedAt) === parisDateString(today)) {
         freshness = "confirmed";
         defaultValue = logForTarget.value;
         defaultDetail = logForTarget.detail ?? zone.parseNotes;
