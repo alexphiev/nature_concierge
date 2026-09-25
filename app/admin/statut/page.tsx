@@ -151,7 +151,7 @@ export default async function AdminStatutPage() {
                   <select
                     name={`zone-${zone.id}-value`}
                     defaultValue={defaultValue}
-                    className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                    className="w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
                   >
                     <option value="">— Non renseigné —</option>
                     {(VALUE_OPTIONS[signalType] ?? []).map((value) => (
@@ -169,7 +169,7 @@ export default async function AdminStatutPage() {
                     rows={2}
                     defaultValue={defaultDetail}
                     placeholder={zone.parseNotes}
-                    className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                    className="w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
                   />
                 </label>
               </li>
@@ -184,7 +184,7 @@ export default async function AdminStatutPage() {
             name="forDate"
             required
             defaultValue={todayUtcDateString()}
-            className="rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+            className="w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
           />
         </label>
 

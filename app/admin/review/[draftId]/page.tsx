@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
+const inputClass = "w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
 const cardClass = "rounded-[10px] border border-sable/40 p-4";
 
 type DraftClaim = {

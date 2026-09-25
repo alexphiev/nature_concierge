@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const inputClass =
-  "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee";
+  "w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee";
 
 export function BlockList({ sourceTypes }: { sourceTypes: readonly string[] }) {
   const [blockKeys, setBlockKeys] = useState<number[]>([0]);

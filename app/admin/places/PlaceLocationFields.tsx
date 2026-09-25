@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CommuneSuggestion } from "@/src/corpus/geo";
 import type { SignalZone } from "../../../prisma/generated/client";
 
-const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
+const inputClass = "w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
 
 export function PlaceLocationFields({
   defaultName,
@@ -149,7 +149,7 @@ export function PlaceLocationFields({
       <input type="hidden" name="departement" value={departement} />
 
       <div className="flex gap-4">
-        <label className="flex flex-1 flex-col gap-1">
+        <label className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-sm text-encre/70">Latitude</span>
           <input
             type="number"
@@ -162,7 +162,7 @@ export function PlaceLocationFields({
           />
         </label>
 
-        <label className="flex flex-1 flex-col gap-1">
+        <label className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-sm text-encre/70">Longitude</span>
           <input
             type="number"

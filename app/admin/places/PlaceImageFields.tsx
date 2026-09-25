@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
+const inputClass = "min-w-0 rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
 
 export function PlaceImageFields({ defaultUrls }: { defaultUrls: string[] }) {
   const [urls, setUrls] = useState(defaultUrls.length > 0 ? defaultUrls : [""]);

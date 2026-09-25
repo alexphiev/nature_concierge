@@ -61,10 +61,10 @@ export default async function AdminPlacesPage() {
             <thead>
               <tr className="border-b border-sable/40 text-left font-mono text-xs tracking-wide text-encre/70 uppercase">
                 <th className="p-3">Nom</th>
-                <th className="p-3">Commune</th>
-                <th className="p-3">Département</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">Rang</th>
+                <th className="hidden p-3 sm:table-cell">Commune</th>
+                <th className="hidden p-3 sm:table-cell">Département</th>
+                <th className="hidden p-3 sm:table-cell">Statut</th>
+                <th className="hidden p-3 sm:table-cell">Rang</th>
                 <th className="p-3">Claims publiés</th>
               </tr>
             </thead>
@@ -83,12 +83,12 @@ export default async function AdminPlacesPage() {
                       {place.name}
                     </Link>
                   </td>
-                  <td className="p-3">{place.commune}</td>
-                  <td className="p-3">{place.departement}</td>
-                  <td className="p-3">
+                  <td className="hidden p-3 sm:table-cell">{place.commune}</td>
+                  <td className="hidden p-3 sm:table-cell">{place.departement}</td>
+                  <td className="hidden p-3 sm:table-cell">
                     <PlaceStatusPill status={place.status} />
                   </td>
-                  <td className="p-3">{place.demandRank}</td>
+                  <td className="hidden p-3 sm:table-cell">{place.demandRank}</td>
                   <td className="p-3">{claimCountByPlaceId.get(place.id) ?? 0}</td>
                 </tr>
               ))}

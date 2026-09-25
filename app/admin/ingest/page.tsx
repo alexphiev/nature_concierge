@@ -11,13 +11,12 @@ export const metadata: Metadata = {
 };
 
 const inputClass =
-  "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee";
+  "w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee";
 
 export default async function AdminIngestPage() {
   await connection();
 
   const places = await getAllPlaces();
-  const nameById = new Map(places.map((p) => [p.id, p.name]));
   const sourceTypes = SourceTypeSchema.options;
 
   return (
@@ -30,12 +29,12 @@ export default async function AdminIngestPage() {
       >
         <label className="flex flex-col gap-1">
           <span className="text-sm text-encre/70">Lieu</span>
-          <div className="flex items-center gap-3">
-            <select name="placeId" required className={inputClass}>
+          <div className="flex flex-wrap items-center gap-3">
+            <select name="placeId" required className={`${inputClass} w-full min-w-0 sm:w-auto sm:flex-1`}>
               <option value="">— choisir un lieu —</option>
               {places.map((place) => (
                 <option key={place.id} value={place.id}>
-                  {`${place.parentId ? `${nameById.get(place.parentId)} › ` : ""}${place.name} (${place.commune})`}
+                  {place.name}
                 </option>
               ))}
             </select>

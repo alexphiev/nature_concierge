@@ -5,7 +5,7 @@ import { PlaceImageFields } from "./PlaceImageFields";
 const PLACE_TYPES = ["CALANQUE", "PLAGE", "MASSIF", "SENTIER", "SOMMET", "SITE", "ISLAND", "SCENIC_ROAD"] as const;
 const PLACE_STATUSES = ["DRAFT", "ACTIVE", "RETIRED"] as const;
 
-const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
+const inputClass = "w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
 
 export function PlaceForm({
   action,
