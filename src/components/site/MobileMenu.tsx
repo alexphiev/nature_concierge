@@ -1,33 +1,47 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { Suspense, useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChatIcon, CloseIcon, MenuIcon } from "../landing/icons";
-import { ABOUT_HREF, ASK_HREF, CONTAINER, FOCUS_RING, PROPOSE_PLACE_HREF } from "../landing/shared";
+import {
+  ABOUT_HREF,
+  ACTIVE_LINK,
+  ASK_HREF,
+  CONTAINER,
+  FOCUS_RING,
+  GUIDE_HREF,
+  PROPOSE_PLACE_HREF,
+} from "../landing/shared";
 
-const GUIDE_HREF = "/lieux";
-const ACTIVE = "text-[#0E4B5A] underline decoration-2 underline-offset-8";
 const PANEL_ROW = `flex min-h-13 items-center ${FOCUS_RING}`;
 
-export function SiteNav() {
-  return <SiteNavView pathname={usePathname()} />;
+// usePathname suspends while prerendering: isolating it behind its own Suspense
+// keeps the menu button and panel in the static shell, rendered once.
+function CloseOnRouteChange({ onChange }: { onChange: () => void }) {
+  const pathname = usePathname();
+  const onRouteChange = useEffectEvent(onChange);
+  useEffect(() => {
+    onRouteChange();
+  }, [pathname]);
+  return null;
 }
 
-export function SiteNavView({ pathname }: { pathname: string }) {
-  // Remembering the pathname the menu was opened on closes it on route change.
-  const [openedOn, setOpenedOn] = useState<string | null>(null);
-  const open = openedOn === pathname;
+export function MobileMenu({ guideActive }: { guideActive: boolean }) {
+  const [open, setOpen] = useState(false);
   const panelId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const guideActive = pathname === GUIDE_HREF || pathname.startsWith(`${GUIDE_HREF}/`);
-  const close = () => setOpenedOn(null);
+
+  function close() {
+    setOpen(false);
+    buttonRef.current?.focus();
+  }
 
   useEffect(() => {
     if (!open) return;
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      setOpenedOn(null);
+      setOpen(false);
       buttonRef.current?.focus();
     }
     document.addEventListener("keydown", onKeyDown);
@@ -35,34 +49,17 @@ export function SiteNavView({ pathname }: { pathname: string }) {
   }, [open]);
 
   return (
-    <nav className="flex items-center gap-8 text-[16px] font-medium">
-      <Link
-        href={GUIDE_HREF}
-        aria-current={guideActive ? "page" : undefined}
-        className={`hidden md:block ${guideActive ? ACTIVE : "text-[#1D2A2E]"} ${FOCUS_RING}`}
-      >
-        Le guide
-      </Link>
-      <a href={PROPOSE_PLACE_HREF} className={`hidden text-[#1D2A2E] lg:block ${FOCUS_RING}`}>
-        Proposer un lieu
-      </a>
-      <a href={ABOUT_HREF} className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
-        À propos
-      </a>
-      <a
-        href={ASK_HREF}
-        className={`hidden h-11 items-center gap-2 rounded-full bg-[#0E4B5A] px-4.5 font-semibold text-white md:flex ${FOCUS_RING}`}
-      >
-        <ChatIcon className="size-4.5" />
-        WhatsApp
-      </a>
+    <>
+      <Suspense>
+        <CloseOnRouteChange onChange={() => setOpen(false)} />
+      </Suspense>
       <button
         ref={buttonRef}
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={open ? "Fermer le menu" : "Menu"}
-        onClick={() => setOpenedOn(open ? null : pathname)}
+        onClick={() => setOpen(!open)}
         className={`-mr-2.5 flex size-11 items-center justify-center text-[#1D2A2E] md:hidden ${FOCUS_RING}`}
       >
         {open ? <CloseIcon className="size-6" /> : <MenuIcon className="size-6" />}
@@ -79,7 +76,7 @@ export function SiteNavView({ pathname }: { pathname: string }) {
                 href={GUIDE_HREF}
                 onClick={close}
                 aria-current={guideActive ? "page" : undefined}
-                className={`${PANEL_ROW} ${guideActive ? ACTIVE : "text-[#1D2A2E]"}`}
+                className={`${PANEL_ROW} ${guideActive ? ACTIVE_LINK : "text-[#1D2A2E]"}`}
               >
                 Le guide
               </Link>
@@ -105,6 +102,6 @@ export function SiteNavView({ pathname }: { pathname: string }) {
           </a>
         </div>
       </div>
-    </nav>
+    </>
   );
 }

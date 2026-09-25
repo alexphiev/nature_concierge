@@ -9,7 +9,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className={`${fraunces.variable} ${figtree.variable} flex flex-1 flex-col`}>
-      <SiteHeader />
+      <SiteHeader guideActive />
       {children}
       <SiteFooter />
     </div>
