@@ -32,6 +32,8 @@
   --font-display: var(--font-bricolage-grotesque), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-public-sans);
   --font-mono: var(--font-ibm-plex-mono);
+  --font-landing-display: var(--font-fraunces), Georgia, serif;
+  --font-landing-body: var(--font-figtree), system-ui, sans-serif;
 }
 
 body {
