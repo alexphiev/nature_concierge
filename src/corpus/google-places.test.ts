@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { fetchMock } = vi.hoisted(() => ({ fetchMock: vi.fn() }));
+const { fetchMock, cacheLifeMock } = vi.hoisted(() => ({ fetchMock: vi.fn(), cacheLifeMock: vi.fn() }));
 
 vi.stubGlobal("fetch", fetchMock);
 
-vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
+vi.mock("next/cache", () => ({ cacheLife: cacheLifeMock }));
 
 import { getGooglePlaceDetails, getGooglePlacePhoto, googleMapsUrl } from "./google-places";
 
 beforeEach(() => {
   fetchMock.mockReset();
+  cacheLifeMock.mockReset();
   vi.stubEnv("GOOGLE_PLACES_API_KEY", "test-key-123");
 });
 
@@ -221,6 +222,58 @@ describe("getGooglePlacePhoto", () => {
     mockDetailsWithPhotos(["a"]);
 
     expect(await getGooglePlacePhoto("ChIJexample123", 3)).toBeNull();
+  });
+});
+
+describe("cache lifetimes", () => {
+  it("caches successful Details and media lookups for weeks", async () => {
+    mockDetailsWithPhotos(["a"]);
+
+    await getGooglePlaceDetails("ChIJexample123");
+
+    expect(cacheLifeMock).toHaveBeenCalledTimes(2);
+    expect(cacheLifeMock).toHaveBeenNthCalledWith(1, "weeks");
+    expect(cacheLifeMock).toHaveBeenNthCalledWith(2, "weeks");
+  });
+
+  it("caches a thrown Details fetch only for minutes", async () => {
+    fetchMock.mockRejectedValue(new Error("network down"));
+
+    await getGooglePlaceDetails("ChIJexample123");
+
+    expect(cacheLifeMock).toHaveBeenCalledTimes(1);
+    expect(cacheLifeMock).toHaveBeenCalledWith("minutes");
+  });
+
+  it("caches a non-ok Details response only for minutes", async () => {
+    fetchMock.mockResolvedValue({ ok: false, json: async () => ({}) });
+
+    await getGooglePlaceDetails("ChIJexample123");
+
+    expect(cacheLifeMock).toHaveBeenCalledTimes(1);
+    expect(cacheLifeMock).toHaveBeenCalledWith("minutes");
+  });
+
+  it.each([
+    ["throws", () => Promise.reject(new Error("network down"))],
+    ["is not ok", () => Promise.resolve({ ok: false, json: async () => ({}) })],
+    ["has no photoUri", () => Promise.resolve({ ok: true, json: async () => ({}) })],
+  ])("caches the media lookup only for minutes when it %s", async (_label, mediaResult) => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (!url.includes("/media")) {
+        return {
+          ok: true,
+          json: async () => ({ photos: [{ name: "places/ChIJexample123/photos/abc123" }] }),
+        };
+      }
+      return mediaResult();
+    });
+
+    await getGooglePlacePhoto("ChIJexample123", 0);
+
+    expect(cacheLifeMock).toHaveBeenCalledTimes(2);
+    expect(cacheLifeMock).toHaveBeenNthCalledWith(1, "weeks");
+    expect(cacheLifeMock).toHaveBeenNthCalledWith(2, "minutes");
   });
 });
 
