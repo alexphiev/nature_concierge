@@ -6,7 +6,7 @@ import {
   getPlaceBySlug,
   resolvePlaceStatus,
 } from "@/src/corpus/queries";
-import { getGooglePlaceDetails } from "@/src/corpus/google-places";
+import { getGooglePlaceDetails, googleMapsUrl } from "@/src/corpus/google-places";
 import { formatZoneLabel } from "@/src/corpus/status-presentation";
 import { StatusBlock, StatusPill } from "@/src/components/StatusBlock";
 import { ClaimList } from "@/src/components/ClaimList";
@@ -42,7 +42,6 @@ export async function generateMetadata({
   };
 }
 
-
 const SECTION_TITLE = "font-display text-[1.625rem] leading-tight font-semibold";
 
 export default async function PlaceDetailPage({
@@ -72,7 +71,7 @@ export default async function PlaceDetailPage({
     ),
   ]);
 
-  const googleMapsUri = googleDetails?.googleMapsUri ?? null;
+  const mapsUrl = googleMapsUrl(`${place.name}, ${place.commune}`, place.googlePlaceId);
   const galleryTiles = spotCards
     .filter(({ photo }) => photo)
     .map(({ spot }) => ({ slug: spot.slug, name: spot.name }));
@@ -161,28 +160,26 @@ export default async function PlaceDetailPage({
             ))}
           </div>
         </div>
-        {googleMapsUri && (
-          <a
-            href={googleMapsUri}
-            className="inline-flex items-center gap-2 self-start rounded-[10px] border border-sable/70 px-4 py-2.5 text-sm font-medium whitespace-nowrap text-encre transition-colors hover:border-mediterranee hover:text-mediterranee md:self-auto"
+        <a
+          href={mapsUrl}
+          className="inline-flex items-center gap-2 self-start rounded-[10px] border border-sable/70 px-4 py-2.5 text-sm font-medium whitespace-nowrap text-encre transition-colors hover:border-mediterranee hover:text-mediterranee md:self-auto"
+        >
+          <svg
+            aria-hidden
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              aria-hidden
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
-              <circle cx="12" cy="9.5" r="2.5" />
-            </svg>
-            Itinéraire Google Maps
-          </a>
-        )}
+            <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
+            <circle cx="12" cy="9.5" r="2.5" />
+          </svg>
+          Itinéraire Google Maps
+        </a>
       </header>
 
       <div className="mt-7">
@@ -190,6 +187,7 @@ export default async function PlaceDetailPage({
           slug={place.slug}
           typeLabel={typeLabel}
           photo={googleDetails?.photo ?? null}
+          photoAttributions={googleDetails?.photoAttributions ?? []}
           tiles={galleryTiles}
         />
       </div>
@@ -231,20 +229,16 @@ export default async function PlaceDetailPage({
             <div className="hidden border-t border-sable/45 pt-5 md:block">
               <WhatsAppCTA placeName={place.name} />
             </div>
-            {(place.officialInfoUrl || googleMapsUri) && (
-              <div className="flex justify-center gap-5 text-sm">
-                {place.officialInfoUrl && (
-                  <a href={place.officialInfoUrl} className="text-mediterranee underline underline-offset-2">
-                    Carte officielle ↗
-                  </a>
-                )}
-                {googleMapsUri && (
-                  <a href={googleMapsUri} className="text-mediterranee underline underline-offset-2">
-                    Google Maps ↗
-                  </a>
-                )}
-              </div>
-            )}
+            <div className="flex justify-center gap-5 text-sm">
+              {place.officialInfoUrl && (
+                <a href={place.officialInfoUrl} className="text-mediterranee underline underline-offset-2">
+                  Carte officielle ↗
+                </a>
+              )}
+              <a href={mapsUrl} className="text-mediterranee underline underline-offset-2">
+                Google Maps ↗
+              </a>
+            </div>
           </div>
           <AlternativeCallout claims={[...place.claims, ...(parent?.claims ?? [])]} />
         </aside>

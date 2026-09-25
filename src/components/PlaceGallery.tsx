@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { GooglePlacePhoto } from "../corpus/google-places";
+import { PhotoCarousel } from "./PhotoCarousel";
 
 const STRIPES =
   "repeating-linear-gradient(135deg, transparent, transparent 14px, color-mix(in srgb, var(--pin) 7%, transparent) 14px, color-mix(in srgb, var(--pin) 7%, transparent) 15px)";
@@ -18,11 +19,13 @@ export function PlaceGallery({
   slug,
   typeLabel,
   photo,
+  photoAttributions,
   tiles,
 }: {
   slug: string;
   typeLabel: string;
   photo: GooglePlacePhoto | null;
+  photoAttributions: (string | null)[];
   tiles: GalleryTile[];
 }) {
   const side = tiles.length >= 4 ? tiles.slice(0, 4) : tiles.length >= 2 ? tiles.slice(0, 2) : tiles;
@@ -34,7 +37,9 @@ export function PlaceGallery({
         className={`relative flex aspect-[4/3] items-end bg-calcaire-deep p-4 md:aspect-auto ${layout.main}`}
         style={photo ? undefined : { backgroundImage: STRIPES }}
       >
-        {photo ? (
+        {photo && photoAttributions.length > 1 ? (
+          <PhotoCarousel slug={slug} attributions={photoAttributions} />
+        ) : photo ? (
           <>
             <img
               src={`/places/${slug}/photo`}

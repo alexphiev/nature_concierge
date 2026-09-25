@@ -4,7 +4,7 @@ const { fetchMock } = vi.hoisted(() => ({ fetchMock: vi.fn() }));
 
 vi.stubGlobal("fetch", fetchMock);
 
-import { getGooglePlaceDetails } from "./google-places";
+import { getGooglePlaceDetails, getGooglePlacePhoto, googleMapsUrl } from "./google-places";
 
 beforeEach(() => {
   fetchMock.mockReset();
@@ -22,7 +22,7 @@ describe("getGooglePlaceDetails", () => {
   it("calls Place Details (New) with the correct URL, headers, and cache revalidate window", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ photos: [], googleMapsUri: "https://maps.google.com/?cid=123" }),
+      json: async () => ({ photos: [] }),
     });
 
     await getGooglePlaceDetails("ChIJexample123");
@@ -32,22 +32,22 @@ describe("getGooglePlaceDetails", () => {
       expect.objectContaining({
         headers: expect.objectContaining({
           "X-Goog-Api-Key": "test-key-123",
-          "X-Goog-FieldMask": "photos,googleMapsUri",
+          "X-Goog-FieldMask": "photos",
         }),
         next: { revalidate: 604800 },
       }),
     );
   });
 
-  it("returns googleMapsUri and a null photo when photos is empty", async () => {
+  it("returns a null photo and no attributions when photos is empty", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({ photos: [], googleMapsUri: "https://maps.google.com/?cid=123" }),
+      json: async () => ({ photos: [] }),
     });
 
     const result = await getGooglePlaceDetails("ChIJexample123");
 
-    expect(result).toEqual({ photo: null, googleMapsUri: "https://maps.google.com/?cid=123" });
+    expect(result).toEqual({ photo: null, photoAttributions: [] });
   });
 
   it("calls the media endpoint with skipHttpRedirect=true and returns the public photoUri, not a key-bearing URL", async () => {
@@ -64,7 +64,6 @@ describe("getGooglePlaceDetails", () => {
                 authorAttributions: [{ displayName: "Jean D." }],
               },
             ],
-            googleMapsUri: "https://maps.google.com/?cid=123",
           }),
         };
       }
@@ -102,7 +101,6 @@ describe("getGooglePlaceDetails", () => {
                 authorAttributions: [],
               },
             ],
-            googleMapsUri: null,
           }),
         };
       }
@@ -142,7 +140,6 @@ describe("getGooglePlaceDetails", () => {
           ok: true,
           json: async () => ({
             photos: [{ name: "places/ChIJexample123/photos/abc123" }],
-            googleMapsUri: null,
           }),
         };
       }
@@ -161,7 +158,6 @@ describe("getGooglePlaceDetails", () => {
           ok: true,
           json: async () => ({
             photos: [{ name: "places/ChIJexample123/photos/abc123" }],
-            googleMapsUri: null,
           }),
         };
       }
@@ -171,5 +167,73 @@ describe("getGooglePlaceDetails", () => {
     const result = await getGooglePlaceDetails("ChIJexample123");
 
     expect(result?.photo).toBeNull();
+  });
+});
+
+function mockDetailsWithPhotos(names: string[]) {
+  fetchMock.mockImplementation(async (url: string) => {
+    if (!url.includes("/media")) {
+      return {
+        ok: true,
+        json: async () => ({
+          photos: names.map((name, i) => ({
+            name: `places/ChIJexample123/photos/${name}`,
+            authorAttributions: i === 0 ? [{ displayName: "Jean D." }] : [],
+          })),
+        }),
+      };
+    }
+    const photoName = url.split("/photos/")[1].split("/media")[0];
+    return { ok: true, json: async () => ({ photoUri: `https://lh3.googleusercontent.com/${photoName}` }) };
+  });
+}
+
+describe("getGooglePlaceDetails photoAttributions", () => {
+  it("lists one attribution per photo while resolving only the first photo's media", async () => {
+    mockDetailsWithPhotos(["a", "b", "c"]);
+
+    const result = await getGooglePlaceDetails("ChIJexample123");
+
+    expect(result?.photoAttributions).toEqual(["Jean D.", null, null]);
+    const mediaCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes("/media"));
+    expect(mediaCalls).toHaveLength(1);
+  });
+});
+
+describe("getGooglePlacePhoto", () => {
+  it("returns null without calling fetch when googlePlaceId is null", async () => {
+    expect(await getGooglePlacePhoto(null, 0)).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("resolves only the photo at the requested index", async () => {
+    mockDetailsWithPhotos(["a", "b", "c"]);
+
+    const result = await getGooglePlacePhoto("ChIJexample123", 2);
+
+    expect(result).toEqual({ photoUri: "https://lh3.googleusercontent.com/c", attribution: null });
+    const mediaCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes("/media"));
+    expect(mediaCalls).toHaveLength(1);
+    expect(String(mediaCalls[0][0])).toContain("/photos/c/media");
+  });
+
+  it("returns null when the index is past the last photo", async () => {
+    mockDetailsWithPhotos(["a"]);
+
+    expect(await getGooglePlacePhoto("ChIJexample123", 3)).toBeNull();
+  });
+});
+
+describe("googleMapsUrl", () => {
+  it("targets the exact place when a googlePlaceId is known", () => {
+    expect(googleMapsUrl("Calanque du Mugel, La Ciotat", "ChIJabc")).toBe(
+      "https://www.google.com/maps/search/?api=1&query=Calanque+du+Mugel%2C+La+Ciotat&query_place_id=ChIJabc",
+    );
+  });
+
+  it("falls back to a text search without a googlePlaceId", () => {
+    expect(googleMapsUrl("Port d'Alon, Saint-Cyr-sur-Mer", null)).toBe(
+      "https://www.google.com/maps/search/?api=1&query=Port+d%27Alon%2C+Saint-Cyr-sur-Mer",
+    );
   });
 });

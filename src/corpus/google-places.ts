@@ -8,36 +8,41 @@ export type GooglePlacePhoto = {
 
 export type GooglePlaceDetails = {
   photo: GooglePlacePhoto | null;
-  googleMapsUri: string | null;
+  // One entry per photo Google returns (up to 10), read from the Details
+  // response itself — no media call. Lets callers page through photos and
+  // resolve each one only when it's actually shown.
+  photoAttributions: (string | null)[];
+};
+
+type PlaceDetailsPhoto = {
+  name: string;
+  authorAttributions?: { displayName?: string }[];
 };
 
 type PlaceDetailsResponse = {
-  photos?: {
-    name: string;
-    authorAttributions?: { displayName?: string }[];
-  }[];
-  googleMapsUri?: string;
+  photos?: PlaceDetailsPhoto[];
 };
 
 type PhotoMediaResponse = {
   photoUri?: string;
 };
 
-export async function getGooglePlaceDetails(
-  googlePlaceId: string | null,
-): Promise<GooglePlaceDetails | null> {
-  if (!googlePlaceId) return null;
+function apiKey(): string {
+  return process.env.GOOGLE_PLACES_API_KEY ?? "";
+}
 
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY ?? "";
-
+async function fetchPlaceDetails(googlePlaceId: string): Promise<PlaceDetailsResponse | null> {
   let response: Response;
   try {
     response = await fetch(
       `https://places.googleapis.com/v1/places/${googlePlaceId}`,
       {
         headers: {
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask": "photos,googleMapsUri",
+          "X-Goog-Api-Key": apiKey(),
+          // Keep this to "photos" only: it bills as Place Details Essentials
+          // (IDs Only), which is free and unlimited. Adding e.g. googleMapsUri
+          // would bill the whole request as Pro.
+          "X-Goog-FieldMask": "photos",
         },
         next: { revalidate: 604800 },
       },
@@ -48,28 +53,56 @@ export async function getGooglePlaceDetails(
 
   if (!response.ok) return null;
 
-  const data = (await response.json()) as PlaceDetailsResponse;
-  const firstPhoto = data.photos?.[0];
+  return (await response.json()) as PlaceDetailsResponse;
+}
 
-  const photo = firstPhoto
-    ? await resolvePhotoUri(firstPhoto.name, apiKey, firstPhoto.authorAttributions)
-    : null;
+export async function getGooglePlaceDetails(
+  googlePlaceId: string | null,
+): Promise<GooglePlaceDetails | null> {
+  if (!googlePlaceId) return null;
+
+  const data = await fetchPlaceDetails(googlePlaceId);
+  if (!data) return null;
+
+  const firstPhoto = data.photos?.[0];
+  const photo = firstPhoto ? await resolvePhotoUri(firstPhoto) : null;
 
   return {
     photo,
-    googleMapsUri: data.googleMapsUri ?? null,
+    photoAttributions: (data.photos ?? []).map(attributionOf),
   };
 }
 
-async function resolvePhotoUri(
-  photoName: string,
-  apiKey: string,
-  authorAttributions?: { displayName?: string }[],
+// Built from a Maps URL (https://developers.google.com/maps/documentation/urls/get-started)
+// instead of requesting googleMapsUri from the API, which costs a Pro call.
+export function googleMapsUrl(query: string, googlePlaceId: string | null): string {
+  const params = new URLSearchParams({ api: "1", query });
+  if (googlePlaceId) params.set("query_place_id", googlePlaceId);
+  return `https://www.google.com/maps/search/?${params}`;
+}
+
+export async function getGooglePlacePhoto(
+  googlePlaceId: string | null,
+  index: number,
 ): Promise<GooglePlacePhoto | null> {
+  if (!googlePlaceId) return null;
+
+  const data = await fetchPlaceDetails(googlePlaceId);
+  const photo = data?.photos?.[index];
+  if (!photo) return null;
+
+  return resolvePhotoUri(photo);
+}
+
+function attributionOf(photo: PlaceDetailsPhoto): string | null {
+  return photo.authorAttributions?.[0]?.displayName ?? null;
+}
+
+async function resolvePhotoUri(photo: PlaceDetailsPhoto): Promise<GooglePlacePhoto | null> {
   let mediaResponse: Response;
   try {
     mediaResponse = await fetch(
-      `https://places.googleapis.com/v1/${photoName}/media?key=${apiKey}&maxWidthPx=1200&skipHttpRedirect=true`,
+      `https://places.googleapis.com/v1/${photo.name}/media?key=${apiKey()}&maxWidthPx=1200&skipHttpRedirect=true`,
       { next: { revalidate: 604800 } },
     );
   } catch {
@@ -83,6 +116,6 @@ async function resolvePhotoUri(
 
   return {
     photoUri: mediaData.photoUri,
-    attribution: authorAttributions?.[0]?.displayName ?? null,
+    attribution: attributionOf(photo),
   };
 }
