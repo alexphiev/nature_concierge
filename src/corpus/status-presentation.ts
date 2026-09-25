@@ -5,6 +5,11 @@ export type StatusPresentation = {
   verdict: string;
 };
 
+// Signal zones are stored upper-case ("CAP CANAILLE"); display them in title case.
+export function formatZoneLabel(label: string): string {
+  return label.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (_, sep, letter) => sep + letter.toUpperCase());
+}
+
 export function presentStatus(
   status: NonNullable<ResolvedStatus>,
 ): StatusPresentation {

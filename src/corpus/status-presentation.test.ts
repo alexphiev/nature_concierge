@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { presentStatus } from "./status-presentation";
+import { presentStatus, formatZoneLabel } from "./status-presentation";
 import type { ResolvedStatus } from "./queries";
 
 function makeStatus(
@@ -68,5 +68,14 @@ describe("presentStatus", () => {
     );
 
     expect(result).toEqual({ colorTone: "rouge", verdict: "Fermé" });
+  });
+});
+
+describe("formatZoneLabel", () => {
+  it("title-cases upper-case zone labels, including after hyphens and apostrophes", () => {
+    expect(formatZoneLabel("CAP CANAILLE")).toBe("Cap Canaille");
+    expect(formatZoneLabel("SAINTE-VICTOIRE")).toBe("Sainte-Victoire");
+    expect(formatZoneLabel("ILES D'HYERES")).toBe("Iles D'Hyeres");
+    expect(formatZoneLabel("CHAÎNE DES CÔTES")).toBe("Chaîne Des Côtes");
   });
 });

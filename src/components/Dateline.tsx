@@ -11,9 +11,5 @@ function formatDateline(date: Date): string {
 }
 
 export function Dateline({ checkedAt }: { checkedAt: Date }) {
-  return (
-    <span className="font-mono text-[0.875rem] text-encre/70">
-      {formatDateline(checkedAt)}
-    </span>
-  );
+  return <span>{formatDateline(checkedAt)}</span>;
 }

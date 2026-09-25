@@ -1,32 +1,78 @@
 import { Dateline } from "./Dateline";
 import type { ResolvedStatus } from "../corpus/queries";
-import { presentStatus } from "../corpus/status-presentation";
+import { formatZoneLabel, presentStatus } from "../corpus/status-presentation";
 
 const ACTIVE_FIRE_CAVEAT =
   "En cas de fumée ou de consignes des secours sur place, suivez-les même si la carte indique autre chose.";
 
+const TONE_TEXT = {
+  vert: "text-statut-vert",
+  orange: "text-statut-orange",
+  rouge: "text-statut-rouge",
+} as const;
+
+const TONE_PILL = {
+  vert: "bg-statut-vert/12 text-statut-vert",
+  orange: "bg-statut-orange/12 text-statut-orange",
+  rouge: "bg-statut-rouge/12 text-statut-rouge",
+} as const;
+
+export function StatusPill({ status, bare = false }: { status: ResolvedStatus; bare?: boolean }) {
+  const label = status ? presentStatus(status).verdict : "Non vérifié";
+  const tone = status ? presentStatus(status).colorTone : null;
+
+  if (bare) {
+    return (
+      <span
+        className={`font-mono text-[0.6875rem] tracking-wide uppercase ${tone ? TONE_TEXT[tone] : "text-statut-inconnu"}`}
+      >
+        ● {label}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[0.7rem] tracking-wide uppercase ${
+        tone ? TONE_PILL[tone] : "border border-dashed border-statut-inconnu/60 text-statut-inconnu"
+      }`}
+    >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+      {label}
+    </span>
+  );
+}
+
 export function StatusBlock({
   status,
   officialInfoUrl,
-  googleMapsUri,
 }: {
   status: ResolvedStatus;
   officialInfoUrl: string | null;
-  googleMapsUri?: string | null;
 }) {
+  const heading = (
+    <p className="font-mono text-[0.6875rem] tracking-widest text-encre/65 uppercase">Statut du jour</p>
+  );
+
   if (!status) {
     return (
-      <section
-        aria-label="Statut du jour"
-        className="rounded-xl border border-dashed border-statut-inconnu bg-calcaire-deep p-5"
-      >
-        <p className="font-mono text-statut-inconnu">
-          Données non vérifiées aujourd&apos;hui — consultez la carte
-          officielle{" "}
-          {officialInfoUrl && (
-            <a href={officialInfoUrl} className="underline">
-              ↗
-            </a>
+      <section aria-label="Statut du jour" className="flex flex-col gap-1.5">
+        {heading}
+        <p className="font-display text-[1.75rem] leading-tight font-semibold text-statut-inconnu">
+          Non vérifié
+        </p>
+        <p className="text-sm leading-relaxed text-encre/75">
+          Pas de relevé officiel aujourd&apos;hui
+          {officialInfoUrl ? (
+            <>
+              {" "}
+              — consultez la{" "}
+              <a href={officialInfoUrl} className="text-mediterranee underline underline-offset-2">
+                carte officielle ↗
+              </a>
+            </>
+          ) : (
+            "."
           )}
         </p>
       </section>
@@ -34,58 +80,25 @@ export function StatusBlock({
   }
 
   const { colorTone, verdict } = presentStatus(status);
-
-  const colorClass =
-    colorTone === "rouge"
-      ? "text-statut-rouge border-l-statut-rouge"
-      : colorTone === "orange"
-        ? "text-statut-orange border-l-statut-orange"
-        : "text-statut-vert border-l-statut-vert";
-
   const showCaveat = ["orange", "rouge", "extreme"].includes(status.displayValue);
 
   return (
-    <section
-      aria-label="Statut du jour"
-      className={`grid grid-cols-1 items-center gap-5 rounded-xl border border-sable/45 border-l-[3px] bg-calcaire-deep p-5 sm:grid-cols-[auto_1fr_auto] sm:gap-6 ${colorClass}`}
-    >
-      <div className="border-b border-sable/30 pb-3 text-center font-mono sm:border-r sm:border-b-0 sm:pr-6 sm:pb-0">
-        <span className="block text-[0.7rem] font-semibold tracking-wide uppercase">
-          {verdict}
-        </span>
-        <span className="mt-0.5 block text-2xl font-semibold uppercase">
-          {status.displayValue}
-        </span>
-      </div>
-
-      <div>
-        {status.detail && <p className="text-[0.95rem] text-encre">{status.detail}</p>}
-        {showCaveat && (
-          <p className="mt-2 text-sm text-encre/70 italic">{ACTIVE_FIRE_CAVEAT}</p>
-        )}
-      </div>
-
-      <div className="font-mono text-xs whitespace-nowrap text-encre/60">
-        <Dateline checkedAt={status.confirmedAt} />
-        <br />
-        Source officielle : {status.provider}
-        {officialInfoUrl && (
-          <>
-            {" "}
-            <a href={officialInfoUrl} className="text-mediterranee underline">
-              ↗
-            </a>
-          </>
-        )}
-        {googleMapsUri && (
-          <>
-            <br />
-            <a href={googleMapsUri} className="text-mediterranee underline">
-              Voir sur Google Maps ↗
-            </a>
-          </>
-        )}
-      </div>
+    <section aria-label="Statut du jour" className="flex flex-col gap-1.5">
+      {heading}
+      <p
+        className={`flex items-center gap-2.5 font-display text-[1.75rem] leading-tight font-semibold ${TONE_TEXT[colorTone]}`}
+      >
+        <span aria-hidden className="size-2.5 rounded-full bg-current" />
+        {verdict}
+      </p>
+      <p className="text-sm text-encre/80">
+        Massif {formatZoneLabel(status.zoneLabel)} · niveau {status.displayValue}
+      </p>
+      {status.detail && <p className="text-sm text-encre">{status.detail}</p>}
+      {showCaveat && <p className="text-sm text-encre/70 italic">{ACTIVE_FIRE_CAVEAT}</p>}
+      <p className="mt-1 font-mono text-[0.6875rem] leading-relaxed text-encre/60">
+        <Dateline checkedAt={status.confirmedAt} /> · {status.provider}
+      </p>
     </section>
   );
 }

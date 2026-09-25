@@ -13,7 +13,7 @@ export function AlternativeCallout({
   if (alternatives.length === 0) return null;
 
   return (
-    <section aria-label="Alternatives" className="mt-5 flex flex-col gap-2 rounded-[10px] border border-sable/40 bg-calcaire-deep p-4 text-sm">
+    <section aria-label="Alternatives" className="flex flex-col gap-2 rounded-[10px] border border-sable/40 bg-calcaire-deep p-4 text-sm">
       {alternatives.map((claim) => (
         <p key={claim.id}>
           Si c&apos;est fermé ou saturé →{" "}

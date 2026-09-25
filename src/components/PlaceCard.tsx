@@ -4,7 +4,7 @@ import type { ResolvedStatus } from "../corpus/queries";
 import type { GooglePlacePhoto } from "../corpus/google-places";
 import { presentStatus } from "../corpus/status-presentation";
 
-const TYPE_LABELS: Record<Place["type"], string> = {
+export const TYPE_LABELS: Record<Place["type"], string> = {
   CALANQUE: "Calanque",
   PLAGE: "Plage",
   MASSIF: "Massif",
