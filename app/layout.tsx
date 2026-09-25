@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SITE_URL, SITE_NAME } from "@/src/site";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",
@@ -20,9 +21,21 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nature Concierge",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Nature Concierge — nature entre Marseille et Bandol",
+    template: "%s · Nature Concierge",
+  },
   description:
     "Le guide local qui vous dit où aller en nature entre Marseille et Bandol — et où ne pas aller.",
+  openGraph: {
+    siteName: SITE_NAME,
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

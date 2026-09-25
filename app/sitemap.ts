@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import { getActivePlaces, getPlaceFreshness } from "@/src/corpus/queries";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { SITE_URL } from "@/src/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   "use cache";

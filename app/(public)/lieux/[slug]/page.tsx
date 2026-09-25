@@ -18,6 +18,8 @@ import { PlaceGallery } from "@/src/components/PlaceGallery";
 import { SpotCard } from "@/src/components/SpotCard";
 import { ExpandableText } from "@/src/components/ExpandableText";
 import { PracticalImages } from "@/src/components/PracticalImages";
+import { SITE_URL } from "@/src/site";
+import { placeTitle, placeDescription, buildPlaceJsonLd } from "@/src/seo/place-jsonld";
 
 export async function generateStaticParams() {
   const places = await getActivePlaces();
@@ -33,11 +35,19 @@ export async function generateMetadata({
   const place = await getPlaceBySlug(slug);
   if (!place) return {};
 
+  const title = placeTitle(place);
+  const description = placeDescription(place);
+
   return {
-    title: `${place.name} : ouvert aujourd'hui ? Accès, parking, affluence — ${place.commune}`,
-    description:
-      place.claims[0]?.claimText ??
-      `Statut du jour, accès et conseils pour ${place.name}.`,
+    title: { absolute: title },
+    description,
+    alternates: { canonical: `/lieux/${slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `/lieux/${slug}`,
+      type: "website",
+    },
   };
 }
 
@@ -76,40 +86,21 @@ export default async function PlaceDetailPage({
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
   ].filter((item): item is string => Boolean(item));
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Place",
-        name: place.name,
-        geo: {
-          "@type": "GeoCoordinates",
-          latitude: place.lat,
-          longitude: place.lng,
-        },
-        containedInPlace: parent
-          ? { "@type": "Place", name: parent.name }
-          : { "@type": "AdministrativeArea", name: place.commune },
-      },
-      place.claims.length > 0 && {
-        "@type": "FAQPage",
-        mainEntity: place.claims.slice(0, 3).map((claim) => ({
-          "@type": "Question",
-          name: `${claim.claimText.split(".")[0]} ?`,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: claim.claimText,
-          },
-        })),
-      },
-    ].filter(Boolean),
-  };
+  const photoUrl = googleDetails?.photo ? `${SITE_URL}/lieux/${slug}/photo` : null;
+  const jsonLd = buildPlaceJsonLd({
+    place,
+    parent,
+    url: `${SITE_URL}/lieux/${slug}`,
+    photoUrl,
+  });
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-4 pt-7 md:px-6 md:pb-20">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
 
       <nav
