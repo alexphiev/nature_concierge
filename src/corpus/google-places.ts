@@ -1,3 +1,5 @@
+import { cacheLife } from "next/cache";
+
 export type GooglePlacePhoto = {
   // A genuinely public lh3.googleusercontent.com URL with its own embedded
   // token — NOT the places.googleapis.com media endpoint, which requires
@@ -31,7 +33,10 @@ function apiKey(): string {
   return process.env.GOOGLE_PLACES_API_KEY ?? "";
 }
 
+// Failures are cached only briefly so a transient Google error doesn't hide
+// photos for weeks.
 async function fetchPlaceDetails(googlePlaceId: string): Promise<PlaceDetailsResponse | null> {
+  "use cache";
   let response: Response;
   try {
     response = await fetch(
@@ -44,15 +49,19 @@ async function fetchPlaceDetails(googlePlaceId: string): Promise<PlaceDetailsRes
           // would bill the whole request as Pro.
           "X-Goog-FieldMask": "photos",
         },
-        next: { revalidate: 604800 },
       },
     );
   } catch {
+    cacheLife("minutes");
     return null;
   }
 
-  if (!response.ok) return null;
+  if (!response.ok) {
+    cacheLife("minutes");
+    return null;
+  }
 
+  cacheLife("weeks");
   return (await response.json()) as PlaceDetailsResponse;
 }
 
@@ -99,21 +108,29 @@ function attributionOf(photo: PlaceDetailsPhoto): string | null {
 }
 
 async function resolvePhotoUri(photo: PlaceDetailsPhoto): Promise<GooglePlacePhoto | null> {
+  "use cache";
   let mediaResponse: Response;
   try {
     mediaResponse = await fetch(
       `https://places.googleapis.com/v1/${photo.name}/media?key=${apiKey()}&maxWidthPx=1200&skipHttpRedirect=true`,
-      { next: { revalidate: 604800 } },
     );
   } catch {
+    cacheLife("minutes");
     return null;
   }
 
-  if (!mediaResponse.ok) return null;
+  if (!mediaResponse.ok) {
+    cacheLife("minutes");
+    return null;
+  }
 
   const mediaData = (await mediaResponse.json()) as PhotoMediaResponse;
-  if (!mediaData.photoUri) return null;
+  if (!mediaData.photoUri) {
+    cacheLife("minutes");
+    return null;
+  }
 
+  cacheLife("weeks");
   return {
     photoUri: mediaData.photoUri,
     attribution: attributionOf(photo),

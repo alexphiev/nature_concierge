@@ -18,7 +18,7 @@ export function AlternativeCallout({
         <p key={claim.id}>
           Si c&apos;est fermé ou saturé →{" "}
           <Link
-            href={`/places/${claim.alternativePlace!.slug}`}
+            href={`/lieux/${claim.alternativePlace!.slug}`}
             className="font-semibold text-mediterranee underline"
           >
             {claim.alternativePlace!.name}

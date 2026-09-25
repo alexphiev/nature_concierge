@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  getActivePlaces,
-  getPlaceBySlug,
-  resolvePlaceStatus,
-} from "@/src/corpus/queries";
+import { getActivePlaces, getPlaceBySlug } from "@/src/corpus/queries";
 import { getGooglePlaceDetails, googleMapsUrl } from "@/src/corpus/google-places";
-import { formatZoneLabel } from "@/src/corpus/status-presentation";
-import { StatusBlock, StatusPill } from "@/src/components/StatusBlock";
+import {
+  LiveStatusBlock,
+  LiveStatusPill,
+  StatusBlockFallback,
+  StatusPillFallback,
+} from "@/src/components/LiveStatus";
 import { ClaimList } from "@/src/components/ClaimList";
 import { WhatsAppBar, WhatsAppCTA } from "@/src/components/WhatsAppCTA";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
@@ -17,8 +18,14 @@ import { PlaceGallery } from "@/src/components/PlaceGallery";
 import { SpotCard } from "@/src/components/SpotCard";
 import { ExpandableText } from "@/src/components/ExpandableText";
 import { PracticalImages } from "@/src/components/PracticalImages";
+import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
+import { placeTitle, placeDescription, buildPlaceJsonLd } from "@/src/seo/place-jsonld";
+import { nearbyPlaces } from "@/src/corpus/nearby";
 
-export const revalidate = 900;
+const kmFormatter = new Intl.NumberFormat("fr-FR", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 export async function generateStaticParams() {
   const places = await getActivePlaces();
@@ -34,11 +41,19 @@ export async function generateMetadata({
   const place = await getPlaceBySlug(slug);
   if (!place) return {};
 
+  const title = placeTitle(place);
+  const description = placeDescription(place);
+
   return {
-    title: `${place.name} : ouvert aujourd'hui ? Accès, parking, affluence — ${place.commune}`,
-    description:
-      place.claims[0]?.claimText ??
-      `Statut du jour, accès et conseils pour ${place.name}.`,
+    title: { absolute: title },
+    description,
+    alternates: { canonical: `/lieux/${slug}` },
+    openGraph: {
+      ...BASE_OPEN_GRAPH,
+      title,
+      description,
+      url: `/lieux/${slug}`,
+    },
   };
 }
 
@@ -57,19 +72,18 @@ export default async function PlaceDetailPage({
   const parent = place.parent?.status === "ACTIVE" ? place.parent : null;
   const typeLabel = TYPE_LABELS[place.type] ?? place.type;
 
-  const [status, googleDetails, spotCards] = await Promise.all([
-    resolvePlaceStatus(place.id),
+  const [googleDetails, spotCards, activePlaces] = await Promise.all([
     getGooglePlaceDetails(place.googlePlaceId),
     Promise.all(
       place.children.map(async (spot) => {
-        const [spotStatus, spotDetails] = await Promise.all([
-          resolvePlaceStatus(spot.id),
-          getGooglePlaceDetails(spot.googlePlaceId),
-        ]);
-        return { spot, status: spotStatus, photo: spotDetails?.photo ?? null };
+        const spotDetails = await getGooglePlaceDetails(spot.googlePlaceId);
+        return { spot, photo: spotDetails?.photo ?? null };
       }),
     ),
+    getActivePlaces(),
   ]);
+
+  const nearby = nearbyPlaces(place, activePlaces);
 
   const mapsUrl = googleMapsUrl(`${place.name}, ${place.commune}`, place.googlePlaceId);
   const galleryTiles = spotCards
@@ -77,59 +91,37 @@ export default async function PlaceDetailPage({
     .map(({ spot }) => ({ slug: spot.slug, name: spot.name }));
 
   const metaItems = [
-    status && `Zone feu ${formatZoneLabel(status.zoneLabel)}`,
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
   ].filter((item): item is string => Boolean(item));
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Place",
-        name: place.name,
-        geo: {
-          "@type": "GeoCoordinates",
-          latitude: place.lat,
-          longitude: place.lng,
-        },
-        containedInPlace: parent
-          ? { "@type": "Place", name: parent.name }
-          : { "@type": "AdministrativeArea", name: place.commune },
-      },
-      place.claims.length > 0 && {
-        "@type": "FAQPage",
-        mainEntity: place.claims.slice(0, 3).map((claim) => ({
-          "@type": "Question",
-          name: `${claim.claimText.split(".")[0]} ?`,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: claim.claimText,
-          },
-        })),
-      },
-    ].filter(Boolean),
-  };
+  const jsonLd = buildPlaceJsonLd({
+    place,
+    parent,
+    url: `${SITE_URL}/lieux/${slug}`,
+  });
 
   return (
     <main className="mx-auto w-full max-w-[1120px] px-4 pt-7 md:px-6 md:pb-20">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
 
       <nav
         aria-label="Fil d'Ariane"
         className="flex flex-wrap gap-2 font-mono text-xs tracking-wide text-encre/65"
       >
-        <Link href="/places" className="underline decoration-dotted underline-offset-2">
+        <Link href="/lieux" className="underline decoration-dotted underline-offset-2">
           Les lieux
         </Link>
         {parent && (
           <>
             <span aria-hidden>/</span>
             <Link
-              href={`/places/${parent.slug}`}
+              href={`/lieux/${parent.slug}`}
               className="underline decoration-dotted underline-offset-2"
             >
               {parent.name}
@@ -151,7 +143,9 @@ export default async function PlaceDetailPage({
             {place.name}
           </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-encre/75">
-            <StatusPill status={status} />
+            <Suspense fallback={<StatusPillFallback />}>
+              <LiveStatusPill placeId={place.id} />
+            </Suspense>
             {metaItems.map((item) => (
               <span key={item} className="flex items-center gap-3">
                 <span aria-hidden>·</span>
@@ -213,8 +207,38 @@ export default async function PlaceDetailPage({
                 {spotCards.length > 1 ? `Les ${spotCards.length} spots` : "Le spot"}
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {spotCards.map(({ spot, status: spotStatus, photo }) => (
-                  <SpotCard key={spot.id} spot={spot} status={spotStatus} photo={photo} />
+                {spotCards.map(({ spot, photo }) => (
+                  <SpotCard
+                    key={spot.id}
+                    spot={spot}
+                    photo={photo}
+                    status={
+                      <Suspense fallback={<StatusPillFallback variant="bare" />}>
+                        <LiveStatusPill placeId={spot.id} variant="bare" />
+                      </Suspense>
+                    }
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {nearby.length > 0 && (
+            <section aria-label="À proximité" className="flex flex-col gap-5">
+              <h2 className={SECTION_TITLE}>À proximité</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {nearby.map(({ place: nearbyPlace, km }) => (
+                  <Link
+                    key={nearbyPlace.id}
+                    href={`/lieux/${nearbyPlace.slug}`}
+                    className="flex flex-col gap-1 rounded-[14px] border border-sable/50 p-3 transition-colors hover:border-mediterranee focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                  >
+                    <span className="leading-snug font-semibold">{nearbyPlace.name}</span>
+                    <span className="text-[0.8125rem] text-encre/70">
+                      {TYPE_LABELS[nearbyPlace.type] ?? nearbyPlace.type} · {nearbyPlace.commune} ·
+                      à {kmFormatter.format(km)} km
+                    </span>
+                  </Link>
                 ))}
               </div>
             </section>
@@ -225,7 +249,9 @@ export default async function PlaceDetailPage({
 
         <aside className="order-first flex flex-col gap-5 md:sticky md:top-6 md:order-none">
           <div className="flex flex-col gap-5 rounded-[18px] border border-sable/55 bg-[#FFFCF6] p-6 shadow-[0_8px_28px_rgba(28,43,51,0.08)]">
-            <StatusBlock status={status} officialInfoUrl={place.officialInfoUrl} />
+            <Suspense fallback={<StatusBlockFallback />}>
+              <LiveStatusBlock placeId={place.id} officialInfoUrl={place.officialInfoUrl} />
+            </Suspense>
             <div className="hidden border-t border-sable/45 pt-5 md:block">
               <WhatsAppCTA placeName={place.name} />
             </div>

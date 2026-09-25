@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
 import { MapPin } from "lucide-react";
 import { LandingWhatsAppCTA } from "@/src/components/LandingWhatsAppCTA";
 import { SampleExchange } from "@/src/components/SampleExchange";
@@ -9,6 +12,30 @@ import {
   getCoverageCounts,
   getTodayStatusCounts,
 } from "@/src/corpus/queries";
+import { SITE_URL, SITE_NAME, BASE_OPEN_GRAPH } from "@/src/site";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: { ...BASE_OPEN_GRAPH, url: "/" },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+      inLanguage: "fr-FR",
+    },
+    {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+      areaServed: "Littoral Marseille–Bandol, ouest Var, Sainte-Baume",
+    },
+  ],
+};
 
 const BENEFITS = [
   {
@@ -46,9 +73,13 @@ const TRUST_SIGNALS = [
   "Pas de compte, votre prénom suffit",
 ];
 
+async function TodayProofLine() {
+  await connection();
+  return <LiveProofLine counts={await getTodayStatusCounts()} />;
+}
+
 export default async function LandingPage() {
-  const [todayStatusCounts, coverageCounts, places] = await Promise.all([
-    getTodayStatusCounts(),
+  const [coverageCounts, places] = await Promise.all([
     getCoverageCounts(),
     getActivePlaces(),
   ]);
@@ -57,6 +88,12 @@ export default async function LandingPage() {
 
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <section className="px-4 py-20 sm:py-24">
         <div className="mx-auto flex max-w-[760px] flex-col items-center text-center">
           <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-pin">
@@ -75,13 +112,15 @@ export default async function LandingPage() {
           <div className="mt-10 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
             <LandingWhatsAppCTA />
             <Link
-              href="/places"
+              href="/lieux"
               className="flex w-full items-center justify-center rounded-[10px] border border-sable/60 px-6 py-3.5 font-medium text-mediterranee transition-colors duration-150 hover:border-mediterranee hover:bg-calcaire-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee sm:w-auto"
             >
               Voir les lieux couverts
             </Link>
           </div>
-          <LiveProofLine counts={todayStatusCounts} />
+          <Suspense fallback={null}>
+            <TodayProofLine />
+          </Suspense>
         </div>
       </section>
 
@@ -149,7 +188,7 @@ export default async function LandingPage() {
               {namedPlaces.map((place, index) => (
                 <span key={place.id}>
                   <Link
-                    href={`/places/${place.slug}`}
+                    href={`/lieux/${place.slug}`}
                     className="text-mediterranee underline decoration-sable/60 underline-offset-4 transition-colors duration-150 hover:decoration-mediterranee"
                   >
                     {place.name}
@@ -160,7 +199,7 @@ export default async function LandingPage() {
             </p>
           )}
           <Link
-            href="/places"
+            href="/lieux"
             className="mt-6 inline-block font-medium text-mediterranee underline decoration-sable/60 underline-offset-4 transition-colors duration-150 hover:decoration-mediterranee"
           >
             Voir tous les lieux

@@ -10,7 +10,7 @@ export function SiteFooter() {
           vérification directe — quand on ne sait pas, on le dit.
         </p>
         <p className="mt-2">
-          <Link href="/places" className="text-mediterranee underline">
+          <Link href="/lieux" className="text-mediterranee underline">
             Voir tous les lieux
           </Link>
         </p>

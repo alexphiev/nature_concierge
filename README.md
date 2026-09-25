@@ -53,7 +53,9 @@ pnpm corpus:stats   # print a coverage report (claims per place, verification mi
 
 `corpus:seed` is idempotent (upserts by slug) and never deletes rows —
 retiring a place or claim is a manual status change in its source file, not
-a delete.
+a delete. After seeding or editing via a local admin against the shared DB,
+the prod cache refreshes within 1 hour, or immediately with
+`curl -X POST -H "Authorization: Bearer $REVALIDATE_TOKEN" $NEXT_PUBLIC_SITE_URL/api/revalidate`.
 
 ## Project structure
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/corpus/db";
 
@@ -94,6 +95,7 @@ export async function createPlace(formData: FormData): Promise<void> {
     });
   }
 
+  updateTag("corpus");
   redirect("/admin/places");
 }
 
@@ -136,5 +138,6 @@ export async function updatePlace(placeId: string, formData: FormData): Promise<
     });
   }
 
+  updateTag("corpus");
   redirect("/admin/places");
 }

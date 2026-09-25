@@ -163,7 +163,37 @@ async function main() {
   console.log(
     `corpus:seed done — ${placesUpserted} place(s), ${claimsUpserted} claim(s), ${signalSourcesUpserted} signal source(s), ${signalZonesUpserted} signal zone(s)`,
   );
+
+  await pingProdRevalidate();
+
   await prisma.$disconnect();
+}
+
+// Local seeds write to the same DB as prod (see spec/08-infra.md), but prod's
+// corpus cache only refreshes on its own updateTag("corpus") calls — so ping
+// its revalidate endpoint here to avoid a stale prod cache for up to an hour.
+async function pingProdRevalidate(): Promise<void> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const token = process.env.REVALIDATE_TOKEN;
+
+  if (!siteUrl || !token) {
+    console.log("corpus:seed — NEXT_PUBLIC_SITE_URL or REVALIDATE_TOKEN not set, skipped prod cache ping");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${siteUrl}/api/revalidate`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      console.log("corpus:seed — prod cache revalidated");
+    } else {
+      console.error(`corpus:seed — prod cache revalidation failed: ${res.status} ${res.statusText}`);
+    }
+  } catch (err) {
+    console.error("corpus:seed — prod cache revalidation failed:", err);
+  }
 }
 
 main().catch(async (err) => {

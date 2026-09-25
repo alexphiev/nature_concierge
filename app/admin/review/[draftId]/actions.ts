@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/src/corpus/db";
 import { runBlockExtraction } from "@/src/corpus/run-block-extraction";
 import {
@@ -205,6 +205,7 @@ export async function approveClaim(
   editedSource?: Record<string, unknown>,
 ): Promise<void> {
   await approveClaimNoRollup(blockId, claimId, editedClaim, editedSource);
+  updateTag("corpus");
   await rollupBlockAndDraft(blockId);
 }
 
@@ -257,13 +258,19 @@ export async function approveAllInBlock(
   blockId: string,
   editedClaims: Record<string, unknown>[],
 ): Promise<void> {
-  for (const editedClaim of editedClaims) {
-    const claimId = editedClaim.id as string;
-    const { editedSource, ...rest } = editedClaim as { editedSource?: Record<string, unknown> } & Record<
-      string,
-      unknown
-    >;
-    await approveClaimNoRollup(blockId, claimId, rest, editedSource);
+  try {
+    for (const editedClaim of editedClaims) {
+      const claimId = editedClaim.id as string;
+      const { editedSource, ...rest } = editedClaim as { editedSource?: Record<string, unknown> } & Record<
+        string,
+        unknown
+      >;
+      await approveClaimNoRollup(blockId, claimId, rest, editedSource);
+    }
+  } finally {
+    // Claims already written for earlier claimIds in this block must still
+    // be invalidated even if a later claim in the loop throws.
+    updateTag("corpus");
   }
   await rollupBlockAndDraft(blockId);
 }

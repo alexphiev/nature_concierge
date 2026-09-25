@@ -1,7 +1,12 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "./db";
+import { parisToday } from "./paris-date";
 import type { Place, Claim, SignalZone, PlaceImage } from "../../prisma/generated/client";
 
 export async function getActivePlaces(): Promise<Place[]> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("corpus");
   return prisma.place.findMany({
     where: { status: "ACTIVE" },
     orderBy: { demandRank: "asc" },
@@ -50,6 +55,9 @@ const publicClaimsInclude = {
 export async function getPlaceBySlug(
   slug: string,
 ): Promise<PlaceWithPublicClaims | null> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("corpus");
   return prisma.place.findFirst({
     where: { slug, status: "ACTIVE" },
     include: {
@@ -118,7 +126,7 @@ export async function resolvePlaceStatus(
   // today exactly, for every signal type — never an offset applied again at
   // read time, and never "earliest date >= today" (which can silently fall
   // forward onto a different day's row).
-  const forDate = new Date(new Date().setHours(0, 0, 0, 0));
+  const forDate = parisToday();
 
   const statusLog = await prisma.statusLog.findFirst({
     where: {
@@ -168,7 +176,7 @@ export type TodayStatusCounts = {
 } | null;
 
 export async function getTodayStatusCounts(): Promise<TodayStatusCounts> {
-  const forDate = new Date(new Date().setHours(0, 0, 0, 0));
+  const forDate = parisToday();
 
   const statusLogs = await prisma.statusLog.findMany({
     where: { forDate },
@@ -195,6 +203,9 @@ export type CoverageCounts = {
 };
 
 export async function getCoverageCounts(): Promise<CoverageCounts> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("corpus");
   const [placeCount, claimCount] = await Promise.all([
     prisma.place.count({ where: { status: "ACTIVE" } }),
     prisma.claim.count({ where: { isPublic: true, status: "PUBLISHED" } }),

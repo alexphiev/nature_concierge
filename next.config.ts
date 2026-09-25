@@ -1,10 +1,24 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
+  cacheLife: {
+    corpus: {
+      stale: 300,
+      revalidate: 3600,
+      expire: 2592000,
+    },
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+  },
+  async redirects() {
+    return [
+      { source: "/places", destination: "/lieux", permanent: true },
+      { source: "/places/:path*", destination: "/lieux/:path*", permanent: true },
+    ];
   },
 };
 

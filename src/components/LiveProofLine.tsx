@@ -2,6 +2,7 @@ import type { TodayStatusCounts } from "@/src/corpus/queries";
 
 function formatHeure(date: Date): string {
   return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);

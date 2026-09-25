@@ -42,7 +42,7 @@ export function PlaceGallery({
         ) : photo ? (
           <>
             <img
-              src={`/places/${slug}/photo`}
+              src={`/lieux/${slug}/photo`}
               alt=""
               width={1200}
               height={900}
@@ -64,11 +64,11 @@ export function PlaceGallery({
       {side.map((tile) => (
         <Link
           key={tile.slug}
-          href={`/places/${tile.slug}`}
+          href={`/lieux/${tile.slug}`}
           className="group relative hidden overflow-hidden bg-calcaire-deep md:block"
         >
           <img
-            src={`/places/${tile.slug}/photo`}
+            src={`/lieux/${tile.slug}/photo`}
             alt=""
             width={600}
             height={450}

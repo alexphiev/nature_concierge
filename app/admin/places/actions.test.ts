@@ -10,6 +10,7 @@ const {
   createManyPlaceImageMock,
   deleteManyPlaceImageMock,
   redirectMock,
+  updateTagMock,
 } = vi.hoisted(() => ({
   createPlaceMock: vi.fn(),
   updatePlaceMock: vi.fn(),
@@ -20,6 +21,7 @@ const {
   createManyPlaceImageMock: vi.fn(),
   deleteManyPlaceImageMock: vi.fn(),
   redirectMock: vi.fn(),
+  updateTagMock: vi.fn(),
 }));
 
 vi.mock("@/src/corpus/db", () => ({
@@ -43,6 +45,10 @@ vi.mock("@/src/corpus/db", () => ({
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
+}));
+
+vi.mock("next/cache", () => ({
+  updateTag: updateTagMock,
 }));
 
 import { createPlace, updatePlace } from "./actions";
@@ -71,6 +77,7 @@ beforeEach(() => {
   createManyPlaceImageMock.mockReset();
   deleteManyPlaceImageMock.mockReset();
   redirectMock.mockReset();
+  updateTagMock.mockReset();
 });
 
 describe("createPlace", () => {
@@ -103,6 +110,7 @@ describe("createPlace", () => {
         { signalZoneId: "zone-2", placeId: "place-1" },
       ],
     });
+    expect(updateTagMock).toHaveBeenCalledWith("corpus");
     expect(redirectMock).toHaveBeenCalledWith("/admin/places");
   });
 
@@ -165,6 +173,7 @@ describe("updatePlace", () => {
     const deleteOrder = deleteManyZonePlaceMock.mock.invocationCallOrder[0];
     const createOrder = createManyZonePlaceMock.mock.invocationCallOrder[0];
     expect(deleteOrder).toBeLessThan(createOrder);
+    expect(updateTagMock).toHaveBeenCalledWith("corpus");
     expect(redirectMock).toHaveBeenCalledWith("/admin/places");
   });
 

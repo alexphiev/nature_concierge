@@ -25,7 +25,7 @@ const CLAIM_TYPE_LABELS: Record<string, string> = {
   DECODING: "Décryptage",
 };
 
-function StatusPill({ status }: { status: ResolvedStatus }) {
+export function CardStatusPill({ status }: { status: ResolvedStatus }) {
   if (!status) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-statut-inconnu/60 bg-calcaire/85 px-2.5 py-1 font-mono text-[0.7rem] uppercase tracking-wide text-statut-inconnu backdrop-blur-sm">
@@ -60,14 +60,14 @@ export function PlaceCard({
   photo,
 }: {
   place: Place;
-  status: ResolvedStatus;
+  status: React.ReactNode;
   photo: GooglePlacePhoto | null;
 }) {
   const hookClaim = null as { claimType: string; claimText: string } | null; // see note below — Task 5 does not add a hook-claim query; left null for now.
 
   return (
     <Link
-      href={`/places/${place.slug}`}
+      href={`/lieux/${place.slug}`}
       className="block overflow-hidden rounded-[14px] border border-sable/45 bg-calcaire transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-0.5 hover:border-mediterranee hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
     >
       <div
@@ -83,7 +83,7 @@ export function PlaceCard({
       >
         {photo && (
           <img
-            src={`/places/${place.slug}/photo`}
+            src={`/lieux/${place.slug}/photo`}
             alt=""
             width={800}
             height={600}
@@ -96,9 +96,7 @@ export function PlaceCard({
         <span className="relative rounded-full border border-sable/50 bg-calcaire/90 px-2.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-wide text-pin">
           {TYPE_LABELS[place.type]}
         </span>
-        <div className="absolute top-3 right-3">
-          <StatusPill status={status} />
-        </div>
+        <div className="absolute top-3 right-3">{status}</div>
       </div>
 
       <div className="p-4.5">
