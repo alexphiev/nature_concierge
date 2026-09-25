@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { parisToday } from "./paris-date";
 import type { Place, Claim, SignalZone, PlaceImage } from "../../prisma/generated/client";
 
 export async function getActivePlaces(): Promise<Place[]> {
@@ -118,7 +119,7 @@ export async function resolvePlaceStatus(
   // today exactly, for every signal type — never an offset applied again at
   // read time, and never "earliest date >= today" (which can silently fall
   // forward onto a different day's row).
-  const forDate = new Date(new Date().setHours(0, 0, 0, 0));
+  const forDate = parisToday();
 
   const statusLog = await prisma.statusLog.findFirst({
     where: {
@@ -168,7 +169,7 @@ export type TodayStatusCounts = {
 } | null;
 
 export async function getTodayStatusCounts(): Promise<TodayStatusCounts> {
-  const forDate = new Date(new Date().setHours(0, 0, 0, 0));
+  const forDate = parisToday();
 
   const statusLogs = await prisma.statusLog.findMany({
     where: { forDate },

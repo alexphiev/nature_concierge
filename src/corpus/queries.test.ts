@@ -45,6 +45,7 @@ import {
   getAllPlaces,
   getSignalZones,
 } from "./queries";
+import { parisToday } from "./paris-date";
 
 beforeEach(() => {
   findManyPlaceMock.mockReset();
@@ -138,10 +139,9 @@ describe("resolvePlaceStatus", () => {
       signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
     });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = parisToday();
     const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
     // Only a "tomorrow" row exists (e.g. the admin's most recent save, whose
     // forDate is always write-day + 1 for FIRE_ACCESS); no row exists yet at
@@ -166,6 +166,23 @@ describe("resolvePlaceStatus", () => {
     const queriedForDate = new Date(callArgs.where.forDate);
     expect(queriedForDate).toEqual(today);
     expect(result).toBeNull();
+  });
+
+  it("queries statusLog.findFirst with forDate as the Paris calendar day, not the server-TZ day", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-21T22:30:00Z"));
+
+    findFirstZonePlaceMock.mockResolvedValue({
+      signalZone: { id: "zone-1", label: "SAINTE BAUME", signalSource: { provider: "Préfecture du Var" } },
+    });
+    findFirstStatusLogMock.mockResolvedValue(null);
+
+    await resolvePlaceStatus("place-id-1");
+
+    const callArgs = findFirstStatusLogMock.mock.calls[0][0];
+    expect(callArgs.where.forDate).toEqual(new Date("2026-07-22T00:00:00.000Z"));
+
+    vi.useRealTimers();
   });
 
   it("resolves vert as open, not restricted", async () => {

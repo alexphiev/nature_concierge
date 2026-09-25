@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { prisma } from "@/src/corpus/db";
+import { parisDateString, parisToday } from "@/src/corpus/paris-date";
 import { saveStatus } from "./actions";
 
 export const metadata: Metadata = {
@@ -32,10 +33,6 @@ const SIGNAL_TYPE_LABEL: Record<string, string> = {
   WATER_QUALITY: "Qualité de l'eau",
   AIR_QUALITY: "Qualité de l'air",
 };
-
-function todayUtcDateString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function isSameCalendarDate(a: Date, b: Date): boolean {
   return (
@@ -81,9 +78,8 @@ export default async function AdminStatutPage() {
     orderBy: { label: "asc" },
   });
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const forDate = new Date(`${todayUtcDateString()}T00:00:00.000Z`);
+  const today = parisToday();
+  const forDate = today;
 
   const rows = await Promise.all(
     zones.map(async (zone) => {
@@ -183,7 +179,7 @@ export default async function AdminStatutPage() {
             type="date"
             name="forDate"
             required
-            defaultValue={todayUtcDateString()}
+            defaultValue={parisDateString()}
             className="w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire p-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
           />
         </label>
