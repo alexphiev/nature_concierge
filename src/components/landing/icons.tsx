@@ -86,6 +86,22 @@ export function BulbIcon({ className }: IconProps) {
   );
 }
 
+export function MenuIcon({ className }: IconProps) {
+  return (
+    <StrokeIcon className={className}>
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </StrokeIcon>
+  );
+}
+
+export function CloseIcon({ className }: IconProps) {
+  return (
+    <StrokeIcon className={className}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </StrokeIcon>
+  );
+}
+
 export function CoffeeIcon({ className }: IconProps) {
   return (
     <StrokeIcon className={className}>

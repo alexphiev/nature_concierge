@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { SITE_NAME } from "../../site";
-import { ChatIcon, LogoIcon } from "./icons";
-import { ABOUT_HREF, ASK_HREF, CONTAINER, FOCUS_RING, PROPOSE_PLACE_HREF } from "./shared";
+import { ChatIcon, LogoIcon } from "../landing/icons";
+import {
+  ABOUT_HREF,
+  ACTIVE_LINK,
+  ASK_HREF,
+  CONTAINER,
+  FOCUS_RING,
+  GUIDE_HREF,
+  PROPOSE_PLACE_HREF,
+} from "../landing/shared";
+import { MobileMenu } from "./MobileMenu";
 
-export function LandingHeader() {
+export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
   return (
-    <header className="h-15 border-b border-[#E4DACA] md:h-20">
+    <header className="relative h-15 border-b border-[#E4DACA] bg-[#F5EFE4] font-landing-body leading-[normal] text-[#1D2A2E] md:h-20">
       <div className={`${CONTAINER} flex h-full items-center justify-between`}>
         <Link
           href="/"
@@ -18,17 +27,21 @@ export function LandingHeader() {
             {SITE_NAME}
           </span>
         </Link>
-        <nav className="flex items-center gap-8 text-[16px] font-medium">
-          <a href="#guide" className={`hidden text-[#1D2A2E] lg:block ${FOCUS_RING}`}>
+        <nav
+          aria-label="Navigation principale"
+          className="flex items-center gap-8 text-[16px] font-medium"
+        >
+          <Link
+            href={GUIDE_HREF}
+            aria-current={guideActive ? "page" : undefined}
+            className={`hidden md:block ${guideActive ? ACTIVE_LINK : "text-[#1D2A2E]"} ${FOCUS_RING}`}
+          >
             Le guide
-          </a>
+          </Link>
           <a href={PROPOSE_PLACE_HREF} className={`hidden text-[#1D2A2E] lg:block ${FOCUS_RING}`}>
             Proposer un lieu
           </a>
-          <a
-            href={ABOUT_HREF}
-            className={`flex h-11 items-center text-[15px] font-semibold text-[#0E4B5A] hover:text-[#0A3843] md:h-auto md:text-[16px] md:font-medium md:text-[#1D2A2E] md:hover:text-[#1D2A2E] ${FOCUS_RING}`}
-          >
+          <a href={ABOUT_HREF} className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
             À propos
           </a>
           <a
@@ -38,6 +51,7 @@ export function LandingHeader() {
             <ChatIcon className="size-4.5" />
             WhatsApp
           </a>
+          <MobileMenu guideActive={guideActive} />
         </nav>
       </div>
     </header>
