@@ -13,6 +13,7 @@ export function PlaceForm({
   selectedZoneIds,
   parentOptions,
   hasChildren = false,
+  governingAuthorities,
 }: {
   action: (formData: FormData) => Promise<void>;
   place?: Place;
@@ -20,6 +21,7 @@ export function PlaceForm({
   selectedZoneIds?: Set<string>;
   parentOptions: Pick<Place, "id" | "name" | "commune">[];
   hasChildren?: boolean;
+  governingAuthorities: string[];
 }) {
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -75,9 +77,15 @@ export function PlaceForm({
         <input
           type="text"
           name="governingAuthority"
+          list="governingAuthority-options"
           defaultValue={place?.governingAuthority ?? ""}
           className={inputClass}
         />
+        <datalist id="governingAuthority-options">
+          {governingAuthorities.map((authority) => (
+            <option key={authority} value={authority} />
+          ))}
+        </datalist>
       </label>
 
       <label className="flex flex-col gap-1">

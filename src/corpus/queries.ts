@@ -14,6 +14,16 @@ export async function getAllPlaces(): Promise<Place[]> {
   });
 }
 
+export async function getGoverningAuthorities(): Promise<string[]> {
+  const rows = await prisma.place.findMany({
+    where: { governingAuthority: { not: null } },
+    select: { governingAuthority: true },
+    distinct: ["governingAuthority"],
+    orderBy: { governingAuthority: "asc" },
+  });
+  return rows.map((r) => r.governingAuthority as string);
+}
+
 export async function getSignalZones(): Promise<SignalZone[]> {
   return prisma.signalZone.findMany({
     where: { active: true },

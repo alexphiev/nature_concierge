@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { getAllPlaces, getSignalZones } from "@/src/corpus/queries";
+import { getAllPlaces, getGoverningAuthorities, getSignalZones } from "@/src/corpus/queries";
 import { PlaceForm } from "../PlaceForm";
 import { createPlace } from "../actions";
 
@@ -12,13 +12,22 @@ export const metadata: Metadata = {
 export default async function AdminNewPlacePage() {
   await connection();
 
-  const [zones, places] = await Promise.all([getSignalZones(), getAllPlaces()]);
+  const [zones, places, governingAuthorities] = await Promise.all([
+    getSignalZones(),
+    getAllPlaces(),
+    getGoverningAuthorities(),
+  ]);
   const parentOptions = places.filter((p) => !p.parentId);
 
   return (
     <main className="flex flex-col gap-6">
       <h1 className="font-display text-2xl">Nouveau lieu</h1>
-      <PlaceForm action={createPlace} zones={zones} parentOptions={parentOptions} />
+      <PlaceForm
+        action={createPlace}
+        zones={zones}
+        parentOptions={parentOptions}
+        governingAuthorities={governingAuthorities}
+      />
     </main>
   );
 }

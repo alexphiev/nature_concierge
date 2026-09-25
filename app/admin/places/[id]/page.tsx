@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { prisma } from "@/src/corpus/db";
-import { getAllPlaces, getSignalZones } from "@/src/corpus/queries";
+import { getAllPlaces, getGoverningAuthorities, getSignalZones } from "@/src/corpus/queries";
 import { PlaceForm } from "../PlaceForm";
 import { updatePlace } from "../actions";
 
@@ -23,10 +23,11 @@ export default async function AdminEditPlacePage({
   const place = await prisma.place.findUnique({ where: { id } });
   if (!place) notFound();
 
-  const [zones, zonePlaces, places] = await Promise.all([
+  const [zones, zonePlaces, places, governingAuthorities] = await Promise.all([
     getSignalZones(),
     prisma.zonePlace.findMany({ where: { placeId: id }, select: { signalZoneId: true } }),
     getAllPlaces(),
+    getGoverningAuthorities(),
   ]);
   const selectedZoneIds = new Set(zonePlaces.map((zp) => zp.signalZoneId));
   const parentOptions = places.filter((p) => !p.parentId && p.id !== id);
@@ -42,6 +43,7 @@ export default async function AdminEditPlacePage({
         selectedZoneIds={selectedZoneIds}
         parentOptions={parentOptions}
         hasChildren={hasChildren}
+        governingAuthorities={governingAuthorities}
       />
     </main>
   );
