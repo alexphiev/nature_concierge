@@ -4,6 +4,8 @@ const { fetchMock } = vi.hoisted(() => ({ fetchMock: vi.fn() }));
 
 vi.stubGlobal("fetch", fetchMock);
 
+vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
+
 import { getGooglePlaceDetails, getGooglePlacePhoto, googleMapsUrl } from "./google-places";
 
 beforeEach(() => {
@@ -19,7 +21,7 @@ describe("getGooglePlaceDetails", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("calls Place Details (New) with the correct URL, headers, and cache revalidate window", async () => {
+  it("calls Place Details (New) with the correct URL and headers", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({ photos: [] }),
@@ -34,7 +36,6 @@ describe("getGooglePlaceDetails", () => {
           "X-Goog-Api-Key": "test-key-123",
           "X-Goog-FieldMask": "photos",
         }),
-        next: { revalidate: 604800 },
       }),
     );
   });
@@ -79,7 +80,6 @@ describe("getGooglePlaceDetails", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://places.googleapis.com/v1/places/ChIJexample123/photos/abc123/media?key=test-key-123&maxWidthPx=1200&skipHttpRedirect=true",
-      expect.objectContaining({ next: { revalidate: 604800 } }),
     );
     expect(result?.photo).toEqual({
       photoUri: "https://lh3.googleusercontent.com/place-photos/abc123=s4800-w1200",

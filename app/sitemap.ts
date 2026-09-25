@@ -1,9 +1,13 @@
 import type { MetadataRoute } from "next";
+import { cacheLife, cacheTag } from "next/cache";
 import { getActivePlaces, getPlaceFreshness } from "@/src/corpus/queries";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("hours");
   const places = await getActivePlaces();
 
   const placeEntries = await Promise.all(

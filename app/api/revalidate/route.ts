@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 
@@ -21,14 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const slug = body?.slug;
+  revalidateTag("corpus", "max");
 
-  if (typeof slug !== "string" || slug.length === 0) {
-    return NextResponse.json({ error: "Missing slug" }, { status: 400 });
-  }
-
-  revalidatePath(`/lieux/${slug}`, "page");
-
-  return NextResponse.json({ revalidated: true, slug });
+  return NextResponse.json({ revalidated: true });
 }

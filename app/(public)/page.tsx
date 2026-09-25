@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
 import { MapPin } from "lucide-react";
 import { LandingWhatsAppCTA } from "@/src/components/LandingWhatsAppCTA";
 import { SampleExchange } from "@/src/components/SampleExchange";
@@ -46,9 +48,13 @@ const TRUST_SIGNALS = [
   "Pas de compte, votre prénom suffit",
 ];
 
+async function TodayProofLine() {
+  await connection();
+  return <LiveProofLine counts={await getTodayStatusCounts()} />;
+}
+
 export default async function LandingPage() {
-  const [todayStatusCounts, coverageCounts, places] = await Promise.all([
-    getTodayStatusCounts(),
+  const [coverageCounts, places] = await Promise.all([
     getCoverageCounts(),
     getActivePlaces(),
   ]);
@@ -81,7 +87,9 @@ export default async function LandingPage() {
               Voir les lieux couverts
             </Link>
           </div>
-          <LiveProofLine counts={todayStatusCounts} />
+          <Suspense fallback={null}>
+            <TodayProofLine />
+          </Suspense>
         </div>
       </section>
 

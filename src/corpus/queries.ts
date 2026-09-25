@@ -1,8 +1,12 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "./db";
 import { parisToday } from "./paris-date";
 import type { Place, Claim, SignalZone, PlaceImage } from "../../prisma/generated/client";
 
 export async function getActivePlaces(): Promise<Place[]> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("max");
   return prisma.place.findMany({
     where: { status: "ACTIVE" },
     orderBy: { demandRank: "asc" },
@@ -51,6 +55,9 @@ const publicClaimsInclude = {
 export async function getPlaceBySlug(
   slug: string,
 ): Promise<PlaceWithPublicClaims | null> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("max");
   return prisma.place.findFirst({
     where: { slug, status: "ACTIVE" },
     include: {
@@ -196,6 +203,9 @@ export type CoverageCounts = {
 };
 
 export async function getCoverageCounts(): Promise<CoverageCounts> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("max");
   const [placeCount, claimCount] = await Promise.all([
     prisma.place.count({ where: { status: "ACTIVE" } }),
     prisma.claim.count({ where: { isPublic: true, status: "PUBLISHED" } }),

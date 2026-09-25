@@ -11,6 +11,7 @@ const {
   findUniquePlaceMock,
   extractBlockMock,
   transcribeImageMock,
+  updateTagMock,
 } = vi.hoisted(() => ({
   findUniqueOrThrowBlockMock: vi.fn(),
   updateBlockMock: vi.fn(),
@@ -22,6 +23,7 @@ const {
   findUniquePlaceMock: vi.fn(),
   extractBlockMock: vi.fn(),
   transcribeImageMock: vi.fn(),
+  updateTagMock: vi.fn(),
 }));
 
 vi.mock("@/src/corpus/db", () => ({
@@ -54,6 +56,7 @@ vi.mock("@/src/corpus/block-extraction", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
+  updateTag: updateTagMock,
 }));
 
 import { approveClaim, rejectClaim, retryExtraction, approveAllInBlock, rejectAllInBlock } from "./actions";
@@ -149,6 +152,7 @@ function seedBlocks(...blocks: ReturnType<typeof block>[]): void {
 }
 
 beforeEach(() => {
+  updateTagMock.mockReset();
   findUniqueOrThrowBlockMock.mockReset();
   updateBlockMock.mockReset();
   findUniqueOrThrowDraftMock.mockReset();
@@ -225,6 +229,7 @@ describe("approveClaim", () => {
     const updatedClaim = finalDraftClaims.find((c) => c.id === "claim-draft-1")!;
     expect(updatedClaim.resolution).toBe("approved");
     expect(updatedClaim.claimId).toBe("claim-1");
+    expect(updateTagMock).toHaveBeenCalledWith("corpus");
   });
 
   it("reuses the existing sourceId for a second approveClaim in the same block — does not call prisma.source.create again", async () => {
@@ -528,6 +533,7 @@ describe("approveAllInBlock", () => {
 
     const statusUpdateCall = updateBlockMock.mock.calls.find((c) => c[0].data.status === "RESOLVED");
     expect(statusUpdateCall).toBeTruthy();
+    expect(updateTagMock).toHaveBeenCalledWith("corpus");
   });
 });
 

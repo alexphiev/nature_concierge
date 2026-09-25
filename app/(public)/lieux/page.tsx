@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { getActivePlaces, resolvePlaceStatus } from "@/src/corpus/queries";
+import { Suspense } from "react";
+import { getActivePlaces } from "@/src/corpus/queries";
 import { getGooglePlaceDetails } from "@/src/corpus/google-places";
 import { PlaceCard } from "@/src/components/PlaceCard";
+import { LiveStatusPill, StatusPillFallback } from "@/src/components/LiveStatus";
 
 export const metadata: Metadata = {
   title: "Les lieux — Nature Concierge",
@@ -17,11 +19,8 @@ export default async function PlacesIndexPage() {
 
   const cards = await Promise.all(
     places.map(async (place) => {
-      const [status, googleDetails] = await Promise.all([
-        resolvePlaceStatus(place.id),
-        getGooglePlaceDetails(place.googlePlaceId),
-      ]);
-      return { place, status, photo: googleDetails?.photo ?? null };
+      const googleDetails = await getGooglePlaceDetails(place.googlePlaceId);
+      return { place, photo: googleDetails?.photo ?? null };
     }),
   );
 
@@ -33,8 +32,17 @@ export default async function PlacesIndexPage() {
       </p>
       <h1 className="font-display text-3xl">Les lieux</h1>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map(({ place, status, photo }) => (
-          <PlaceCard key={place.id} place={place} status={status} photo={photo} />
+        {cards.map(({ place, photo }) => (
+          <PlaceCard
+            key={place.id}
+            place={place}
+            photo={photo}
+            status={
+              <Suspense fallback={<StatusPillFallback variant="card" />}>
+                <LiveStatusPill placeId={place.id} variant="card" />
+              </Suspense>
+            }
+          />
         ))}
       </div>
     </main>

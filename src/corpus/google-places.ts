@@ -1,3 +1,5 @@
+import { cacheLife } from "next/cache";
+
 export type GooglePlacePhoto = {
   // A genuinely public lh3.googleusercontent.com URL with its own embedded
   // token — NOT the places.googleapis.com media endpoint, which requires
@@ -32,6 +34,8 @@ function apiKey(): string {
 }
 
 async function fetchPlaceDetails(googlePlaceId: string): Promise<PlaceDetailsResponse | null> {
+  "use cache";
+  cacheLife("weeks");
   let response: Response;
   try {
     response = await fetch(
@@ -44,7 +48,6 @@ async function fetchPlaceDetails(googlePlaceId: string): Promise<PlaceDetailsRes
           // would bill the whole request as Pro.
           "X-Goog-FieldMask": "photos",
         },
-        next: { revalidate: 604800 },
       },
     );
   } catch {
@@ -99,11 +102,12 @@ function attributionOf(photo: PlaceDetailsPhoto): string | null {
 }
 
 async function resolvePhotoUri(photo: PlaceDetailsPhoto): Promise<GooglePlacePhoto | null> {
+  "use cache";
+  cacheLife("weeks");
   let mediaResponse: Response;
   try {
     mediaResponse = await fetch(
       `https://places.googleapis.com/v1/${photo.name}/media?key=${apiKey()}&maxWidthPx=1200&skipHttpRedirect=true`,
-      { next: { revalidate: 604800 } },
     );
   } catch {
     return null;

@@ -7,6 +7,8 @@ const {
   findFirstClaimMock,
   findFirstZonePlaceMock,
   findManySignalZoneMock,
+  cacheTagMock,
+  cacheLifeMock,
 } = vi.hoisted(() => ({
   findManyPlaceMock: vi.fn(),
   findFirstPlaceMock: vi.fn(),
@@ -14,6 +16,8 @@ const {
   findFirstClaimMock: vi.fn(),
   findFirstZonePlaceMock: vi.fn(),
   findManySignalZoneMock: vi.fn(),
+  cacheTagMock: vi.fn(),
+  cacheLifeMock: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
@@ -37,6 +41,8 @@ vi.mock("./db", () => ({
   },
 }));
 
+vi.mock("next/cache", () => ({ cacheTag: cacheTagMock, cacheLife: cacheLifeMock }));
+
 import {
   getActivePlaces,
   getPlaceBySlug,
@@ -54,6 +60,8 @@ beforeEach(() => {
   findFirstClaimMock.mockReset();
   findFirstZonePlaceMock.mockReset();
   findManySignalZoneMock.mockReset();
+  cacheTagMock.mockReset();
+  cacheLifeMock.mockReset();
 });
 
 describe("getActivePlaces", () => {
@@ -67,6 +75,15 @@ describe("getActivePlaces", () => {
       orderBy: { demandRank: "asc" },
     });
     expect(result).toEqual([{ slug: "port-d-alon" }]);
+  });
+
+  it("is cached under the corpus tag", async () => {
+    findManyPlaceMock.mockResolvedValue([]);
+
+    await getActivePlaces();
+
+    expect(cacheTagMock).toHaveBeenCalledWith("corpus");
+    expect(cacheLifeMock).toHaveBeenCalledWith("max");
   });
 });
 

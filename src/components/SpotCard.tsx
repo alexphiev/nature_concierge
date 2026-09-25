@@ -1,8 +1,6 @@
 import Link from "next/link";
 import type { Place } from "../../prisma/generated/client";
-import type { ResolvedStatus } from "../corpus/queries";
 import type { GooglePlacePhoto } from "../corpus/google-places";
-import { StatusPill } from "./StatusBlock";
 
 const STRIPES =
   "repeating-linear-gradient(135deg, transparent, transparent 12px, color-mix(in srgb, var(--pin) 6%, transparent) 12px, color-mix(in srgb, var(--pin) 6%, transparent) 13px)";
@@ -13,7 +11,7 @@ export function SpotCard({
   photo,
 }: {
   spot: Place;
-  status: ResolvedStatus;
+  status: React.ReactNode;
   photo: GooglePlacePhoto | null;
 }) {
   return (
@@ -40,7 +38,7 @@ export function SpotCard({
         {spot.description && (
           <span className="line-clamp-1 text-[0.8125rem] text-encre/70">{spot.description}</span>
         )}
-        <StatusPill status={status} bare />
+        {status}
       </div>
     </Link>
   );

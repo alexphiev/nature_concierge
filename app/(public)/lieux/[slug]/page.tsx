@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  getActivePlaces,
-  getPlaceBySlug,
-  resolvePlaceStatus,
-} from "@/src/corpus/queries";
+import { getActivePlaces, getPlaceBySlug } from "@/src/corpus/queries";
 import { getGooglePlaceDetails, googleMapsUrl } from "@/src/corpus/google-places";
-import { formatZoneLabel } from "@/src/corpus/status-presentation";
-import { StatusBlock, StatusPill } from "@/src/components/StatusBlock";
+import {
+  LiveStatusBlock,
+  LiveStatusPill,
+  StatusBlockFallback,
+  StatusPillFallback,
+} from "@/src/components/LiveStatus";
 import { ClaimList } from "@/src/components/ClaimList";
 import { WhatsAppBar, WhatsAppCTA } from "@/src/components/WhatsAppCTA";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
@@ -17,8 +18,6 @@ import { PlaceGallery } from "@/src/components/PlaceGallery";
 import { SpotCard } from "@/src/components/SpotCard";
 import { ExpandableText } from "@/src/components/ExpandableText";
 import { PracticalImages } from "@/src/components/PracticalImages";
-
-export const revalidate = 900;
 
 export async function generateStaticParams() {
   const places = await getActivePlaces();
@@ -57,16 +56,12 @@ export default async function PlaceDetailPage({
   const parent = place.parent?.status === "ACTIVE" ? place.parent : null;
   const typeLabel = TYPE_LABELS[place.type] ?? place.type;
 
-  const [status, googleDetails, spotCards] = await Promise.all([
-    resolvePlaceStatus(place.id),
+  const [googleDetails, spotCards] = await Promise.all([
     getGooglePlaceDetails(place.googlePlaceId),
     Promise.all(
       place.children.map(async (spot) => {
-        const [spotStatus, spotDetails] = await Promise.all([
-          resolvePlaceStatus(spot.id),
-          getGooglePlaceDetails(spot.googlePlaceId),
-        ]);
-        return { spot, status: spotStatus, photo: spotDetails?.photo ?? null };
+        const spotDetails = await getGooglePlaceDetails(spot.googlePlaceId);
+        return { spot, photo: spotDetails?.photo ?? null };
       }),
     ),
   ]);
@@ -77,7 +72,6 @@ export default async function PlaceDetailPage({
     .map(({ spot }) => ({ slug: spot.slug, name: spot.name }));
 
   const metaItems = [
-    status && `Zone feu ${formatZoneLabel(status.zoneLabel)}`,
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
   ].filter((item): item is string => Boolean(item));
@@ -151,7 +145,9 @@ export default async function PlaceDetailPage({
             {place.name}
           </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-encre/75">
-            <StatusPill status={status} />
+            <Suspense fallback={<StatusPillFallback />}>
+              <LiveStatusPill placeId={place.id} />
+            </Suspense>
             {metaItems.map((item) => (
               <span key={item} className="flex items-center gap-3">
                 <span aria-hidden>·</span>
@@ -213,8 +209,17 @@ export default async function PlaceDetailPage({
                 {spotCards.length > 1 ? `Les ${spotCards.length} spots` : "Le spot"}
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {spotCards.map(({ spot, status: spotStatus, photo }) => (
-                  <SpotCard key={spot.id} spot={spot} status={spotStatus} photo={photo} />
+                {spotCards.map(({ spot, photo }) => (
+                  <SpotCard
+                    key={spot.id}
+                    spot={spot}
+                    photo={photo}
+                    status={
+                      <Suspense fallback={<StatusPillFallback variant="bare" />}>
+                        <LiveStatusPill placeId={spot.id} variant="bare" />
+                      </Suspense>
+                    }
+                  />
                 ))}
               </div>
             </section>
@@ -225,7 +230,9 @@ export default async function PlaceDetailPage({
 
         <aside className="order-first flex flex-col gap-5 md:sticky md:top-6 md:order-none">
           <div className="flex flex-col gap-5 rounded-[18px] border border-sable/55 bg-[#FFFCF6] p-6 shadow-[0_8px_28px_rgba(28,43,51,0.08)]">
-            <StatusBlock status={status} officialInfoUrl={place.officialInfoUrl} />
+            <Suspense fallback={<StatusBlockFallback />}>
+              <LiveStatusBlock placeId={place.id} officialInfoUrl={place.officialInfoUrl} />
+            </Suspense>
             <div className="hidden border-t border-sable/45 pt-5 md:block">
               <WhatsAppCTA placeName={place.name} />
             </div>

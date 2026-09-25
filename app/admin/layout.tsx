@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { AdminNav } from "./AdminNav";
 
@@ -18,9 +19,15 @@ export default function AdminLayout({
             ← Voir le site
           </Link>
         </div>
-        <AdminNav />
+        <Suspense>
+          <AdminNav />
+        </Suspense>
       </header>
-      <div className="w-full min-w-0">{children}</div>
+      <div className="w-full min-w-0">
+        <Suspense fallback={<p className="text-sm text-encre/60">Chargement…</p>}>
+          {children}
+        </Suspense>
+      </div>
     </div>
   );
 }

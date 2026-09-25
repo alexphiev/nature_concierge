@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/src/corpus/db";
 import { runBlockExtraction } from "@/src/corpus/run-block-extraction";
 import {
@@ -205,6 +205,7 @@ export async function approveClaim(
   editedSource?: Record<string, unknown>,
 ): Promise<void> {
   await approveClaimNoRollup(blockId, claimId, editedClaim, editedSource);
+  updateTag("corpus");
   await rollupBlockAndDraft(blockId);
 }
 
@@ -265,6 +266,7 @@ export async function approveAllInBlock(
     >;
     await approveClaimNoRollup(blockId, claimId, rest, editedSource);
   }
+  updateTag("corpus");
   await rollupBlockAndDraft(blockId);
 }
 

@@ -36,26 +36,6 @@ export async function saveStatus(formData: FormData): Promise<void> {
         confirmedAt: new Date(),
       },
     });
-
-    const zonePlaces = await prisma.zonePlace.findMany({
-      where: { signalZoneId: zoneId },
-      include: {
-        place: {
-          select: {
-            slug: true,
-            parent: { select: { slug: true } },
-            children: { select: { slug: true } },
-          },
-        },
-      },
-    });
-    for (const zp of zonePlaces) {
-      // Spots inherit their parent's zone, and a parent page shows its spots' status.
-      const slugs = [zp.place.slug, zp.place.parent?.slug, ...zp.place.children.map((c) => c.slug)];
-      for (const slug of slugs) {
-        if (slug) revalidatePath(`/lieux/${slug}`, "page");
-      }
-    }
   }
 
   revalidatePath("/admin/statut", "page");
