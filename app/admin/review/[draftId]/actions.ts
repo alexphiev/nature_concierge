@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/corpus/db";
 import { runBlockExtraction } from "@/src/corpus/run-block-extraction";
 import {
@@ -68,6 +69,8 @@ async function rollupBlockAndDraft(blockId: string): Promise<void> {
   const block = await prisma.ingestionBlock.findUniqueOrThrow({ where: { id: blockId } });
   const claims = block.draftClaims as unknown as DraftClaim[];
   const anyPending = claims.some((c) => c.resolution === "pending");
+
+  revalidatePath(`/admin/review/${block.draftId}`);
 
   if (anyPending) return;
 
@@ -246,6 +249,8 @@ export async function retryExtraction(blockId: string): Promise<void> {
       status: result.status,
     },
   });
+
+  revalidatePath(`/admin/review/${block.draftId}`);
 }
 
 export async function approveAllInBlock(
@@ -259,6 +264,15 @@ export async function approveAllInBlock(
       unknown
     >;
     await approveClaimNoRollup(blockId, claimId, rest, editedSource);
+  }
+  await rollupBlockAndDraft(blockId);
+}
+
+export async function acknowledgeEmptyBlock(blockId: string): Promise<void> {
+  const block = await prisma.ingestionBlock.findUniqueOrThrow({ where: { id: blockId } });
+  const claims = block.draftClaims as unknown as DraftClaim[];
+  if (claims.length > 0) {
+    throw new Error("Cannot acknowledge a block that has draft claims");
   }
   await rollupBlockAndDraft(blockId);
 }

@@ -12,12 +12,14 @@ import {
   SourceTypeSchema,
 } from "@/src/corpus/schema";
 import { addBlock } from "../../ingest/actions";
+import { VerdictFields } from "./VerdictFields";
 import {
   approveClaim,
   rejectClaim,
   retryExtraction,
   approveAllInBlock,
   rejectAllInBlock,
+  acknowledgeEmptyBlock,
 } from "./actions";
 
 export const metadata: Metadata = {
@@ -212,21 +214,12 @@ function ClaimFields({ prefix, claim }: { prefix: string; claim: DraftClaim }) {
         </select>
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-encre/70">Verdict</span>
-        <select name={`${prefix}-verdict`} defaultValue={claim.verdict} className={inputClass}>
-          {VerdictSchema.options.map((v) => (
-            <option key={v} value={v}>
-              {v}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="flex flex-col gap-1">
-        <span className="text-xs text-encre/70">Lieu alternatif (slug, si verdict = ALTERNATIVE)</span>
-        <input type="text" name={`${prefix}-alternativePlaceSlug`} className={inputClass} />
-      </label>
+      <VerdictFields
+        prefix={prefix}
+        defaultVerdict={claim.verdict}
+        verdictOptions={VerdictSchema.options}
+        inputClass={inputClass}
+      />
 
       <label className="flex flex-col gap-1">
         <span className="text-xs text-encre/70">Vérification</span>
@@ -447,6 +440,22 @@ export default async function AdminReviewDraftPage({
 
                 <div className="flex flex-col gap-4">
                   {blockPending.length === 0 && <ReadOnlySourceCard draftSource={draftSource} />}
+
+                  {claims.length === 0 && block.status === "PENDING_REVIEW" && (
+                    <div className={cardClass}>
+                      <p className="text-sm text-encre/70">
+                        Aucune revendication extraite de ce bloc.
+                      </p>
+                      <form action={acknowledgeEmptyBlock.bind(null, block.id)} className="mt-2">
+                        <button
+                          type="submit"
+                          className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm"
+                        >
+                          Marquer comme traité
+                        </button>
+                      </form>
+                    </div>
+                  )}
 
                   {claims.map((claim) => (
                     <ClaimCard key={claim.id} blockId={block.id} claim={claim} draftSource={draftSource} />

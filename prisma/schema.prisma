@@ -17,7 +17,7 @@ model Place {
   departement        String
   lat                Float
   lng                Float
-  type               PlaceType
+  type               String
   governingAuthority String?
   officialInfoUrl    String?
   description        String?
@@ -34,15 +34,6 @@ model Place {
   ingestionDrafts IngestionDraft[]
 
   @@index([status, demandRank])
-}
-
-enum PlaceType {
-  CALANQUE
-  PLAGE
-  MASSIF
-  SENTIER
-  SOMMET
-  SITE
 }
 
 enum PlaceStatus {
@@ -118,24 +109,13 @@ enum ClaimStatus {
 
 model Source {
   id              String           @id @default(cuid())
-  type            SourceType
+  type            String
   urlOrRef        String?
   dateCollected   DateTime
   reliability     Int              @default(2)
   notes           String?
   claims          Claim[]
   ingestionBlocks IngestionBlock[]
-}
-
-enum SourceType {
-  OFFICIAL
-  PERSONAL_VISIT
-  LOCAL_PERSON
-  OT_CONVERSATION
-  REDDIT_LEAD
-  INSTAGRAM_LEAD
-  FACEBOOK_LEAD
-  PRESS_LEAD
 }
 
 // ---------- Real-time layer (separate lane, automatable later) ----------

@@ -1,6 +1,6 @@
 import type { Place, SignalZone } from "../../../prisma/generated/client";
 
-const PLACE_TYPES = ["CALANQUE", "PLAGE", "MASSIF", "SENTIER", "SOMMET", "SITE"] as const;
+const PLACE_TYPES = ["CALANQUE", "PLAGE", "MASSIF", "SENTIER", "SOMMET", "SITE", "ISLAND", "SCENIC_ROAD"] as const;
 const PLACE_STATUSES = ["DRAFT", "ACTIVE", "RETIRED"] as const;
 const DEPARTEMENTS = ["13", "83"] as const;
 

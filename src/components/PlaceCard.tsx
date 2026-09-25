@@ -11,6 +11,8 @@ const TYPE_LABELS: Record<Place["type"], string> = {
   SENTIER: "Sentier",
   SOMMET: "Sommet",
   SITE: "Site",
+  ISLAND: "Île",
+  SCENIC_ROAD: "Route touristique",
 };
 
 const CLAIM_TYPE_LABELS: Record<string, string> = {
@@ -61,9 +63,7 @@ export function PlaceCard({
   status: ResolvedStatus;
   photo: GooglePlacePhoto | null;
 }) {
-  const hookClaim = null as
-    | { claimType: string; claimText: string }
-    | null; // see note below — Task 5 does not add a hook-claim query; left null for now.
+  const hookClaim = null as { claimType: string; claimText: string } | null; // see note below — Task 5 does not add a hook-claim query; left null for now.
 
   return (
     <Link

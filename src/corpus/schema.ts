@@ -8,6 +8,8 @@ export const PlaceTypeSchema = z.enum([
   "SENTIER",
   "SOMMET",
   "SITE",
+  "ISLAND",
+  "SCENIC_ROAD",
 ]);
 
 export const ClaimTypeSchema = z.enum([
@@ -29,7 +31,11 @@ export const VerificationSchema = z.enum([
   "HEURISTIC",
 ]);
 
-export const DecayClassSchema = z.enum(["PERMANENT", "SEASONAL", "ANNUAL_CHECK"]);
+export const DecayClassSchema = z.enum([
+  "PERMANENT",
+  "SEASONAL",
+  "ANNUAL_CHECK",
+]);
 
 export const SourceTypeSchema = z.enum([
   "OFFICIAL",
