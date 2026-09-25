@@ -50,12 +50,10 @@ export function buildPlaceJsonLd({
   place,
   parent,
   url,
-  photoUrl,
 }: {
   place: PlaceWithPublicClaims;
   parent: ParentForJsonLd;
   url: string;
-  photoUrl: string | null;
 }) {
   const touristAttraction = {
     "@type": "TouristAttraction",
@@ -80,7 +78,6 @@ export function buildPlaceJsonLd({
           url: `${SITE_URL}/lieux/${parent.slug}`,
         }
       : { "@type": "City", name: place.commune },
-    ...(photoUrl ? { image: photoUrl } : {}),
   };
 
   const breadcrumbItems = [

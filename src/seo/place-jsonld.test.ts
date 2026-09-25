@@ -115,7 +115,7 @@ describe("buildPlaceJsonLd", () => {
 
   it("includes @context and @graph", () => {
     const place = makePlace();
-    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl });
     expect(result["@context"]).toBe("https://schema.org");
     expect(Array.isArray(result["@graph"])).toBe(true);
   });
@@ -128,7 +128,7 @@ describe("buildPlaceJsonLd", () => {
       lng: 5.6123,
       description: "Une crique tranquille.",
     });
-    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl });
     const graph = result["@graph"] as Array<Record<string, unknown>>;
     const attraction = graph.find((n) => n["@type"] === "TouristAttraction");
     expect(attraction).toBeDefined();
@@ -153,6 +153,14 @@ describe("buildPlaceJsonLd", () => {
     expect("image" in attraction!).toBe(false);
   });
 
+  it("never includes an image field", () => {
+    const place = makePlace();
+    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl });
+    const graph = result["@graph"] as Array<Record<string, unknown>>;
+    const attraction = graph.find((n) => n["@type"] === "TouristAttraction");
+    expect(Object.keys(attraction!)).not.toContain("image");
+  });
+
   it("uses parent for containedInPlace when a parent is provided", () => {
     const place = makePlace();
     const parent = {
@@ -162,7 +170,7 @@ describe("buildPlaceJsonLd", () => {
       status: "ACTIVE",
       claims: [],
     } as PlaceWithPublicClaims["parent"];
-    const result = buildPlaceJsonLd({ place, parent, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent, url: baseUrl });
     const graph = result["@graph"] as Array<Record<string, unknown>>;
     const attraction = graph.find((n) => n["@type"] === "TouristAttraction");
     expect(attraction!.containedInPlace).toEqual({
@@ -172,30 +180,9 @@ describe("buildPlaceJsonLd", () => {
     });
   });
 
-  it("includes image when photoUrl is provided", () => {
-    const place = makePlace();
-    const result = buildPlaceJsonLd({
-      place,
-      parent: null,
-      url: baseUrl,
-      photoUrl: "http://localhost:3000/lieux/calanque-du-mugel/photo",
-    });
-    const graph = result["@graph"] as Array<Record<string, unknown>>;
-    const attraction = graph.find((n) => n["@type"] === "TouristAttraction");
-    expect(attraction!.image).toBe("http://localhost:3000/lieux/calanque-du-mugel/photo");
-  });
-
-  it("omits image key entirely when photoUrl is null", () => {
-    const place = makePlace();
-    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl, photoUrl: null });
-    const graph = result["@graph"] as Array<Record<string, unknown>>;
-    const attraction = graph.find((n) => n["@type"] === "TouristAttraction");
-    expect(Object.keys(attraction!)).not.toContain("image");
-  });
-
   it("builds a BreadcrumbList without a parent", () => {
     const place = makePlace({ name: "Calanque du Mugel" });
-    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl });
     const graph = result["@graph"] as Array<Record<string, unknown>>;
     const breadcrumb = graph.find((n) => n["@type"] === "BreadcrumbList");
     expect(breadcrumb).toBeDefined();
@@ -226,7 +213,7 @@ describe("buildPlaceJsonLd", () => {
       status: "ACTIVE",
       claims: [],
     } as PlaceWithPublicClaims["parent"];
-    const result = buildPlaceJsonLd({ place, parent, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent, url: baseUrl });
     const graph = result["@graph"] as Array<Record<string, unknown>>;
     const breadcrumb = graph.find((n) => n["@type"] === "BreadcrumbList");
     const items = breadcrumb!.itemListElement as Array<Record<string, unknown>>;
@@ -250,7 +237,7 @@ describe("buildPlaceJsonLd", () => {
 
   it("omits FAQPage when the place has zero public claims", () => {
     const place = makePlace({ claims: [] });
-    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl });
     const graph = result["@graph"] as Array<Record<string, unknown>>;
     expect(graph.find((n) => n["@type"] === "FAQPage")).toBeUndefined();
   });
@@ -265,7 +252,7 @@ describe("buildPlaceJsonLd", () => {
         makeClaim("TIP", "Venez tôt le matin."),
       ],
     });
-    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl });
     const graph = result["@graph"] as Array<Record<string, unknown>>;
     const faq = graph.find((n) => n["@type"] === "FAQPage");
     expect(faq).toBeDefined();
@@ -284,7 +271,7 @@ describe("buildPlaceJsonLd", () => {
 
   it("never includes daily status fields", () => {
     const place = makePlace({ claims: [makeClaim("ACCESS", "Ouvert toute l'année.")] });
-    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl, photoUrl: null });
+    const result = buildPlaceJsonLd({ place, parent: null, url: baseUrl });
     const serialized = JSON.stringify(result);
     expect(serialized).not.toMatch(/status|verdict|ouvert aujourd|fermé aujourd/i);
   });
