@@ -1,5 +1,6 @@
 import type { Place, SignalZone } from "../../../prisma/generated/client";
 import { PlaceLocationFields } from "./PlaceLocationFields";
+import { PlaceImageFields } from "./PlaceImageFields";
 
 const PLACE_TYPES = ["CALANQUE", "PLAGE", "MASSIF", "SENTIER", "SOMMET", "SITE", "ISLAND", "SCENIC_ROAD"] as const;
 const PLACE_STATUSES = ["DRAFT", "ACTIVE", "RETIRED"] as const;
@@ -14,6 +15,7 @@ export function PlaceForm({
   parentOptions,
   hasChildren = false,
   governingAuthorities,
+  imageUrls = [],
 }: {
   action: (formData: FormData) => Promise<void>;
   place?: Place;
@@ -22,6 +24,7 @@ export function PlaceForm({
   parentOptions: Pick<Place, "id" | "name" | "commune">[];
   hasChildren?: boolean;
   governingAuthorities: string[];
+  imageUrls?: string[];
 }) {
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -133,6 +136,8 @@ export function PlaceForm({
         <input type="checkbox" name="zapef" defaultChecked={place?.zapef ?? false} />
         <span className="text-sm text-encre/70">ZAPEF (accessible même en rouge)</span>
       </label>
+
+      <PlaceImageFields defaultUrls={imageUrls} />
 
       <button
         type="submit"

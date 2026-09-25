@@ -7,6 +7,8 @@ const {
   countPlaceMock,
   createManyZonePlaceMock,
   deleteManyZonePlaceMock,
+  createManyPlaceImageMock,
+  deleteManyPlaceImageMock,
   redirectMock,
 } = vi.hoisted(() => ({
   createPlaceMock: vi.fn(),
@@ -15,6 +17,8 @@ const {
   countPlaceMock: vi.fn(),
   createManyZonePlaceMock: vi.fn(),
   deleteManyZonePlaceMock: vi.fn(),
+  createManyPlaceImageMock: vi.fn(),
+  deleteManyPlaceImageMock: vi.fn(),
   redirectMock: vi.fn(),
 }));
 
@@ -29,6 +33,10 @@ vi.mock("@/src/corpus/db", () => ({
     zonePlace: {
       createMany: createManyZonePlaceMock,
       deleteMany: deleteManyZonePlaceMock,
+    },
+    placeImage: {
+      createMany: createManyPlaceImageMock,
+      deleteMany: deleteManyPlaceImageMock,
     },
   },
 }));
@@ -60,6 +68,8 @@ beforeEach(() => {
   countPlaceMock.mockReset();
   createManyZonePlaceMock.mockReset();
   deleteManyZonePlaceMock.mockReset();
+  createManyPlaceImageMock.mockReset();
+  deleteManyPlaceImageMock.mockReset();
   redirectMock.mockReset();
 });
 
@@ -218,5 +228,58 @@ describe("parent place (two levels max)", () => {
 
     await expect(updatePlace("place-1", formData)).rejects.toThrow("déjà des spots");
     expect(updatePlaceMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("place images", () => {
+  it("creates PlaceImage rows in order for each submitted URL on createPlace", async () => {
+    createPlaceMock.mockResolvedValue({ id: "place-1" });
+    const formData = baseFormData();
+    formData.append("imageUrls", "https://example.com/a.jpg");
+    formData.append("imageUrls", "https://other.fr/b.jpg");
+
+    await createPlace(formData);
+
+    expect(createManyPlaceImageMock).toHaveBeenCalledWith({
+      data: [
+        { url: "https://example.com/a.jpg", order: 0, placeId: "place-1" },
+        { url: "https://other.fr/b.jpg", order: 1, placeId: "place-1" },
+      ],
+    });
+  });
+
+  it("skips blank URLs and skips placeImage.createMany when none remain", async () => {
+    createPlaceMock.mockResolvedValue({ id: "place-1" });
+    const formData = baseFormData();
+    formData.append("imageUrls", "   ");
+
+    await createPlace(formData);
+
+    expect(createManyPlaceImageMock).not.toHaveBeenCalled();
+  });
+
+  it("replaces images by deleting then recreating on updatePlace", async () => {
+    const formData = baseFormData();
+    formData.append("imageUrls", "https://example.com/new.jpg");
+
+    await updatePlace("place-1", formData);
+
+    expect(deleteManyPlaceImageMock).toHaveBeenCalledWith({ where: { placeId: "place-1" } });
+    expect(createManyPlaceImageMock).toHaveBeenCalledWith({
+      data: [{ url: "https://example.com/new.jpg", order: 0, placeId: "place-1" }],
+    });
+
+    const deleteOrder = deleteManyPlaceImageMock.mock.invocationCallOrder[0];
+    const createOrder = createManyPlaceImageMock.mock.invocationCallOrder[0];
+    expect(deleteOrder).toBeLessThan(createOrder);
+  });
+
+  it("still deletes existing images on updatePlace when no URLs are submitted", async () => {
+    const formData = baseFormData();
+
+    await updatePlace("place-1", formData);
+
+    expect(deleteManyPlaceImageMock).toHaveBeenCalledWith({ where: { placeId: "place-1" } });
+    expect(createManyPlaceImageMock).not.toHaveBeenCalled();
   });
 });

@@ -12,6 +12,7 @@ import { ClaimList } from "@/src/components/ClaimList";
 import { WhatsAppCTA } from "@/src/components/WhatsAppCTA";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
 import { PlaceCard } from "@/src/components/PlaceCard";
+import { PracticalImages } from "@/src/components/PracticalImages";
 
 export const revalidate = 900;
 
@@ -197,6 +198,8 @@ export default async function PlaceDetailPage({
           </div>
         </section>
       )}
+
+      <PracticalImages urls={place.images.map((img) => img.url)} />
     </main>
   );
 }

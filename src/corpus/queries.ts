@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import type { Place, Claim, SignalZone } from "../../prisma/generated/client";
+import type { Place, Claim, SignalZone, PlaceImage } from "../../prisma/generated/client";
 
 export async function getActivePlaces(): Promise<Place[]> {
   return prisma.place.findMany({
@@ -37,6 +37,7 @@ export type PlaceWithPublicClaims = Place & {
   claims: PublicClaim[];
   parent: (Pick<Place, "id" | "slug" | "name" | "status"> & { claims: PublicClaim[] }) | null;
   children: Place[];
+  images: PlaceImage[];
 };
 
 const publicClaimsInclude = {
@@ -60,6 +61,7 @@ export async function getPlaceBySlug(
         where: { status: "ACTIVE" },
         orderBy: { demandRank: "asc" },
       },
+      images: { orderBy: { order: "asc" } },
     },
   }) as Promise<PlaceWithPublicClaims | null>;
 }

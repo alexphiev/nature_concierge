@@ -95,6 +95,7 @@ describe("getPlaceBySlug", () => {
           where: { status: "ACTIVE" },
           orderBy: { demandRank: "asc" },
         },
+        images: { orderBy: { order: "asc" } },
       },
     });
     expect(result).toEqual({

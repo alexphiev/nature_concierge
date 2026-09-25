@@ -12,6 +12,14 @@ function slugify(name: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+function readImageUrls(formData: FormData): string[] {
+  return formData
+    .getAll("imageUrls")
+    .filter((v): v is string => typeof v === "string")
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
+}
+
 function readPlaceFields(formData: FormData) {
   const zoneIds = formData.getAll("zoneIds").filter((v): v is string => typeof v === "string");
   return {
@@ -79,6 +87,13 @@ export async function createPlace(formData: FormData): Promise<void> {
     });
   }
 
+  const imageUrls = readImageUrls(formData);
+  if (imageUrls.length > 0) {
+    await prisma.placeImage.createMany({
+      data: imageUrls.map((url, order) => ({ url, order, placeId: place.id })),
+    });
+  }
+
   redirect("/admin/places");
 }
 
@@ -110,6 +125,14 @@ export async function updatePlace(placeId: string, formData: FormData): Promise<
   if (fields.zoneIds.length > 0) {
     await prisma.zonePlace.createMany({
       data: fields.zoneIds.map((signalZoneId) => ({ signalZoneId, placeId })),
+    });
+  }
+
+  const imageUrls = readImageUrls(formData);
+  await prisma.placeImage.deleteMany({ where: { placeId } });
+  if (imageUrls.length > 0) {
+    await prisma.placeImage.createMany({
+      data: imageUrls.map((url, order) => ({ url, order, placeId })),
     });
   }
 

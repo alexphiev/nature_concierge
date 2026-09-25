@@ -37,9 +37,23 @@ model Place {
   alternativeOf   Claim[]          @relation("AlternativePlace")
   zones           ZonePlace[]
   ingestionDrafts IngestionDraft[]
+  images          PlaceImage[]
 
   @@index([status, demandRank])
   @@index([parentId])
+}
+
+model PlaceImage {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  url   String
+  order Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([placeId, order])
 }
 
 enum PlaceStatus {
