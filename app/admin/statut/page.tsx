@@ -5,7 +5,7 @@ import { parisDateString, parisToday } from "@/src/corpus/paris-date";
 import { saveStatus } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Statut du jour — Admin — Nature Concierge",
+  title: "Statut du jour — Admin — Guide Nature de La Ciotat",
   robots: { index: false, follow: false },
 };
 

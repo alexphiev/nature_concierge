@@ -8,7 +8,7 @@ import { PlaceForm } from "../PlaceForm";
 import { updatePlace } from "../actions";
 
 export const metadata: Metadata = {
-  title: "Modifier le lieu — Admin — Nature Concierge",
+  title: "Modifier le lieu — Admin — Guide Nature de La Ciotat",
   robots: { index: false, follow: false },
 };
 

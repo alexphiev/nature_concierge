@@ -2,8 +2,9 @@ import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 import { getActivePlaces, getPlaceBySlug } from "@/src/corpus/queries";
 import { TYPE_LABELS } from "@/src/components/PlaceCard";
+import { SITE_NAME } from "@/src/site";
 
-export const alt = "Nature Concierge";
+export const alt = SITE_NAME;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -58,7 +59,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <div style={{ display: "flex", fontSize: 28, fontWeight: 600, color: "#0F4C5C" }}>
-            Nature Concierge
+            {SITE_NAME}
           </div>
           <div style={{ display: "flex", fontSize: 20, color: "#0F4C5C" }}>
             Statut du jour, accès, conseils vérifiés

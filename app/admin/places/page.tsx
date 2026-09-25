@@ -5,7 +5,7 @@ import { prisma } from "@/src/corpus/db";
 import { getAllPlaces } from "@/src/corpus/queries";
 
 export const metadata: Metadata = {
-  title: "Lieux — Admin — Nature Concierge",
+  title: "Lieux — Admin — Guide Nature de La Ciotat",
   robots: { index: false, follow: false },
 };
 

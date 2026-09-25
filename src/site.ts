@@ -1,5 +1,5 @@
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-export const SITE_NAME = "Nature Concierge";
+export const SITE_NAME = "Guide Nature de La Ciotat";
 
 // Next shallow-merges `openGraph` across metadata objects: a page-level
 // `openGraph` replaces the root layout's entirely, dropping siteName/locale
