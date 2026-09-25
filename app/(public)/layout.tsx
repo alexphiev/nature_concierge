@@ -1,4 +1,6 @@
-import { SiteFooter } from "@/src/components/SiteFooter";
+import { figtree, fraunces } from "@/src/fonts";
+import { SiteHeader } from "@/src/components/site/SiteHeader";
+import { SiteFooter } from "@/src/components/site/SiteFooter";
 
 export default function PublicLayout({
   children,
@@ -6,9 +8,10 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <div className="flex flex-1 flex-col">{children}</div>
+    <div className={`${fraunces.variable} ${figtree.variable} flex flex-1 flex-col`}>
+      <SiteHeader />
+      {children}
       <SiteFooter />
-    </>
+    </div>
   );
 }

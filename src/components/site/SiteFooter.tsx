@@ -1,11 +1,11 @@
-import { CoffeeIcon, Monogram } from "./icons";
-import { ACCESS_MAP_HREF, COFFEE_HREF, CONTAINER, FOCUS_RING, STORY_HREF } from "./shared";
+import { CoffeeIcon, Monogram } from "../landing/icons";
+import { ACCESS_MAP_HREF, COFFEE_HREF, CONTAINER, FOCUS_RING, STORY_HREF } from "../landing/shared";
 
 const LINK = `text-[15px] font-semibold text-[#0E4B5A] hover:text-[#0A3843] ${FOCUS_RING}`;
 
-export function LandingFooter() {
+export function SiteFooter() {
   return (
-    <footer className="grow bg-[#EAE2D3]">
+    <footer className="grow bg-[#EAE2D3] font-landing-body leading-[normal] text-[#1D2A2E]">
       <div className={`${CONTAINER} flex flex-col gap-5 py-8 md:gap-8 md:py-12`}>
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-12">
           <div className="flex items-center gap-3.5 md:max-w-[640px] md:gap-4.5">
