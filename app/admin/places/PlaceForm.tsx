@@ -1,8 +1,8 @@
 import type { Place, SignalZone } from "../../../prisma/generated/client";
+import { PlaceLocationFields } from "./PlaceLocationFields";
 
 const PLACE_TYPES = ["CALANQUE", "PLAGE", "MASSIF", "SENTIER", "SOMMET", "SITE", "ISLAND", "SCENIC_ROAD"] as const;
 const PLACE_STATUSES = ["DRAFT", "ACTIVE", "RETIRED"] as const;
-const DEPARTEMENTS = ["13", "83"] as const;
 
 const inputClass = "rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
 
@@ -19,57 +19,19 @@ export function PlaceForm({
 }) {
   return (
     <form action={action} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1">
-        <span className="text-sm text-encre/70">Nom</span>
-        <input type="text" name="name" defaultValue={place?.name} required className={inputClass} />
-      </label>
+      <PlaceLocationFields
+        defaultName={place?.name}
+        defaultCommune={place?.commune}
+        defaultDepartement={place?.departement}
+        defaultLat={place?.lat}
+        defaultLng={place?.lng}
+        defaultGooglePlaceId={place?.googlePlaceId}
+      />
 
       <label className="flex flex-col gap-1">
         <span className="text-sm text-encre/70">Slug (laisser vide pour auto-génération à la création)</span>
         <input type="text" name="slug" defaultValue={place?.slug} className={inputClass} />
       </label>
-
-      <label className="flex flex-col gap-1">
-        <span className="text-sm text-encre/70">Commune</span>
-        <input type="text" name="commune" defaultValue={place?.commune} required className={inputClass} />
-      </label>
-
-      <label className="flex flex-col gap-1">
-        <span className="text-sm text-encre/70">Département</span>
-        <select name="departement" defaultValue={place?.departement ?? "83"} className={inputClass}>
-          {DEPARTEMENTS.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="flex gap-4">
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-sm text-encre/70">Latitude</span>
-          <input
-            type="number"
-            step="any"
-            name="lat"
-            defaultValue={place?.lat}
-            required
-            className={inputClass}
-          />
-        </label>
-
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-sm text-encre/70">Longitude</span>
-          <input
-            type="number"
-            step="any"
-            name="lng"
-            defaultValue={place?.lng}
-            required
-            className={inputClass}
-          />
-        </label>
-      </div>
 
       <label className="flex flex-col gap-1">
         <span className="text-sm text-encre/70">Type</span>
@@ -98,19 +60,6 @@ export function PlaceForm({
           type="text"
           name="officialInfoUrl"
           defaultValue={place?.officialInfoUrl ?? ""}
-          className={inputClass}
-        />
-      </label>
-
-      <label className="flex flex-col gap-1">
-        <span className="text-sm text-encre/70">
-          Identifiant Google Places (optionnel)
-        </span>
-        <input
-          type="text"
-          name="googlePlaceId"
-          defaultValue={place?.googlePlaceId ?? ""}
-          placeholder="ChIJ..."
           className={inputClass}
         />
       </label>
