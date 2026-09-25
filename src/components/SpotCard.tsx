@@ -18,7 +18,7 @@ export function SpotCard({
 }) {
   return (
     <Link
-      href={`/places/${spot.slug}`}
+      href={`/lieux/${spot.slug}`}
       className="flex items-center gap-3.5 rounded-[14px] border border-sable/50 p-3 transition-colors hover:border-mediterranee focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
     >
       <div
@@ -27,7 +27,7 @@ export function SpotCard({
       >
         {photo && (
           <img
-            src={`/places/${spot.slug}/photo`}
+            src={`/lieux/${spot.slug}/photo`}
             alt=""
             width={176}
             height={176}

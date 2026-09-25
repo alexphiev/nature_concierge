@@ -8,14 +8,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const placeEntries = await Promise.all(
     places.map(async (place) => ({
-      url: `${SITE_URL}/places/${place.slug}`,
+      url: `${SITE_URL}/lieux/${place.slug}`,
       lastModified: await getPlaceFreshness(place.id),
     })),
   );
 
   return [
     { url: SITE_URL, lastModified: new Date() },
-    { url: `${SITE_URL}/places`, lastModified: new Date() },
+    { url: `${SITE_URL}/lieux`, lastModified: new Date() },
     ...placeEntries,
   ];
 }

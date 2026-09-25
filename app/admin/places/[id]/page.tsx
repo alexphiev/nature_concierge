@@ -41,7 +41,7 @@ export default async function AdminEditPlacePage({
         <h1 className="font-display text-2xl">Modifier {place.name}</h1>
         {place.status === "ACTIVE" && (
           <Link
-            href={`/places/${place.slug}`}
+            href={`/lieux/${place.slug}`}
             target="_blank"
             className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm text-encre/70 transition-colors hover:border-mediterranee hover:text-mediterranee"
           >

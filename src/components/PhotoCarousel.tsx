@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 function photoSrc(slug: string, index: number): string {
-  return `/places/${slug}/photo?i=${index}`;
+  return `/lieux/${slug}/photo?i=${index}`;
 }
 
 function Chevron({ direction }: { direction: "left" | "right" }) {

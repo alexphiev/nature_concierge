@@ -122,14 +122,14 @@ export default async function PlaceDetailPage({
         aria-label="Fil d'Ariane"
         className="flex flex-wrap gap-2 font-mono text-xs tracking-wide text-encre/65"
       >
-        <Link href="/places" className="underline decoration-dotted underline-offset-2">
+        <Link href="/lieux" className="underline decoration-dotted underline-offset-2">
           Les lieux
         </Link>
         {parent && (
           <>
             <span aria-hidden>/</span>
             <Link
-              href={`/places/${parent.slug}`}
+              href={`/lieux/${parent.slug}`}
               className="underline decoration-dotted underline-offset-2"
             >
               {parent.name}

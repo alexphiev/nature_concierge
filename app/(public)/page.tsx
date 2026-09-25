@@ -75,7 +75,7 @@ export default async function LandingPage() {
           <div className="mt-10 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
             <LandingWhatsAppCTA />
             <Link
-              href="/places"
+              href="/lieux"
               className="flex w-full items-center justify-center rounded-[10px] border border-sable/60 px-6 py-3.5 font-medium text-mediterranee transition-colors duration-150 hover:border-mediterranee hover:bg-calcaire-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee sm:w-auto"
             >
               Voir les lieux couverts
@@ -149,7 +149,7 @@ export default async function LandingPage() {
               {namedPlaces.map((place, index) => (
                 <span key={place.id}>
                   <Link
-                    href={`/places/${place.slug}`}
+                    href={`/lieux/${place.slug}`}
                     className="text-mediterranee underline decoration-sable/60 underline-offset-4 transition-colors duration-150 hover:decoration-mediterranee"
                   >
                     {place.name}
@@ -160,7 +160,7 @@ export default async function LandingPage() {
             </p>
           )}
           <Link
-            href="/places"
+            href="/lieux"
             className="mt-6 inline-block font-medium text-mediterranee underline decoration-sable/60 underline-offset-4 transition-colors duration-150 hover:decoration-mediterranee"
           >
             Voir tous les lieux

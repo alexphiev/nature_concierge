@@ -53,7 +53,7 @@ export async function saveStatus(formData: FormData): Promise<void> {
       // Spots inherit their parent's zone, and a parent page shows its spots' status.
       const slugs = [zp.place.slug, zp.place.parent?.slug, ...zp.place.children.map((c) => c.slug)];
       for (const slug of slugs) {
-        if (slug) revalidatePath(`/places/${slug}`, "page");
+        if (slug) revalidatePath(`/lieux/${slug}`, "page");
       }
     }
   }

@@ -15,8 +15,8 @@ Sainte-Baume.
 ## Pages
 
 - / — présentation de la mission
-- /places — liste des lieux couverts
-- /places/{slug} — une page par lieu : statut du jour, accès, conseils
+- /lieux — liste des lieux couverts
+- /lieux/{slug} — une page par lieu : statut du jour, accès, conseils
 
 ## Mise à jour
 

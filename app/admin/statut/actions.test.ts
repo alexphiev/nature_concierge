@@ -59,8 +59,8 @@ describe("saveStatus", () => {
 
     await saveStatus(formData);
 
-    expect(revalidatePathMock).toHaveBeenCalledWith("/places/port-d-alon", "page");
-    expect(revalidatePathMock).toHaveBeenCalledWith("/places/other-place", "page");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/lieux/port-d-alon", "page");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/lieux/other-place", "page");
   });
 
   it("skips zones with no submitted value (not touched today)", async () => {
@@ -94,7 +94,7 @@ describe("saveStatus", () => {
     await saveStatus(formData);
 
     for (const slug of ["calanque-mugel", "anse-du-sec", "petit-mugel", "grand-mugel"]) {
-      expect(revalidatePathMock).toHaveBeenCalledWith(`/places/${slug}`, "page");
+      expect(revalidatePathMock).toHaveBeenCalledWith(`/lieux/${slug}`, "page");
     }
   });
 });

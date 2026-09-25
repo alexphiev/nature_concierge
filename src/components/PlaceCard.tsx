@@ -67,7 +67,7 @@ export function PlaceCard({
 
   return (
     <Link
-      href={`/places/${place.slug}`}
+      href={`/lieux/${place.slug}`}
       className="block overflow-hidden rounded-[14px] border border-sable/45 bg-calcaire transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-0.5 hover:border-mediterranee hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
     >
       <div
@@ -83,7 +83,7 @@ export function PlaceCard({
       >
         {photo && (
           <img
-            src={`/places/${place.slug}/photo`}
+            src={`/lieux/${place.slug}/photo`}
             alt=""
             width={800}
             height={600}

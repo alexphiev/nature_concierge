@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing slug" }, { status: 400 });
   }
 
-  revalidatePath(`/places/${slug}`, "page");
+  revalidatePath(`/lieux/${slug}`, "page");
 
   return NextResponse.json({ revalidated: true, slug });
 }
