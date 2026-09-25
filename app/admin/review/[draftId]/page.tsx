@@ -23,7 +23,7 @@ import {
 } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Relecture — Admin — Nature Concierge",
+  title: "Relecture — Admin",
   robots: { index: false, follow: false },
 };
 

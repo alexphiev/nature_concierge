@@ -6,7 +6,7 @@ import { BlockList } from "./BlockList";
 import { createCapture } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Nouvelle capture — Admin — Nature Concierge",
+  title: "Nouvelle capture — Admin",
   robots: { index: false, follow: false },
 };
 

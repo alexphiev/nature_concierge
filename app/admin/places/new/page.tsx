@@ -5,7 +5,7 @@ import { PlaceForm } from "../PlaceForm";
 import { createPlace } from "../actions";
 
 export const metadata: Metadata = {
-  title: "Nouveau lieu — Admin — Nature Concierge",
+  title: "Nouveau lieu — Admin",
   robots: { index: false, follow: false },
 };
 

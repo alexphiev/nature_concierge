@@ -23,8 +23,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Nature Concierge — nature entre Marseille et Bandol",
-    template: "%s · Nature Concierge",
+    default: "Guide Nature de La Ciotat — calanques, criques et sentiers",
+    template: "%s · Guide Nature de La Ciotat",
   },
   description:
     "Le guide local qui vous dit où aller en nature entre Marseille et Bandol — et où ne pas aller.",

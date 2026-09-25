@@ -1,12 +1,13 @@
 import type { Place } from "../../prisma/generated/client";
 import { TYPE_LABELS } from "../components/PlaceCard";
+import { SITE_NAME } from "../site";
 
 export type LlmsTxtPlace = Pick<
   Place,
   "id" | "slug" | "name" | "commune" | "type" | "description" | "parentId"
 >;
 
-const HEADER = `# Nature Concierge
+const HEADER = `# ${SITE_NAME}
 
 > Le guide local pour la nature entre Marseille et Bandol : statut du jour (accès incendie) et conseils vérifiés sur le terrain, lieu par lieu.
 

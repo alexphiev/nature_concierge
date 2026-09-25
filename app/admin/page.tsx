@@ -4,7 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/src/corpus/db";
 
 export const metadata: Metadata = {
-  title: "Admin — Nature Concierge",
+  title: "Admin",
   robots: { index: false, follow: false },
 };
 

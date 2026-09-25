@@ -5,7 +5,7 @@ import { prisma } from "@/src/corpus/db";
 import { getAllPlaces } from "@/src/corpus/queries";
 
 export const metadata: Metadata = {
-  title: "Lieux — Admin — Nature Concierge",
+  title: "Lieux — Admin",
   robots: { index: false, follow: false },
 };
 
