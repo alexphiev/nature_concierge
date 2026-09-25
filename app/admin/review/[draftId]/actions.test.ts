@@ -535,6 +535,23 @@ describe("approveAllInBlock", () => {
     expect(statusUpdateCall).toBeTruthy();
     expect(updateTagMock).toHaveBeenCalledWith("corpus");
   });
+
+  it("still invalidates the corpus tag when a later claim in the block throws", async () => {
+    const claimA = draftClaim({ id: "claim-A", claimText: "Claim A." });
+    const claimB = draftClaim({ id: "claim-B", claimText: "Claim B." });
+    seedBlocks(block({ draftClaims: [claimA, claimB] }));
+
+    createClaimMock.mockResolvedValueOnce({ id: "claim-1" }).mockRejectedValueOnce(new Error("db down"));
+
+    await expect(
+      approveAllInBlock("block-1", [
+        { id: "claim-A", ...editedClaim({ claimText: "Claim A." }), editedSource: editedSource() },
+        { id: "claim-B", ...editedClaim({ claimText: "Claim B." }) },
+      ]),
+    ).rejects.toThrow("db down");
+
+    expect(updateTagMock).toHaveBeenCalledWith("corpus");
+  });
 });
 
 describe("rejectAllInBlock", () => {
