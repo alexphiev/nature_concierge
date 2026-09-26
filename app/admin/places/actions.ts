@@ -1,8 +1,14 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "@/src/corpus/db";
+import {
+  deletePlacePhotos,
+  placePhotoKey,
+  placePhotoUrl,
+  putPlacePhoto,
+} from "@/src/storage/place-photos";
+import { MAX_PHOTO_BYTES, isPlacePhotoType } from "@/src/storage/photo-types";
 
 function slugify(name: string): string {
   return name
@@ -19,6 +25,35 @@ function readImageUrls(formData: FormData): string[] {
     .filter((v): v is string => typeof v === "string")
     .map((v) => v.trim())
     .filter((v) => v.length > 0);
+}
+
+function readPhotoEdits(formData: FormData): { id: string; order: number; credit: string | null }[] {
+  const credits = formData.getAll("photoCredits").map((v) => String(v).trim());
+  return formData
+    .getAll("photoIds")
+    .map((id, order) => ({ id: String(id), order, credit: credits[order] || null }));
+}
+
+async function savePhotoEdits(placeId: string, formData: FormData): Promise<void> {
+  const photos = readPhotoEdits(formData);
+
+  const removed = await prisma.placePhoto.findMany({
+    where: { placeId, id: { notIn: photos.map((p) => p.id) } },
+    select: { id: true, key: true },
+  });
+  if (removed.length > 0) {
+    await prisma.placePhoto.deleteMany({ where: { id: { in: removed.map((p) => p.id) } } });
+    await deletePlacePhotos(removed.map((p) => p.key));
+  }
+
+  await Promise.all(
+    photos.map((photo) =>
+      prisma.placePhoto.update({
+        where: { id: photo.id, placeId },
+        data: { order: photo.order, credit: photo.credit },
+      }),
+    ),
+  );
 }
 
 function readPlaceFields(formData: FormData) {
@@ -59,7 +94,7 @@ async function assertValidParent(parentId: string | null, placeId?: string): Pro
   }
 }
 
-export async function createPlace(formData: FormData): Promise<void> {
+export async function createPlace(formData: FormData): Promise<{ id: string }> {
   const fields = readPlaceFields(formData);
   await assertValidParent(fields.parentId);
   const place = await prisma.place.create({
@@ -96,10 +131,10 @@ export async function createPlace(formData: FormData): Promise<void> {
   }
 
   updateTag("corpus");
-  redirect("/admin/places");
+  return { id: place.id };
 }
 
-export async function updatePlace(placeId: string, formData: FormData): Promise<void> {
+export async function updatePlace(placeId: string, formData: FormData): Promise<{ id: string }> {
   const fields = readPlaceFields(formData);
   await assertValidParent(fields.parentId, placeId);
   await prisma.place.update({
@@ -138,6 +173,35 @@ export async function updatePlace(placeId: string, formData: FormData): Promise<
     });
   }
 
+  await savePhotoEdits(placeId, formData);
+
   updateTag("corpus");
-  redirect("/admin/places");
+  return { id: placeId };
+}
+
+export async function uploadPlacePhoto(
+  placeId: string,
+  formData: FormData,
+): Promise<{ id: string; src: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof Blob) || !isPlacePhotoType(file.type)) {
+    throw new Error("La photo doit être un JPEG, PNG ou WebP");
+  }
+  if (file.size > MAX_PHOTO_BYTES) throw new Error("La photo dépasse 4 Mo");
+  const credit = String(formData.get("credit") ?? "").trim() || null;
+
+  const key = placePhotoKey(placeId, file.type);
+  await putPlacePhoto(key, new Uint8Array(await file.arrayBuffer()), file.type);
+
+  const last = await prisma.placePhoto.findFirst({
+    where: { placeId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+  const photo = await prisma.placePhoto.create({
+    data: { placeId, key, credit, order: (last?.order ?? -1) + 1 },
+  });
+
+  updateTag("corpus");
+  return { id: photo.id, src: placePhotoUrl(photo.key) };
 }
