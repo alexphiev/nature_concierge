@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
       expire: 2592000,
     },
   },
+  images: {
+    // Neon Object Storage public_read bucket (branch endpoint host varies).
+    remotePatterns: [
+      { protocol: "https", hostname: "**.aws.neon.tech", pathname: "/place-photos/**" },
+    ],
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
