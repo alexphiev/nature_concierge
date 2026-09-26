@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { PLACE_PHOTO_TYPES } from "@/src/storage/photo-types";
 import { compressPhoto } from "./compress-photo";
 
@@ -19,9 +19,13 @@ function itemKey(item: PhotoItem): string {
 export function PlacePhotoFields({
   items,
   onChange,
+  onPreparingChange,
+  disabled = false,
 }: {
   items: PhotoItem[];
-  onChange: (items: PhotoItem[]) => void;
+  onChange: Dispatch<SetStateAction<PhotoItem[]>>;
+  onPreparingChange?: (preparing: boolean) => void;
+  disabled?: boolean;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [preparing, setPreparing] = useState(false);
@@ -29,6 +33,7 @@ export function PlacePhotoFields({
 
   async function addFiles(files: FileList) {
     setPreparing(true);
+    onPreparingChange?.(true);
     const added: PhotoItem[] = [];
     const failed: string[] = [];
     for (const file of Array.from(files)) {
@@ -47,8 +52,9 @@ export function PlacePhotoFields({
     }
     setErrors(failed);
     setPreparing(false);
+    onPreparingChange?.(false);
     if (fileInput.current) fileInput.current.value = "";
-    onChange([...items, ...added]);
+    onChange((prev) => [...prev, ...added]);
   }
 
   // Saved photos always precede pending ones: pending photos are appended on upload.
@@ -89,6 +95,7 @@ export function PlacePhotoFields({
             value={item.credit}
             onChange={(e) => setCredit(index, e.target.value)}
             placeholder="Crédit (optionnel)"
+            disabled={disabled}
             className={`flex-1 ${inputClass}`}
           />
           {item.kind === "pending" && (
@@ -97,7 +104,7 @@ export function PlacePhotoFields({
           <button
             type="button"
             onClick={() => swap(index, index - 1)}
-            disabled={!canSwap(index, index - 1)}
+            disabled={disabled || !canSwap(index, index - 1)}
             aria-label="Monter"
             className={smallButton}
           >
@@ -106,13 +113,18 @@ export function PlacePhotoFields({
           <button
             type="button"
             onClick={() => swap(index, index + 1)}
-            disabled={!canSwap(index, index + 1)}
+            disabled={disabled || !canSwap(index, index + 1)}
             aria-label="Descendre"
             className={smallButton}
           >
             ↓
           </button>
-          <button type="button" onClick={() => remove(index)} className={smallButton}>
+          <button
+            type="button"
+            onClick={() => remove(index)}
+            disabled={disabled}
+            className={smallButton}
+          >
             Retirer
           </button>
         </div>
@@ -125,7 +137,7 @@ export function PlacePhotoFields({
           type="file"
           accept={PLACE_PHOTO_TYPES.join(",")}
           multiple
-          disabled={preparing}
+          disabled={disabled || preparing}
           onChange={(e) => e.target.files && addFiles(e.target.files)}
           className="sr-only"
         />

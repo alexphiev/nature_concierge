@@ -246,7 +246,9 @@ describe("parent place (two levels max)", () => {
     const formData = baseFormData();
     formData.set("parentId", "anse-du-sec");
 
-    await expect(createPlace(formData)).rejects.toThrow("2 niveaux maximum");
+    const result = await createPlace(formData);
+
+    expect(result).toEqual({ error: expect.stringContaining("2 niveaux maximum") });
     expect(createPlaceMock).not.toHaveBeenCalled();
   });
 
@@ -254,7 +256,9 @@ describe("parent place (two levels max)", () => {
     const formData = baseFormData();
     formData.set("parentId", "place-1");
 
-    await expect(updatePlace("place-1", formData)).rejects.toThrow("son propre parent");
+    const result = await updatePlace("place-1", formData);
+
+    expect(result).toEqual({ error: expect.stringContaining("son propre parent") });
     expect(updatePlaceMock).not.toHaveBeenCalled();
   });
 
@@ -264,7 +268,9 @@ describe("parent place (two levels max)", () => {
     const formData = baseFormData();
     formData.set("parentId", "other-place");
 
-    await expect(updatePlace("place-1", formData)).rejects.toThrow("déjà des spots");
+    const result = await updatePlace("place-1", formData);
+
+    expect(result).toEqual({ error: expect.stringContaining("déjà des spots") });
     expect(updatePlaceMock).not.toHaveBeenCalled();
   });
 });

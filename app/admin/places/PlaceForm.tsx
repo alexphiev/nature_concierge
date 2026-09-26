@@ -24,7 +24,7 @@ export function PlaceForm({
   imageUrls = [],
   photos = [],
 }: {
-  action: (formData: FormData) => Promise<{ id: string }>;
+  action: (formData: FormData) => Promise<{ id: string } | { error: string }>;
   place?: Place;
   zones: SignalZone[];
   selectedZoneIds?: Set<string>;
@@ -40,6 +40,7 @@ export function PlaceForm({
   );
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   // onSubmit instead of <form action>: React resets uncontrolled fields after a
@@ -52,26 +53,42 @@ export function PlaceForm({
     startTransition(async () => {
       let placeId: string;
       try {
-        ({ id: placeId } = await action(formData));
+        const result = await action(formData);
+        if ("error" in result) {
+          setError(result.error);
+          return;
+        }
+        placeId = result.id;
       } catch (e) {
         setError(e instanceof Error ? e.message : "Enregistrement impossible");
         return;
       }
 
-      let items = photoItems;
-      const pending = items.filter((item) => item.kind === "pending");
+      const pending = photoItems.filter((item) => item.kind === "pending");
       for (const [index, photo] of pending.entries()) {
         setProgress(`Envoi photo ${index + 1}/${pending.length}…`);
         const data = new FormData();
         data.set("file", photo.blob);
         data.set("credit", photo.credit);
         try {
-          const saved = await uploadPlacePhoto(placeId, data);
+          const result = await uploadPlacePhoto(placeId, data);
+          if ("error" in result) {
+            setProgress(null);
+            if (!place) {
+              router.push(`/admin/places/${placeId}?erreur=photos`);
+            } else {
+              setError("L'envoi d'une photo a échoué. Enregistrez à nouveau pour réessayer.");
+            }
+            return;
+          }
           URL.revokeObjectURL(photo.src);
-          items = items.map((item) =>
-            item === photo ? { kind: "saved", id: saved.id, src: saved.src, credit: photo.credit } : item,
+          setPhotoItems((prev) =>
+            prev.map((item) =>
+              item === photo
+                ? { kind: "saved", id: result.id, src: result.src, credit: photo.credit }
+                : item,
+            ),
           );
-          setPhotoItems(items);
         } catch {
           setProgress(null);
           if (!place) {
@@ -199,13 +216,18 @@ export function PlaceForm({
         <span className="text-sm text-encre/70">ZAPEF (accessible même en rouge)</span>
       </label>
 
-      <PlacePhotoFields items={photoItems} onChange={setPhotoItems} />
+      <PlacePhotoFields
+        items={photoItems}
+        onChange={setPhotoItems}
+        onPreparingChange={setPreparingPhotos}
+        disabled={isPending}
+      />
       <PlaceImageFields defaultUrls={imageUrls} />
 
       {error && <p className="text-sm text-statut-rouge">{error}</p>}
       <button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || preparingPhotos}
         className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white disabled:opacity-60 sm:w-auto"
       >
         {progress ?? (isPending ? "Enregistrement…" : "Enregistrer")}

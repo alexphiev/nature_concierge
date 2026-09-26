@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/src/corpus/db";
+import { Prisma } from "../../../prisma/generated/client";
 import {
   deletePlacePhotos,
   placePhotoKey,
@@ -43,7 +44,6 @@ async function savePhotoEdits(placeId: string, formData: FormData): Promise<void
   });
   if (removed.length > 0) {
     await prisma.placePhoto.deleteMany({ where: { id: { in: removed.map((p) => p.id) } } });
-    await deletePlacePhotos(removed.map((p) => p.key));
   }
 
   await Promise.all(
@@ -54,6 +54,14 @@ async function savePhotoEdits(placeId: string, formData: FormData): Promise<void
       }),
     ),
   );
+
+  if (removed.length > 0) {
+    try {
+      await deletePlacePhotos(removed.map((p) => p.key));
+    } catch (e) {
+      console.error("Failed to delete place photo objects", e);
+    }
+  }
 }
 
 function readPlaceFields(formData: FormData) {
@@ -78,44 +86,64 @@ function readPlaceFields(formData: FormData) {
   };
 }
 
-async function assertValidParent(parentId: string | null, placeId?: string): Promise<void> {
-  if (!parentId) return;
-  if (parentId === placeId) throw new Error("Un lieu ne peut pas être son propre parent");
+async function assertValidParent(parentId: string | null, placeId?: string): Promise<string | null> {
+  if (!parentId) return null;
+  if (parentId === placeId) return "Un lieu ne peut pas être son propre parent";
 
   const parent = await prisma.place.findUniqueOrThrow({
     where: { id: parentId },
     select: { parentId: true },
   });
-  if (parent.parentId) throw new Error("Le parent choisi est déjà un spot (2 niveaux maximum)");
+  if (parent.parentId) return "Le parent choisi est déjà un spot (2 niveaux maximum)";
 
   if (placeId) {
     const childCount = await prisma.place.count({ where: { parentId: placeId } });
-    if (childCount > 0) throw new Error("Ce lieu a déjà des spots : il ne peut pas avoir de parent");
+    if (childCount > 0) return "Ce lieu a déjà des spots : il ne peut pas avoir de parent";
   }
+
+  return null;
 }
 
-export async function createPlace(formData: FormData): Promise<{ id: string }> {
+function slugConflictError(error: unknown): string | null {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    return "Ce slug est déjà utilisé";
+  }
+  return null;
+}
+
+export async function createPlace(
+  formData: FormData,
+): Promise<{ id: string } | { error: string }> {
   const fields = readPlaceFields(formData);
-  await assertValidParent(fields.parentId);
-  const place = await prisma.place.create({
-    data: {
-      name: fields.name,
-      slug: fields.slug,
-      commune: fields.commune,
-      departement: fields.departement,
-      lat: fields.lat,
-      lng: fields.lng,
-      type: fields.type as never,
-      governingAuthority: fields.governingAuthority,
-      officialInfoUrl: fields.officialInfoUrl,
-      googlePlaceId: fields.googlePlaceId,
-      description: fields.description,
-      demandRank: fields.demandRank,
-      zapef: fields.zapef,
-      status: fields.status as never,
-      parentId: fields.parentId,
-    },
-  });
+  const parentError = await assertValidParent(fields.parentId);
+  if (parentError) return { error: parentError };
+
+  let place: { id: string };
+  try {
+    place = await prisma.place.create({
+      data: {
+        name: fields.name,
+        slug: fields.slug,
+        commune: fields.commune,
+        departement: fields.departement,
+        lat: fields.lat,
+        lng: fields.lng,
+        type: fields.type as never,
+        governingAuthority: fields.governingAuthority,
+        officialInfoUrl: fields.officialInfoUrl,
+        googlePlaceId: fields.googlePlaceId,
+        description: fields.description,
+        demandRank: fields.demandRank,
+        zapef: fields.zapef,
+        status: fields.status as never,
+        parentId: fields.parentId,
+      },
+    });
+  } catch (e) {
+    const slugError = slugConflictError(e);
+    if (slugError) return { error: slugError };
+    throw e;
+  }
 
   if (fields.zoneIds.length > 0) {
     await prisma.zonePlace.createMany({
@@ -134,29 +162,40 @@ export async function createPlace(formData: FormData): Promise<{ id: string }> {
   return { id: place.id };
 }
 
-export async function updatePlace(placeId: string, formData: FormData): Promise<{ id: string }> {
+export async function updatePlace(
+  placeId: string,
+  formData: FormData,
+): Promise<{ id: string } | { error: string }> {
   const fields = readPlaceFields(formData);
-  await assertValidParent(fields.parentId, placeId);
-  await prisma.place.update({
-    where: { id: placeId },
-    data: {
-      name: fields.name,
-      slug: fields.slug,
-      commune: fields.commune,
-      departement: fields.departement,
-      lat: fields.lat,
-      lng: fields.lng,
-      type: fields.type as never,
-      governingAuthority: fields.governingAuthority,
-      officialInfoUrl: fields.officialInfoUrl,
-      googlePlaceId: fields.googlePlaceId,
-      description: fields.description,
-      demandRank: fields.demandRank,
-      zapef: fields.zapef,
-      status: fields.status as never,
-      parentId: fields.parentId,
-    },
-  });
+  const parentError = await assertValidParent(fields.parentId, placeId);
+  if (parentError) return { error: parentError };
+
+  try {
+    await prisma.place.update({
+      where: { id: placeId },
+      data: {
+        name: fields.name,
+        slug: fields.slug,
+        commune: fields.commune,
+        departement: fields.departement,
+        lat: fields.lat,
+        lng: fields.lng,
+        type: fields.type as never,
+        governingAuthority: fields.governingAuthority,
+        officialInfoUrl: fields.officialInfoUrl,
+        googlePlaceId: fields.googlePlaceId,
+        description: fields.description,
+        demandRank: fields.demandRank,
+        zapef: fields.zapef,
+        status: fields.status as never,
+        parentId: fields.parentId,
+      },
+    });
+  } catch (e) {
+    const slugError = slugConflictError(e);
+    if (slugError) return { error: slugError };
+    throw e;
+  }
 
   await prisma.zonePlace.deleteMany({ where: { placeId } });
   if (fields.zoneIds.length > 0) {
@@ -182,13 +221,16 @@ export async function updatePlace(placeId: string, formData: FormData): Promise<
 export async function uploadPlacePhoto(
   placeId: string,
   formData: FormData,
-): Promise<{ id: string; src: string }> {
+): Promise<{ id: string; src: string } | { error: string }> {
   const file = formData.get("file");
   if (!(file instanceof Blob) || !isPlacePhotoType(file.type)) {
-    throw new Error("La photo doit être un JPEG, PNG ou WebP");
+    return { error: "La photo doit être un JPEG, PNG ou WebP" };
   }
-  if (file.size > MAX_PHOTO_BYTES) throw new Error("La photo dépasse 4 Mo");
+  if (file.size > MAX_PHOTO_BYTES) return { error: "La photo dépasse 4 Mo" };
   const credit = String(formData.get("credit") ?? "").trim() || null;
+
+  const place = await prisma.place.findUnique({ where: { id: placeId }, select: { id: true } });
+  if (!place) return { error: "Lieu introuvable" };
 
   const key = placePhotoKey(placeId, file.type);
   await putPlacePhoto(key, new Uint8Array(await file.arrayBuffer()), file.type);
