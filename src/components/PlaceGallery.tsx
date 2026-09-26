@@ -9,17 +9,22 @@ import { Lightbox } from "./Lightbox";
 const STRIPES =
   "repeating-linear-gradient(135deg, transparent, transparent 14px, color-mix(in srgb, var(--pin) 7%, transparent) 14px, color-mix(in srgb, var(--pin) 7%, transparent) 15px)";
 
-// side.length -> grid-template-columns/rows for the small squares.
-const SIDE_LAYOUTS: Record<number, string> = {
-  1: "md:grid-cols-1 md:grid-rows-1",
-  2: "md:grid-cols-1 md:grid-rows-2",
-  3: "md:grid-cols-2 md:grid-rows-2",
-  4: "md:grid-cols-2 md:grid-rows-2",
+// side.length -> the outer grid's column/row template, so the main cell's
+// row-span always fills the same fixed md:h-[448px] as the side squares.
+// 3 side items get their own 1x3 column (not the 2fr/1fr/1fr split used by
+// 4, which would auto-place a gap in the last cell).
+const LAYOUTS: Record<number, { grid: string; main: string }> = {
+  0: { grid: "", main: "" },
+  1: { grid: "md:grid-cols-[2fr_1fr]", main: "" },
+  2: { grid: "md:grid-cols-[2fr_1fr] md:grid-rows-2", main: "md:row-span-2" },
+  3: { grid: "md:grid-cols-[2fr_1fr] md:grid-rows-3", main: "md:row-span-3" },
+  4: { grid: "md:grid-cols-[2fr_1fr_1fr] md:grid-rows-2", main: "md:row-span-2" },
 };
 
 export function PlaceGallery({ typeLabel, slides }: { typeLabel: string; slides: DisplayPhoto[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const side = slides.slice(1, 5);
+  const layout = LAYOUTS[side.length];
 
   return (
     <>
@@ -38,12 +43,12 @@ export function PlaceGallery({ typeLabel, slides }: { typeLabel: string; slides:
       </div>
 
       {/* Desktop: 1 main square + up to 4 small squares, opening a lightbox. */}
-      <div className="hidden gap-2 md:grid md:h-[448px] md:grid-cols-[2fr_1fr]">
+      <div className={`hidden gap-2 md:grid md:h-[448px] ${layout.grid}`}>
         <button
           type="button"
           onClick={() => slides.length > 0 && setOpenIndex(0)}
           disabled={slides.length === 0}
-          className="relative aspect-square overflow-hidden rounded-[18px] bg-calcaire-deep"
+          className={`relative overflow-hidden rounded-[18px] bg-calcaire-deep ${layout.main}`}
           style={slides.length > 0 ? undefined : { backgroundImage: STRIPES }}
         >
           {slides.length > 0 ? (
@@ -60,24 +65,20 @@ export function PlaceGallery({ typeLabel, slides }: { typeLabel: string; slides:
           )}
         </button>
 
-        {side.length > 0 && (
-          <div className={`grid gap-2 ${SIDE_LAYOUTS[side.length]}`}>
-            {side.map((slide, i) => (
-              <button
-                key={slide.src}
-                type="button"
-                onClick={() => setOpenIndex(i + 1)}
-                className="group relative aspect-square overflow-hidden rounded-[18px] bg-calcaire-deep"
-              >
-                <PhotoImage
-                  photo={slide}
-                  sizes="(min-width: 768px) 17vw, 0px"
-                  className="transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-              </button>
-            ))}
-          </div>
-        )}
+        {side.map((slide, i) => (
+          <button
+            key={slide.src}
+            type="button"
+            onClick={() => setOpenIndex(i + 1)}
+            className="group relative hidden overflow-hidden rounded-[18px] bg-calcaire-deep md:block"
+          >
+            <PhotoImage
+              photo={slide}
+              sizes="(min-width: 768px) 17vw, 0px"
+              className="transition-transform duration-300 group-hover:scale-[1.03]"
+            />
+          </button>
+        ))}
       </div>
 
       {openIndex !== null && (
