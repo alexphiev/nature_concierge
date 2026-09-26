@@ -6,15 +6,19 @@ export function PhotoImage({
   sizes,
   className = "",
   preload = false,
+  fit = "cover",
 }: {
   photo: DisplayPhoto;
   sizes: string;
   className?: string;
   preload?: boolean;
+  fit?: "cover" | "contain";
 }) {
+  const fitClass = fit === "contain" ? "object-contain" : "object-cover";
+
   if (photo.uploaded) {
     return (
-      <Image src={photo.src} alt="" fill sizes={sizes} preload={preload} className={`object-cover ${className}`} />
+      <Image src={photo.src} alt="" fill sizes={sizes} preload={preload} className={`${fitClass} ${className}`} />
     );
   }
 
@@ -24,7 +28,7 @@ export function PhotoImage({
       src={photo.src}
       alt=""
       loading={preload ? "eager" : "lazy"}
-      className={`absolute inset-0 size-full object-cover ${className}`}
+      className={`absolute inset-0 size-full ${fitClass} ${className}`}
     />
   );
 }

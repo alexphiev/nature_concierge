@@ -89,10 +89,6 @@ export default async function PlaceDetailPage({
     uploaded: place.photos,
     googleAttributions: googleDetails?.photo ? googleDetails.photoAttributions : [],
   });
-  const galleryTiles = spotCards.flatMap(({ spot, cover }) =>
-    cover ? [{ slug: spot.slug, name: spot.name, cover }] : [],
-  );
-
   const metaItems = [
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
@@ -180,7 +176,7 @@ export default async function PlaceDetailPage({
       </header>
 
       <div className="mt-7">
-        <PlaceGallery typeLabel={typeLabel} slides={slides} tiles={galleryTiles} />
+        <PlaceGallery typeLabel={typeLabel} slides={slides} />
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-10 md:mt-12 md:grid-cols-[minmax(0,1fr)_360px] md:items-start md:gap-16">
