@@ -73,6 +73,7 @@ describe("getActivePlaces", () => {
     expect(findManyPlaceMock).toHaveBeenCalledWith({
       where: { status: "ACTIVE" },
       orderBy: { demandRank: "asc" },
+      include: { photos: { orderBy: { order: "asc" }, take: 1 } },
     });
     expect(result).toEqual([{ slug: "port-d-alon" }]);
   });
@@ -112,8 +113,10 @@ describe("getPlaceBySlug", () => {
         children: {
           where: { status: "ACTIVE" },
           orderBy: { demandRank: "asc" },
+          include: { photos: { orderBy: { order: "asc" }, take: 1 } },
         },
         images: { orderBy: { order: "asc" } },
+        photos: { orderBy: { order: "asc" } },
       },
     });
     expect(result).toEqual({

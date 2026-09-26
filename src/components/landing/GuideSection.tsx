@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { Place } from "../../../prisma/generated/client";
-import type { GooglePlacePhoto } from "../../corpus/google-places";
+import type { DisplayPhoto } from "../../corpus/place-photos";
 import { TYPE_LABELS } from "../PlaceCard";
+import { PhotoImage } from "../PhotoImage";
 import { ArrowIcon, ChevronIcon, PinIcon } from "./icons";
 import { CONTAINER, FOCUS_RING } from "./shared";
 
-export type GuideCard = { place: Place; photo: GooglePlacePhoto | null };
+export type GuideCard = { place: Place; cover: DisplayPhoto | null };
 
 const FILTERS = [
   "Tous",
@@ -60,21 +61,17 @@ export function GuideSection({ cards, placeCount }: { cards: GuideCard[]; placeC
       </div>
 
       <ul role="list" className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-6 lg:grid-cols-4">
-        {cards.map(({ place, photo }, index) => (
+        {cards.map(({ place, cover }, index) => (
           <li key={place.id} className={index >= MOBILE_CARD_COUNT ? "hidden md:flex" : "flex"}>
             <Link
               href={`/lieux/${place.slug}`}
               className={`flex w-full items-center gap-3.5 rounded-2xl border border-[#E4DACA] bg-[#FFFDF8] p-2.5 text-[#1D2A2E] md:flex-col md:items-stretch md:gap-0 md:overflow-hidden md:rounded-[18px] md:p-0 ${FOCUS_RING}`}
             >
               <div className="relative size-23 shrink-0 overflow-hidden rounded-xl bg-[#D9E4E2] md:h-49 md:w-auto md:rounded-none">
-                {photo && (
-                  <img
-                    src={`/lieux/${place.slug}/photo`}
-                    alt=""
-                    width={800}
-                    height={600}
-                    loading="lazy"
-                    className="absolute inset-0 size-full object-cover"
+                {cover && (
+                  <PhotoImage
+                    photo={cover}
+                    sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 92px"
                   />
                 )}
               </div>

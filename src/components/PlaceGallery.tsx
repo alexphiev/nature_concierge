@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { GooglePlacePhoto } from "../corpus/google-places";
+import type { DisplayPhoto } from "../corpus/place-photos";
+import { PhotoImage } from "./PhotoImage";
 import { PhotoCarousel } from "./PhotoCarousel";
 
 const STRIPES =
@@ -13,19 +14,15 @@ const LAYOUTS: Record<number, { grid: string; main: string }> = {
   4: { grid: "md:grid-cols-[2fr_1fr_1fr] md:grid-rows-2", main: "md:row-span-2" },
 };
 
-export type GalleryTile = { slug: string; name: string };
+export type GalleryTile = { slug: string; name: string; cover: DisplayPhoto };
 
 export function PlaceGallery({
-  slug,
   typeLabel,
-  photo,
-  photoAttributions,
+  slides,
   tiles,
 }: {
-  slug: string;
   typeLabel: string;
-  photo: GooglePlacePhoto | null;
-  photoAttributions: (string | null)[];
+  slides: DisplayPhoto[];
   tiles: GalleryTile[];
 }) {
   const side = tiles.length >= 4 ? tiles.slice(0, 4) : tiles.length >= 2 ? tiles.slice(0, 2) : tiles;
@@ -35,22 +32,16 @@ export function PlaceGallery({
     <div className={`grid gap-2 overflow-hidden rounded-[18px] md:h-[448px] ${layout.grid}`}>
       <div
         className={`relative flex aspect-[4/3] items-end bg-calcaire-deep p-4 md:aspect-auto ${layout.main}`}
-        style={photo ? undefined : { backgroundImage: STRIPES }}
+        style={slides.length > 0 ? undefined : { backgroundImage: STRIPES }}
       >
-        {photo && photoAttributions.length > 1 ? (
-          <PhotoCarousel slug={slug} attributions={photoAttributions} />
-        ) : photo ? (
+        {slides.length > 1 ? (
+          <PhotoCarousel slides={slides} />
+        ) : slides.length === 1 ? (
           <>
-            <img
-              src={`/lieux/${slug}/photo`}
-              alt=""
-              width={1200}
-              height={900}
-              className="absolute inset-0 size-full object-cover"
-            />
-            {photo.attribution && (
+            <PhotoImage photo={slides[0]} sizes="(min-width: 768px) 66vw, 100vw" preload />
+            {slides[0].credit && (
               <span className="absolute right-3 bottom-3 rounded bg-encre/55 px-2 py-0.5 font-mono text-[0.65rem] text-calcaire">
-                Photo : {photo.attribution}
+                Photo : {slides[0].credit}
               </span>
             )}
           </>
@@ -67,12 +58,10 @@ export function PlaceGallery({
           href={`/lieux/${tile.slug}`}
           className="group relative hidden overflow-hidden bg-calcaire-deep md:block"
         >
-          <img
-            src={`/lieux/${tile.slug}/photo`}
-            alt=""
-            width={600}
-            height={450}
-            className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          <PhotoImage
+            photo={tile.cover}
+            sizes="(min-width: 768px) 17vw, 0px"
+            className="transition-transform duration-300 group-hover:scale-[1.03]"
           />
           <span className="absolute bottom-3 left-3 rounded-full bg-calcaire/90 px-2.5 py-0.5 text-[0.8125rem] font-medium text-encre">
             {tile.name}

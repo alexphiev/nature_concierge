@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Place } from "../../prisma/generated/client";
 import type { ResolvedStatus } from "../corpus/queries";
-import type { GooglePlacePhoto } from "../corpus/google-places";
+import type { DisplayPhoto } from "../corpus/place-photos";
 import { presentStatus } from "../corpus/status-presentation";
+import { PhotoImage } from "./PhotoImage";
 
 export const TYPE_LABELS: Record<Place["type"], string> = {
   CALANQUE: "Calanque",
@@ -57,11 +58,11 @@ export function CardStatusPill({ status }: { status: ResolvedStatus }) {
 export function PlaceCard({
   place,
   status,
-  photo,
+  cover,
 }: {
   place: Place;
   status: React.ReactNode;
-  photo: GooglePlacePhoto | null;
+  cover: DisplayPhoto | null;
 }) {
   const hookClaim = null as { claimType: string; claimText: string } | null; // see note below — Task 5 does not add a hook-claim query; left null for now.
 
@@ -73,7 +74,7 @@ export function PlaceCard({
       <div
         className="relative flex aspect-[4/3] items-end bg-calcaire-deep p-3.5"
         style={
-          !photo
+          !cover
             ? {
                 backgroundImage:
                   "repeating-linear-gradient(135deg, transparent, transparent 12px, color-mix(in srgb, var(--pin) 6%, transparent) 12px, color-mix(in srgb, var(--pin) 6%, transparent) 13px)",
@@ -81,16 +82,13 @@ export function PlaceCard({
             : undefined
         }
       >
-        {photo && (
-          <img
-            src={`/lieux/${place.slug}/photo`}
-            alt=""
-            width={800}
-            height={600}
-            className="absolute inset-0 size-full object-cover"
+        {cover && (
+          <PhotoImage
+            photo={cover}
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           />
         )}
-        {photo && (
+        {cover && (
           <div className="absolute inset-0 bg-gradient-to-t from-encre/30 to-transparent to-55%" />
         )}
         <span className="relative rounded-full border border-sable/50 bg-calcaire/90 px-2.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-wide text-pin">

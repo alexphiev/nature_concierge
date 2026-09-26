@@ -9,7 +9,13 @@ const {
   deleteManyZonePlaceMock,
   createManyPlaceImageMock,
   deleteManyPlaceImageMock,
-  redirectMock,
+  findManyPlacePhotoMock,
+  findFirstPlacePhotoMock,
+  createPlacePhotoMock,
+  updatePlacePhotoMock,
+  deleteManyPlacePhotoMock,
+  putPlacePhotoMock,
+  deletePlacePhotosMock,
   updateTagMock,
 } = vi.hoisted(() => ({
   createPlaceMock: vi.fn(),
@@ -20,7 +26,13 @@ const {
   deleteManyZonePlaceMock: vi.fn(),
   createManyPlaceImageMock: vi.fn(),
   deleteManyPlaceImageMock: vi.fn(),
-  redirectMock: vi.fn(),
+  findManyPlacePhotoMock: vi.fn(),
+  findFirstPlacePhotoMock: vi.fn(),
+  createPlacePhotoMock: vi.fn(),
+  updatePlacePhotoMock: vi.fn(),
+  deleteManyPlacePhotoMock: vi.fn(),
+  putPlacePhotoMock: vi.fn(),
+  deletePlacePhotosMock: vi.fn(),
   updateTagMock: vi.fn(),
 }));
 
@@ -40,15 +52,25 @@ vi.mock("@/src/corpus/db", () => ({
       createMany: createManyPlaceImageMock,
       deleteMany: deleteManyPlaceImageMock,
     },
+    placePhoto: {
+      findMany: findManyPlacePhotoMock,
+      findFirst: findFirstPlacePhotoMock,
+      create: createPlacePhotoMock,
+      update: updatePlacePhotoMock,
+      deleteMany: deleteManyPlacePhotoMock,
+    },
   },
-}));
-
-vi.mock("next/navigation", () => ({
-  redirect: redirectMock,
 }));
 
 vi.mock("next/cache", () => ({
   updateTag: updateTagMock,
+}));
+
+vi.mock("@/src/storage/place-photos", () => ({
+  placePhotoKey: (placeId: string) => `places/${placeId}/uuid.jpg`,
+  placePhotoUrl: (key: string) => `https://storage.test/place-photos/${key}`,
+  putPlacePhoto: putPlacePhotoMock,
+  deletePlacePhotos: deletePlacePhotosMock,
 }));
 
 import { createPlace, updatePlace } from "./actions";
@@ -76,8 +98,15 @@ beforeEach(() => {
   deleteManyZonePlaceMock.mockReset();
   createManyPlaceImageMock.mockReset();
   deleteManyPlaceImageMock.mockReset();
-  redirectMock.mockReset();
+  findManyPlacePhotoMock.mockReset();
+  findFirstPlacePhotoMock.mockReset();
+  createPlacePhotoMock.mockReset();
+  updatePlacePhotoMock.mockReset();
+  deleteManyPlacePhotoMock.mockReset();
+  putPlacePhotoMock.mockReset();
+  deletePlacePhotosMock.mockReset();
   updateTagMock.mockReset();
+  findManyPlacePhotoMock.mockResolvedValue([]);
 });
 
 describe("createPlace", () => {
@@ -87,7 +116,7 @@ describe("createPlace", () => {
     formData.append("zoneIds", "zone-1");
     formData.append("zoneIds", "zone-2");
 
-    await createPlace(formData);
+    const result = await createPlace(formData);
 
     expect(createPlaceMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -111,17 +140,17 @@ describe("createPlace", () => {
       ],
     });
     expect(updateTagMock).toHaveBeenCalledWith("corpus");
-    expect(redirectMock).toHaveBeenCalledWith("/admin/places");
+    expect(result).toEqual({ id: "place-1" });
   });
 
   it("skips zonePlace.createMany when no zones are selected", async () => {
     createPlaceMock.mockResolvedValue({ id: "place-1" });
     const formData = baseFormData();
 
-    await createPlace(formData);
+    const result = await createPlace(formData);
 
     expect(createManyZonePlaceMock).not.toHaveBeenCalled();
-    expect(redirectMock).toHaveBeenCalledWith("/admin/places");
+    expect(result).toEqual({ id: "place-1" });
   });
 
   it("persists googlePlaceId when provided", async () => {
@@ -157,7 +186,7 @@ describe("updatePlace", () => {
     const formData = baseFormData();
     formData.append("zoneIds", "zone-3");
 
-    await updatePlace("place-1", formData);
+    const result = await updatePlace("place-1", formData);
 
     expect(updatePlaceMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -174,7 +203,7 @@ describe("updatePlace", () => {
     const createOrder = createManyZonePlaceMock.mock.invocationCallOrder[0];
     expect(deleteOrder).toBeLessThan(createOrder);
     expect(updateTagMock).toHaveBeenCalledWith("corpus");
-    expect(redirectMock).toHaveBeenCalledWith("/admin/places");
+    expect(result).toEqual({ id: "place-1" });
   });
 
   it("skips zonePlace.createMany when no zones are selected, but still deletes existing assignments", async () => {
@@ -217,7 +246,9 @@ describe("parent place (two levels max)", () => {
     const formData = baseFormData();
     formData.set("parentId", "anse-du-sec");
 
-    await expect(createPlace(formData)).rejects.toThrow("2 niveaux maximum");
+    const result = await createPlace(formData);
+
+    expect(result).toEqual({ error: expect.stringContaining("2 niveaux maximum") });
     expect(createPlaceMock).not.toHaveBeenCalled();
   });
 
@@ -225,7 +256,9 @@ describe("parent place (two levels max)", () => {
     const formData = baseFormData();
     formData.set("parentId", "place-1");
 
-    await expect(updatePlace("place-1", formData)).rejects.toThrow("son propre parent");
+    const result = await updatePlace("place-1", formData);
+
+    expect(result).toEqual({ error: expect.stringContaining("son propre parent") });
     expect(updatePlaceMock).not.toHaveBeenCalled();
   });
 
@@ -235,7 +268,9 @@ describe("parent place (two levels max)", () => {
     const formData = baseFormData();
     formData.set("parentId", "other-place");
 
-    await expect(updatePlace("place-1", formData)).rejects.toThrow("déjà des spots");
+    const result = await updatePlace("place-1", formData);
+
+    expect(result).toEqual({ error: expect.stringContaining("déjà des spots") });
     expect(updatePlaceMock).not.toHaveBeenCalled();
   });
 });

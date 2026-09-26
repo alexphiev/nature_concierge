@@ -14,11 +14,15 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1141.0",
+    "@aws-sdk/s3-request-presigner": "^3.1141.0",
     "@google/genai": "^2.13.0",
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "7.9.0",
     "@vercel/analytics": "^2.0.1",
+    "browser-image-compression": "^2.0.2",
     "dotenv": "^17.4.2",
+    "heic-to": "^1.5.2",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
