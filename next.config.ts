@@ -12,7 +12,12 @@ const nextConfig: NextConfig = {
   images: {
     // Neon Object Storage public_read bucket (branch endpoint host varies).
     remotePatterns: [
-      { protocol: "https", hostname: "**.aws.neon.tech", pathname: "/place-photos/**" },
+      {
+        protocol: "https",
+        hostname:
+          "br-jolly-thunder-as6ahq2c.storage.c-4.eu-central-1.aws.neon.tech",
+        pathname: "/place-photos/**",
+      },
     ],
   },
   experimental: {
@@ -23,7 +28,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/places", destination: "/lieux", permanent: true },
-      { source: "/places/:path*", destination: "/lieux/:path*", permanent: true },
+      {
+        source: "/places/:path*",
+        destination: "/lieux/:path*",
+        permanent: true,
+      },
     ];
   },
 };
