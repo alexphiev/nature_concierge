@@ -2,7 +2,7 @@
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { PLACE_PHOTO_TYPES } from "@/src/storage/photo-types";
-import { compressPhoto } from "./compress-photo";
+import { HEIC_INPUT_TYPES, compressPhoto } from "./compress-photo";
 
 export type PhotoItem =
   | { kind: "saved"; id: string; src: string; credit: string }
@@ -135,7 +135,7 @@ export function PlacePhotoFields({
         <input
           ref={fileInput}
           type="file"
-          accept={PLACE_PHOTO_TYPES.join(",")}
+          accept={`${PLACE_PHOTO_TYPES.join(",")},${HEIC_INPUT_TYPES}`}
           multiple
           disabled={disabled || preparing}
           onChange={(e) => e.target.files && addFiles(e.target.files)}
