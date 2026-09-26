@@ -1,15 +1,21 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "./db";
 import { parisToday } from "./paris-date";
-import type { Place, Claim, SignalZone, PlaceImage } from "../../prisma/generated/client";
+import type { Place, Claim, SignalZone, PlaceImage, PlacePhoto } from "../../prisma/generated/client";
 
-export async function getActivePlaces(): Promise<Place[]> {
+// `photos` only holds the cover (first photo), enough for cards.
+export type PlaceWithCover = Place & { photos: PlacePhoto[] };
+
+const coverPhotoInclude = { orderBy: { order: "asc" }, take: 1 } as const;
+
+export async function getActivePlaces(): Promise<PlaceWithCover[]> {
   "use cache";
   cacheTag("corpus");
   cacheLife("corpus");
   return prisma.place.findMany({
     where: { status: "ACTIVE" },
     orderBy: { demandRank: "asc" },
+    include: { photos: coverPhotoInclude },
   });
 }
 
@@ -41,8 +47,9 @@ type PublicClaim = Claim & { alternativePlace: Pick<Place, "slug" | "name"> | nu
 export type PlaceWithPublicClaims = Place & {
   claims: PublicClaim[];
   parent: (Pick<Place, "id" | "slug" | "name" | "status"> & { claims: PublicClaim[] }) | null;
-  children: Place[];
+  children: PlaceWithCover[];
   images: PlaceImage[];
+  photos: PlacePhoto[];
 };
 
 const publicClaimsInclude = {
@@ -68,8 +75,10 @@ export async function getPlaceBySlug(
       children: {
         where: { status: "ACTIVE" },
         orderBy: { demandRank: "asc" },
+        include: { photos: coverPhotoInclude },
       },
       images: { orderBy: { order: "asc" } },
+      photos: { orderBy: { order: "asc" } },
     },
   }) as Promise<PlaceWithPublicClaims | null>;
 }
