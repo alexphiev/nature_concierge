@@ -15,8 +15,8 @@ and stays untouched.
 ## Decisions
 
 - **Bucket**: `place-photos`, `public_read`, already created on the Neon branch.
-- **Upload path**: resize in the browser, then one server action call per
-  photo. No presigned PUT, no bucket CORS.
+- **Upload path**: compress large files (> 1.5 MB) in the browser with
+  `browser-image-compression`, then one server action call per photo. No presigned PUT, no bucket CORS.
 - **Placement**: everywhere — detail gallery/carousel, `PlaceCard` (`/lieux`),
   `SpotCard`, and gallery spot tiles. The OG image is unchanged.
 - **Credit**: optional free-text credit per photo, shown like Google
@@ -42,10 +42,10 @@ New module `src/storage/place-photos.ts`:
   — reads the `AWS_*` env vars itself. Created lazily so importing the module
   without env vars (tests, build) doesn't throw.
 - `PLACE_PHOTOS_BUCKET = "place-photos"`.
-- `placePhotoKey(placeId)` → `places/{placeId}/{randomUUID()}.jpg`.
+- `placePhotoKey(placeId, type)` → `places/{placeId}/{randomUUID()}.{jpg|png|webp}`.
 - `placePhotoUrl(key)` → `${AWS_ENDPOINT_URL_S3}/place-photos/${key}`.
-- `putPlacePhoto(key, body: Uint8Array)` → `PutObjectCommand` with
-  `ContentType: "image/jpeg"` and
+- `putPlacePhoto(key, body: Uint8Array, contentType)` → `PutObjectCommand` with
+  the file's `ContentType` (JPEG, PNG or WebP) and
   `CacheControl: "public, max-age=31536000, immutable"`.
 - `deletePlacePhotos(keys)` → `DeleteObjectsCommand` (no-op for empty list).
 
@@ -94,10 +94,11 @@ While submitting, the submit button is disabled.
 
 ### `PlacePhotoFields` (client component)
 
-- File input (`accept="image/*"`, `multiple`). Each picked file is resized in
-  the browser — `createImageBitmap(file, { imageOrientation: "from-image" })`,
-  canvas, max 2400 px on the long side, `toBlob("image/jpeg", 0.85)` — and
-  kept in state as a pending photo with a local object-URL preview.
+- File input (JPEG, PNG, WebP; `multiple`). Files > 1.5 MB are compressed in
+  the browser with `browser-image-compression` (`maxSizeMB: 1.5`,
+  `maxWidthOrHeight: 2400`, web worker, type preserved, EXIF orientation
+  handled); smaller files are kept as-is. Each is kept in state as a pending
+  photo with a local object-URL preview.
 - List of photos: existing ones (edit page) first, then pending ones. Each row:
   thumbnail, credit input, ↑/↓ buttons, "Retirer" button.
 - Existing photos submit with the main form as parallel hidden fields
@@ -111,8 +112,8 @@ While submitting, the submit button is disabled.
 
 ### Server actions (`app/admin/places/actions.ts`)
 
-- `uploadPlacePhoto(placeId, formData)`: reads `file` (must be `image/jpeg`,
-  ≤ 5 MB) and optional `credit`; `putPlacePhoto`; creates the `PlacePhoto`
+- `uploadPlacePhoto(placeId, formData)`: reads `file` (JPEG, PNG or WebP,
+  ≤ 4 MB — below Vercel's 4.5 MB body limit) and optional `credit`; `putPlacePhoto`; creates the `PlacePhoto`
   row with `order = max(order) + 1`; `updateTag("corpus")`.
 - `createPlace`: unchanged logic, returns `{ id }` instead of `redirect`.
 - `updatePlace`: additionally reads `photoIds` / `photoCredits`; deletes
@@ -176,17 +177,9 @@ first uploaded photo, else `/lieux/{slug}/photo`, else `null`.
 
 ## Testing
 
-Vitest (S3 client and Prisma mocked, as in existing `actions.test.ts`):
-
-- `buildGallerySlides`: 0 / 3 / 5 / 7 uploads × with / without / few Google
-  photos; credit mapping.
-- `coverPhotoSrc`: uploaded vs Google vs none.
-- `placePhotoUrl` / `placePhotoKey` format.
-- `uploadPlacePhoto`: rejects non-JPEG and > 5 MB; puts object with the
-  immutable Cache-Control; creates row with next order; tags `corpus`.
-- `updatePlace`: deletes unlisted photos (rows + S3 keys), updates order and
-  credit; returns `{ id }`. `createPlace` returns `{ id }`.
-- Existing tests updated for "returns `{ id }`" instead of `redirect`.
+No new tests (the project is a mock). Existing tests are only adjusted where
+behavior intentionally changes (actions return `{ id }`, photos included in
+queries).
 
 No browser automation; manual test steps are provided at the end:
 create a place with 2 photos, edit it (reorder, credit, remove, add), check the

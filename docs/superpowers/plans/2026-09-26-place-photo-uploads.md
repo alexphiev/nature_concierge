@@ -4,7 +4,7 @@
 
 **Goal:** Admins upload place photos to Neon Object Storage; those photos come first everywhere a place photo is shown, with Google Places photos only filling the gallery up to 5.
 
-**Architecture:** A small S3 module (`src/storage/place-photos.ts`) talks to the `public_read` bucket `place-photos`. A `PlacePhoto` table stores object keys + credit + order. The admin form resizes photos in the browser and uploads them one per server-action call after the place is saved. Public pages turn uploaded photos + Google fallbacks into a single `DisplayPhoto` list (`src/corpus/place-photos.ts`) rendered by one `PhotoImage` component (`next/image` for uploads, plain `<img>` for the Google redirect route).
+**Architecture:** A small S3 module (`src/storage/place-photos.ts`) talks to the `public_read` bucket `place-photos`. A `PlacePhoto` table stores object keys + credit + order. The admin form compresses large photos in the browser (`browser-image-compression`) and uploads them one per server-action call after the place is saved. Public pages turn uploaded photos + Google fallbacks into a single `DisplayPhoto` list (`src/corpus/place-photos.ts`) rendered by one `PhotoImage` component (`next/image` for uploads, plain `<img>` for the Google redirect route).
 
 **Tech Stack:** Next.js 16.2 (App Router, Cache Components, `"use cache"`), React 19.2, Prisma 7.9 (`prisma-client` generator → `prisma/generated`), `@aws-sdk/client-s3` v3 (already installed), Vitest 4, Tailwind 4, pnpm.
 
@@ -15,11 +15,12 @@
 - Read the relevant guide in `node_modules/next/dist/docs/` before writing Next.js code (AGENTS.md: "This is NOT the Next.js you know"). `next/image`: `01-app/03-api-reference/02-components/image.md` — in v16 use `preload`, not the deprecated `priority`.
 - Bucket name: `place-photos` (`public_read`, already created). Env vars: `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (already in `.env.local`).
 - S3 client: `new S3Client({ forcePathStyle: true, requestChecksumCalculation: "WHEN_REQUIRED" })`.
-- Object key format: `places/{placeId}/{randomUUID()}.jpg`. Keys are never reused.
-- Object headers: `ContentType: "image/jpeg"`, `CacheControl: "public, max-age=31536000, immutable"`.
+- Accepted types: `image/jpeg`, `image/png`, `image/webp` (shared in `src/storage/photo-types.ts`).
+- Object key format: `places/{placeId}/{randomUUID()}.{jpg|png|webp}`. Keys are never reused.
+- Object headers: `ContentType` = the file's type, `CacheControl: "public, max-age=31536000, immutable"`.
 - Public URL: `${AWS_ENDPOINT_URL_S3}/place-photos/${key}`. The DB stores the key, never the URL.
 - `MIN_GALLERY_PHOTOS = 5`. Uploaded photos first; Google photos only while total < 5.
-- Browser resize: max 2400 px long edge, `image/jpeg` quality `0.85`. Server accepts only `image/jpeg` ≤ 4 MB (Vercel rejects request bodies > 4.5 MB, so the spec's 5 MB is lowered to 4 MB).
+- Browser compression only for files > 1.5 MB: `browser-image-compression` with `{ maxSizeMB: 1.5, maxWidthOrHeight: 2400, useWebWorker: true }` (keeps the file type, handles EXIF orientation). Files ≤ 1.5 MB are uploaded untouched. Server accepts the 3 types ≤ 4 MB (`MAX_PHOTO_BYTES`; Vercel rejects request bodies > 4.5 MB).
 - Every photo mutation calls `updateTag("corpus")`.
 - UI copy is French. Don't add comments that just describe code (user CLAUDE.md).
 - `PlaceImage` ("Images pratiques") is not touched.
@@ -31,7 +32,7 @@
 
 1. **Partial upload failure, then save again (edit page)** — photos that did upload must not be uploaded twice nor deleted by the next `updatePlace`. `uploadPlacePhoto` returns `{ id, src }` and the form turns that pending item into a saved one (with a `photoIds` hidden input) immediately. Tasks 3 + 4.
 2. **Save fails on validation (e.g. parent is itself a spot)** — the admin's typed values must survive. The form uses `onSubmit` + `preventDefault` (no React form-action auto-reset) and shows the error. Task 4.
-3. **Unreadable picked file (HEIC in Chrome, PDF renamed .jpg)** — show "Impossible de lire …" for that file and keep processing the others. Task 4.
+3. **Unsupported or unreadable picked file (HEIC, PDF renamed .jpg, huge PNG still > 4 MB after compression)** — show a per-file message and keep processing the others. Task 4.
 4. **A `photoIds` value belonging to another place** — must not be modified. `updatePlace` updates with `where: { id, placeId }`. Task 3.
 5. **Missing `AWS_ENDPOINT_URL_S3` in an environment** — fail loudly with a clear message instead of rendering `undefined/place-photos/...`. Task 1.
 
@@ -51,7 +52,8 @@
 | `src/corpus/queries.test.ts` | modify | updated `findMany` expectation |
 | `app/admin/places/actions.ts` | modify | `uploadPlacePhoto`; create/update return `{ id }`; photo edits |
 | `app/admin/places/actions.test.ts` | modify | existing assertions only (mocks + return value) |
-| `app/admin/places/resize-photo.ts` | create | browser-side resize to JPEG |
+| `src/storage/photo-types.ts` | create | accepted types, extensions, size cap (no deps; shared client/server) |
+| `app/admin/places/compress-photo.ts` | create | browser-side compression of large files |
 | `app/admin/places/PlacePhotoFields.tsx` | create | controlled photo list UI |
 | `app/admin/places/PlaceForm.tsx` | modify | becomes client component; save-then-upload flow |
 | `app/admin/places/[id]/page.tsx` | modify | pass photos, show upload-failure banner |
@@ -67,25 +69,52 @@
 ### Task 1: Storage foundation (S3 module, schema, config)
 
 **Files:**
-- Create: `src/storage/place-photos.ts`
+- Create: `src/storage/photo-types.ts`, `src/storage/place-photos.ts`
 - Modify: `prisma/schema.prisma`, `next.config.ts`, `.env.dist`
 - Create (generated): `prisma/migrations/<timestamp>_place_photos/migration.sql`
 - Commit also: `package.json`, `pnpm-lock.yaml` (already modified by the user's `pnpm i @aws-sdk/client-s3 @aws-sdk/s3-request-presigner dotenv`)
 
 **Interfaces:**
 - Produces:
+  - from `src/storage/photo-types.ts`: `type PlacePhotoType = "image/jpeg" | "image/png" | "image/webp"`, `isPlacePhotoType(type: string): type is PlacePhotoType`, `PLACE_PHOTO_TYPES: PlacePhotoType[]`, `MAX_PHOTO_BYTES = 4 * 1024 * 1024`
   - `PLACE_PHOTOS_BUCKET: "place-photos"`
-  - `placePhotoKey(placeId: string): string`
+  - `placePhotoKey(placeId: string, type: PlacePhotoType): string`
   - `placePhotoUrl(key: string): string` (throws if `AWS_ENDPOINT_URL_S3` unset)
-  - `putPlacePhoto(key: string, body: Uint8Array): Promise<void>`
+  - `putPlacePhoto(key: string, body: Uint8Array, contentType: PlacePhotoType): Promise<void>`
   - `deletePlacePhotos(keys: string[]): Promise<void>`
   - Prisma model `PlacePhoto { id, placeId, key, credit: string | null, order: number, createdAt }`, `prisma.placePhoto`, `Place.photos`.
 
-- [ ] **Step 1: Implement** — `src/storage/place-photos.ts`
+- [ ] **Step 1: Shared photo types** — `src/storage/photo-types.ts` (no imports: it is also used by client code)
+
+```ts
+const EXTENSIONS = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+} as const;
+
+export type PlacePhotoType = keyof typeof EXTENSIONS;
+
+export const PLACE_PHOTO_TYPES = Object.keys(EXTENSIONS) as PlacePhotoType[];
+
+// Must stay below Vercel's 4.5 MB request body limit.
+export const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+
+export function isPlacePhotoType(type: string): type is PlacePhotoType {
+  return Object.hasOwn(EXTENSIONS, type);
+}
+
+export function photoExtension(type: PlacePhotoType): string {
+  return EXTENSIONS[type];
+}
+```
+
+- [ ] **Step 2: Implement** — `src/storage/place-photos.ts`
 
 ```ts
 import { randomUUID } from "node:crypto";
 import { DeleteObjectsCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { photoExtension, type PlacePhotoType } from "./photo-types";
 
 export const PLACE_PHOTOS_BUCKET = "place-photos";
 
@@ -105,8 +134,8 @@ function s3(): S3Client {
   return client;
 }
 
-export function placePhotoKey(placeId: string): string {
-  return `places/${placeId}/${randomUUID()}.jpg`;
+export function placePhotoKey(placeId: string, type: PlacePhotoType): string {
+  return `places/${placeId}/${randomUUID()}.${photoExtension(type)}`;
 }
 
 export function placePhotoUrl(key: string): string {
@@ -115,13 +144,17 @@ export function placePhotoUrl(key: string): string {
   return `${endpoint}/${PLACE_PHOTOS_BUCKET}/${key}`;
 }
 
-export async function putPlacePhoto(key: string, body: Uint8Array): Promise<void> {
+export async function putPlacePhoto(
+  key: string,
+  body: Uint8Array,
+  contentType: PlacePhotoType,
+): Promise<void> {
   await s3().send(
     new PutObjectCommand({
       Bucket: PLACE_PHOTOS_BUCKET,
       Key: key,
       Body: body,
-      ContentType: "image/jpeg",
+      ContentType: contentType,
       CacheControl: IMMUTABLE_CACHE_CONTROL,
     }),
   );
@@ -138,7 +171,7 @@ export async function deletePlacePhotos(keys: string[]): Promise<void> {
 }
 ```
 
-- [ ] **Step 2: Add the Prisma model** — in `prisma/schema.prisma`, add `photos PlacePhoto[]` to `Place` right after `images PlaceImage[]`, and add this model right after the `PlaceImage` model:
+- [ ] **Step 3: Add the Prisma model** — in `prisma/schema.prisma`, add `photos PlacePhoto[]` to `Place` right after `images PlaceImage[]`, and add this model right after the `PlaceImage` model:
 
 ```prisma
 model PlacePhoto {
@@ -156,13 +189,13 @@ model PlacePhoto {
 }
 ```
 
-- [ ] **Step 3: Create and apply the migration**
+- [ ] **Step 4: Create and apply the migration**
 
 Run: `pnpm prisma migrate dev --name place_photos`
 Expected: a new folder `prisma/migrations/<timestamp>_place_photos/` whose `migration.sql` creates table `"PlacePhoto"`, index `"PlacePhoto_placeId_order_idx"` and FK with `ON DELETE CASCADE`. If Prisma reports drift or asks to reset the database, **STOP and report** — do not reset.
 Then run: `pnpm prisma generate` (Prisma 7 does not always regenerate on migrate).
 
-- [ ] **Step 4: Allow uploaded photos in `next/image`** — `next.config.ts`, add inside `nextConfig` (after `cacheLife`):
+- [ ] **Step 5: Allow uploaded photos in `next/image`** — `next.config.ts`, add inside `nextConfig` (after `cacheLife`):
 
 ```ts
   images: {
@@ -173,7 +206,7 @@ Then run: `pnpm prisma generate` (Prisma 7 does not always regenerate on migrate
   },
 ```
 
-- [ ] **Step 5: Document env vars** — append to `.env.dist`:
+- [ ] **Step 6: Document env vars** — append to `.env.dist`:
 
 ```
 # Neon Object Storage (Console → Connect → Storage, or `neon env pull`). Bucket: place-photos (public_read)
@@ -183,12 +216,12 @@ AWS_ACCESS_KEY_ID=nak_live_...
 AWS_SECRET_ACCESS_KEY=nsk_live_...
 ```
 
-- [ ] **Step 6: Verify**
+- [ ] **Step 7: Verify**
 
 Run: `pnpm test && pnpm exec tsc --noEmit`
 Expected: existing tests pass, no type errors.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/storage prisma/schema.prisma prisma/migrations next.config.ts .env.dist package.json pnpm-lock.yaml
@@ -337,7 +370,7 @@ git commit -m "feat: gallery slides and cover photos from uploads with Google fa
 - Produces:
   - `createPlace(formData: FormData): Promise<{ id: string }>` — no redirect anymore.
   - `updatePlace(placeId: string, formData: FormData): Promise<{ id: string }>` — no redirect; reads `photoIds` / `photoCredits`.
-  - `uploadPlacePhoto(placeId: string, formData: FormData): Promise<{ id: string; src: string }>` — `formData`: `file` (JPEG Blob ≤ 4 MB), optional `credit`.
+  - `uploadPlacePhoto(placeId: string, formData: FormData): Promise<{ id: string; src: string }>` — `formData`: `file` (JPEG/PNG/WebP Blob ≤ 4 MB), optional `credit`.
 
 - [ ] **Step 1: Keep the existing tests working** — in `app/admin/places/actions.test.ts` (no new test cases):
 
@@ -391,14 +424,12 @@ import {
   placePhotoUrl,
   putPlacePhoto,
 } from "@/src/storage/place-photos";
+import { MAX_PHOTO_BYTES, isPlacePhotoType } from "@/src/storage/photo-types";
 ```
 
 Add below `readImageUrls`:
 
 ```ts
-// Must stay below Vercel's 4.5 MB request body limit.
-const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
-
 function readPhotoEdits(formData: FormData): { id: string; order: number; credit: string | null }[] {
   const credits = formData.getAll("photoCredits").map((v) => String(v).trim());
   return formData
@@ -441,14 +472,14 @@ export async function uploadPlacePhoto(
   formData: FormData,
 ): Promise<{ id: string; src: string }> {
   const file = formData.get("file");
-  if (!(file instanceof Blob) || file.type !== "image/jpeg") {
-    throw new Error("La photo doit être un JPEG");
+  if (!(file instanceof Blob) || !isPlacePhotoType(file.type)) {
+    throw new Error("La photo doit être un JPEG, PNG ou WebP");
   }
   if (file.size > MAX_PHOTO_BYTES) throw new Error("La photo dépasse 4 Mo");
   const credit = String(formData.get("credit") ?? "").trim() || null;
 
-  const key = placePhotoKey(placeId);
-  await putPlacePhoto(key, new Uint8Array(await file.arrayBuffer()));
+  const key = placePhotoKey(placeId, file.type);
+  await putPlacePhoto(key, new Uint8Array(await file.arrayBuffer()), file.type);
 
   const last = await prisma.placePhoto.findFirst({
     where: { placeId },
@@ -475,45 +506,47 @@ git commit -m "feat: upload place photos and save their order and credits"
 
 ---
 
-### Task 4: Admin form (resize, photo list, save-then-upload)
+### Task 4: Admin form (compression, photo list, save-then-upload)
 
 **Files:**
-- Create: `app/admin/places/resize-photo.ts`, `app/admin/places/PlacePhotoFields.tsx`
+- Create: `app/admin/places/compress-photo.ts`, `app/admin/places/PlacePhotoFields.tsx`
+- Modify: `package.json`, `pnpm-lock.yaml` (new dependency `browser-image-compression`)
 - Modify: `app/admin/places/PlaceForm.tsx`, `app/admin/places/[id]/page.tsx`
 - `app/admin/places/new/page.tsx` needs no change (it passes `createPlace`, which now returns `{ id }`).
 
 **Interfaces:**
-- Consumes: `createPlace` / `updatePlace` returning `{ id }`, `uploadPlacePhoto(placeId, formData) → { id, src }` (Task 3); `placePhotoUrl` (Task 1).
+- Consumes: `createPlace` / `updatePlace` returning `{ id }`, `uploadPlacePhoto(placeId, formData) → { id, src }` (Task 3); `placePhotoUrl`, `isPlacePhotoType`, `PLACE_PHOTO_TYPES`, `MAX_PHOTO_BYTES` (Task 1).
 - Produces:
-  - `resizePhoto(file: File): Promise<Blob>`
+  - `compressPhoto(file: File): Promise<File>`
   - `type PhotoItem = { kind: "saved"; id: string; src: string; credit: string } | { kind: "pending"; tempId: string; blob: Blob; src: string; credit: string }`
   - `PlacePhotoFields({ items, onChange }: { items: PhotoItem[]; onChange: (items: PhotoItem[]) => void })`
   - `PlaceForm` new prop `photos?: { id: string; src: string; credit: string | null }[]`; `action: (formData: FormData) => Promise<{ id: string }>`.
 
 Verification is `tsc`, `lint`, and the manual steps in Task 6.
 
-- [ ] **Step 1: Resize helper** — `app/admin/places/resize-photo.ts`
+- [ ] **Step 1: Compression helper**
+
+Run: `pnpm add browser-image-compression` (v2, ships its own types).
+
+`app/admin/places/compress-photo.ts`:
 
 ```ts
-const MAX_EDGE_PX = 2400;
-const JPEG_QUALITY = 0.85;
+import imageCompression from "browser-image-compression";
+import { MAX_PHOTO_BYTES, isPlacePhotoType } from "@/src/storage/photo-types";
 
-export async function resizePhoto(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, MAX_EDGE_PX / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
+const COMPRESS_ABOVE_MB = 1.5;
 
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Conversion JPEG impossible"))),
-      "image/jpeg",
-      JPEG_QUALITY,
-    );
+export async function compressPhoto(file: File): Promise<File> {
+  if (!isPlacePhotoType(file.type)) throw new Error("format non supporté (JPEG, PNG ou WebP)");
+  if (file.size <= COMPRESS_ABOVE_MB * 1024 * 1024) return file;
+
+  const compressed = await imageCompression(file, {
+    maxSizeMB: COMPRESS_ABOVE_MB,
+    maxWidthOrHeight: 2400,
+    useWebWorker: true,
   });
+  if (compressed.size > MAX_PHOTO_BYTES) throw new Error("trop lourde, même après compression");
+  return compressed;
 }
 ```
 
@@ -523,7 +556,8 @@ export async function resizePhoto(file: File): Promise<Blob> {
 "use client";
 
 import { useRef, useState } from "react";
-import { resizePhoto } from "./resize-photo";
+import { PLACE_PHOTO_TYPES } from "@/src/storage/photo-types";
+import { compressPhoto } from "./compress-photo";
 
 export type PhotoItem =
   | { kind: "saved"; id: string; src: string; credit: string }
@@ -554,7 +588,7 @@ export function PlacePhotoFields({
     const failed: string[] = [];
     for (const file of Array.from(files)) {
       try {
-        const blob = await resizePhoto(file);
+        const blob = await compressPhoto(file);
         added.push({
           kind: "pending",
           tempId: crypto.randomUUID(),
@@ -562,8 +596,8 @@ export function PlacePhotoFields({
           src: URL.createObjectURL(blob),
           credit: "",
         });
-      } catch {
-        failed.push(`Impossible de lire « ${file.name} » (format non supporté ?)`);
+      } catch (e) {
+        failed.push(`« ${file.name} » : ${e instanceof Error ? e.message : "illisible"}`);
       }
     }
     setErrors(failed);
@@ -644,7 +678,7 @@ export function PlacePhotoFields({
         <input
           ref={fileInput}
           type="file"
-          accept="image/*"
+          accept={PLACE_PHOTO_TYPES.join(",")}
           multiple
           disabled={preparing}
           onChange={(e) => e.target.files && addFiles(e.target.files)}
@@ -706,7 +740,7 @@ import { PlacePhotoFields, type PhotoItem } from "./PlacePhotoFields";
       for (const [index, photo] of pending.entries()) {
         setProgress(`Envoi photo ${index + 1}/${pending.length}…`);
         const data = new FormData();
-        data.set("file", photo.blob, "photo.jpg");
+        data.set("file", photo.blob);
         data.set("credit", photo.credit);
         try {
           const saved = await uploadPlacePhoto(placeId, data);
@@ -977,5 +1011,5 @@ Expected: all pass; `pnpm build` lists `/lieux/[slug]` as prerendered (●/SSG w
 4. Set the place ACTIVE and open `/lieux/<slug>`: uploads first in the carousel with "Photo : <credit>", then Google photos, 5 total. With 5+ uploads: no Google photo.
 5. `/lieux` card, the parent place's spot card/tile, and the landing guide card show the first uploaded photo.
 6. DevTools → Network on the detail page: the uploaded image loads from `/_next/image?url=https%3A%2F%2F…neon.tech%2Fplace-photos%2F…`; after `pnpm build && pnpm start`, its response has `Cache-Control: public, max-age=31536000, must-revalidate` (or similar year-long value).
-7. Pick a HEIC file in Chrome → an "Impossible de lire …" message, other files still added.
+7. Pick a photo > 1.5 MB → it is compressed (preview appears after a short "Préparation…"); a small photo is added instantly. A HEIC/other file (choose "All files" in the picker) → a per-file error, other files still added.
 8. Before deploying: add the 4 `AWS_*` vars to Vercel (Production + Preview).
