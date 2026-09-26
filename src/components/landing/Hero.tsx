@@ -13,7 +13,8 @@ const TRANSPARENT_PIXEL =
 
 export function Hero({ heroPhoto }: { heroPhoto: HeroPhoto | null }) {
   const attribution = heroPhoto?.photo.attribution;
-  const showAttribution = !!attribution && attribution !== heroPhoto?.place.name;
+  const showAttribution =
+    !!attribution && attribution !== heroPhoto?.place.name;
 
   return (
     <section
@@ -21,10 +22,10 @@ export function Hero({ heroPhoto }: { heroPhoto: HeroPhoto | null }) {
     >
       <div className="flex flex-col gap-4 md:gap-6">
         <p className="text-[12px] font-bold tracking-[0.08em] text-[#A34A25] uppercase md:text-[14px]">
-          La Ciotat et alentours · Guide gratuit
+          La Ciotat et ses alentours · Guide local gratuit
         </p>
         <h1 className="font-landing-display text-[38px] leading-[1.08] font-semibold tracking-[-0.01em] md:text-[64px] md:leading-[1.05]">
-          Où aller en nature autour de La Ciotat ?
+          Où profiter de la nature à La Ciotat ?
         </h1>
         <p className="max-w-[540px] text-[17px] leading-normal text-[#3E4A4B] md:text-[20px] md:leading-[1.55]">
           {HERO_DESCRIPTION}
@@ -32,8 +33,10 @@ export function Hero({ heroPhoto }: { heroPhoto: HeroPhoto | null }) {
         <div className="flex items-center gap-3 pt-1 md:hidden">
           <Monogram className="size-13 border-2 border-[#FFFDF8] text-[20px]" />
           <p className="text-[14px] leading-[1.45] text-[#3E4A4B]">
-            <strong className="text-[#1D2A2E]">Alexandre, habitant de La Ciotat.</strong> Une
-            question ? Je réponds moi-même, gratuitement.
+            <strong className="text-[#1D2A2E]">
+              Alexandre, habitant de La Ciotat.
+            </strong>{" "}
+            Une question ? Je réponds moi-même, gratuitement.
           </p>
         </div>
         <div className="flex items-center gap-3 md:pt-2">
@@ -54,7 +57,9 @@ export function Hero({ heroPhoto }: { heroPhoto: HeroPhoto | null }) {
         <div className="hidden items-center gap-3.5 pt-2 md:flex">
           <Monogram className="size-14 border-2 border-[#FFFDF8] text-[22px]" />
           <p className="text-[15px] leading-[1.45] text-[#3E4A4B]">
-            <strong className="text-[#1D2A2E]">Alexandre, habitant de La Ciotat.</strong>
+            <strong className="text-[#1D2A2E]">
+              Alexandre, habitant de La Ciotat.
+            </strong>
             <br />
             Je réponds moi-même, gratuitement, en général dans la journée.
           </p>
@@ -64,7 +69,10 @@ export function Hero({ heroPhoto }: { heroPhoto: HeroPhoto | null }) {
         {heroPhoto && (
           <>
             <picture>
-              <source media="(min-width: 768px)" srcSet={`/lieux/${heroPhoto.place.slug}/photo`} />
+              <source
+                media="(min-width: 768px)"
+                srcSet={`/lieux/${heroPhoto.place.slug}/photo`}
+              />
               {/* Transparent fallback: the hero image is hidden on mobile, so don't download it there. */}
               <img
                 src={TRANSPARENT_PIXEL}

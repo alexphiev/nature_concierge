@@ -41,9 +41,9 @@ export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
           <a href={PROPOSE_PLACE_HREF} className={`hidden text-[#1D2A2E] lg:block ${FOCUS_RING}`}>
             Proposer un lieu
           </a>
-          <a href={ABOUT_HREF} className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
+          <Link href={ABOUT_HREF} className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
             À propos
-          </a>
+          </Link>
           <a
             href={ASK_HREF}
             className={`hidden h-11 items-center gap-2 rounded-full bg-[#0E4B5A] px-4.5 font-semibold text-white md:flex ${FOCUS_RING}`}

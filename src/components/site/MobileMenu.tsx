@@ -87,9 +87,9 @@ export function MobileMenu({ guideActive }: { guideActive: boolean }) {
               </a>
             </li>
             <li>
-              <a href={ABOUT_HREF} onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>
+              <Link href={ABOUT_HREF} onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>
                 À propos
-              </a>
+              </Link>
             </li>
           </ul>
           <a
