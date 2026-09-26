@@ -6,9 +6,13 @@ const MAX_DESCRIPTION_LENGTH = 155;
 
 const THEME_ORDER: Claim["claimType"][] = [
   "ACCESS",
+  "PRACTICAL",
+  "ACTIVITY",
+  "NATURE",
   "CROWDING",
   "SUITABILITY",
   "TIP",
+  "SAFETY",
   "AVOID",
   "ALTERNATIVE",
   "DECODING",
@@ -22,6 +26,10 @@ const FAQ_QUESTIONS: Record<Claim["claimType"], (name: string) => string> = {
   AVOID: (name) => `Que faut-il éviter à ${name} ?`,
   ALTERNATIVE: (name) => `Quelle alternative à ${name} ?`,
   DECODING: (name) => `Comment comprendre les règles d'accès à ${name} ?`,
+  ACTIVITY: (name) => `Que faire à ${name} ?`,
+  PRACTICAL: (name) => `Quelles infos pratiques pour ${name} ?`,
+  SAFETY: (name) => `Quels risques à ${name} ?`,
+  NATURE: (name) => `Quelle faune et quelle flore observer à ${name} ?`,
 };
 
 export function placeTitle(place: Pick<PlaceWithPublicClaims, "name" | "commune">): string {

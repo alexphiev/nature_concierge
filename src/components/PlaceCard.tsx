@@ -24,6 +24,10 @@ const CLAIM_TYPE_LABELS: Record<string, string> = {
   AVOID: "À éviter",
   ALTERNATIVE: "Alternative",
   DECODING: "Décryptage",
+  ACTIVITY: "Activités",
+  PRACTICAL: "Infos pratiques",
+  SAFETY: "Sécurité",
+  NATURE: "Faune & flore",
 };
 
 export function CardStatusPill({ status }: { status: ResolvedStatus }) {

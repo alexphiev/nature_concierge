@@ -20,6 +20,10 @@ export const ClaimTypeSchema = z.enum([
   "AVOID",
   "ALTERNATIVE",
   "DECODING",
+  "ACTIVITY",
+  "PRACTICAL",
+  "SAFETY",
+  "NATURE",
 ]);
 
 export const VerdictSchema = z.enum(["GO", "GO_IF", "AVOID", "ALTERNATIVE"]);

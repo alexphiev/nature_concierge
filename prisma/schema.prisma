@@ -49,8 +49,9 @@ model PlaceImage {
   placeId String
   place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
-  url   String
-  order Int    @default(0)
+  url    String
+  source String?
+  order  Int     @default(0)
 
   createdAt DateTime @default(now())
 
@@ -114,6 +115,10 @@ enum ClaimType {
   AVOID
   ALTERNATIVE
   DECODING
+  ACTIVITY
+  PRACTICAL
+  SAFETY
+  NATURE
 }
 
 enum Verdict {

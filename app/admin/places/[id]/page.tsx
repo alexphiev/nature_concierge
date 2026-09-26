@@ -68,7 +68,7 @@ export default async function AdminEditPlacePage({
         parentOptions={parentOptions}
         hasChildren={hasChildren}
         governingAuthorities={governingAuthorities}
-        imageUrls={images.map((img) => img.url)}
+        images={images.map((img) => ({ url: img.url, source: img.source }))}
         photos={photos.map((p) => ({ id: p.id, src: placePhotoUrl(p.key), credit: p.credit }))}
       />
     </main>

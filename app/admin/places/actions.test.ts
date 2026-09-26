@@ -286,8 +286,8 @@ describe("place images", () => {
 
     expect(createManyPlaceImageMock).toHaveBeenCalledWith({
       data: [
-        { url: "https://example.com/a.jpg", order: 0, placeId: "place-1" },
-        { url: "https://other.fr/b.jpg", order: 1, placeId: "place-1" },
+        { url: "https://example.com/a.jpg", source: null, order: 0, placeId: "place-1" },
+        { url: "https://other.fr/b.jpg", source: null, order: 1, placeId: "place-1" },
       ],
     });
   });
@@ -310,7 +310,7 @@ describe("place images", () => {
 
     expect(deleteManyPlaceImageMock).toHaveBeenCalledWith({ where: { placeId: "place-1" } });
     expect(createManyPlaceImageMock).toHaveBeenCalledWith({
-      data: [{ url: "https://example.com/new.jpg", order: 0, placeId: "place-1" }],
+      data: [{ url: "https://example.com/new.jpg", source: null, order: 0, placeId: "place-1" }],
     });
 
     const deleteOrder = deleteManyPlaceImageMock.mock.invocationCallOrder[0];

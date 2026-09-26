@@ -20,12 +20,12 @@ function slugify(name: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-function readImageUrls(formData: FormData): string[] {
+function readImages(formData: FormData): { url: string; source: string | null }[] {
+  const sources = formData.getAll("imageSources").map((v) => String(v).trim());
   return formData
     .getAll("imageUrls")
-    .filter((v): v is string => typeof v === "string")
-    .map((v) => v.trim())
-    .filter((v) => v.length > 0);
+    .map((v, i) => ({ url: String(v).trim(), source: sources[i] || null }))
+    .filter((image) => image.url.length > 0);
 }
 
 function readPhotoEdits(formData: FormData): { id: string; order: number; credit: string | null }[] {
@@ -151,10 +151,10 @@ export async function createPlace(
     });
   }
 
-  const imageUrls = readImageUrls(formData);
-  if (imageUrls.length > 0) {
+  const images = readImages(formData);
+  if (images.length > 0) {
     await prisma.placeImage.createMany({
-      data: imageUrls.map((url, order) => ({ url, order, placeId: place.id })),
+      data: images.map((image, order) => ({ ...image, order, placeId: place.id })),
     });
   }
 
@@ -204,11 +204,11 @@ export async function updatePlace(
     });
   }
 
-  const imageUrls = readImageUrls(formData);
+  const images = readImages(formData);
   await prisma.placeImage.deleteMany({ where: { placeId } });
-  if (imageUrls.length > 0) {
+  if (images.length > 0) {
     await prisma.placeImage.createMany({
-      data: imageUrls.map((url, order) => ({ url, order, placeId })),
+      data: images.map((image, order) => ({ ...image, order, placeId })),
     });
   }
 

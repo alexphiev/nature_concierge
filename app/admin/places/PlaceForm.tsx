@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useLayoutEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Place, SignalZone } from "../../../prisma/generated/client";
 import { PlaceLocationFields } from "./PlaceLocationFields";
@@ -21,7 +21,7 @@ export function PlaceForm({
   parentOptions,
   hasChildren = false,
   governingAuthorities,
-  imageUrls = [],
+  images = [],
   photos = [],
 }: {
   action: (formData: FormData) => Promise<{ id: string } | { error: string }>;
@@ -31,7 +31,7 @@ export function PlaceForm({
   parentOptions: Pick<Place, "id" | "name" | "commune">[];
   hasChildren?: boolean;
   governingAuthorities: string[];
-  imageUrls?: string[];
+  images?: { url: string; source: string | null }[];
   photos?: { id: string; src: string; credit: string | null }[];
 }) {
   const router = useRouter();
@@ -42,6 +42,19 @@ export function PlaceForm({
   const [error, setError] = useState<string | null>(null);
   const [preparingPhotos, setPreparingPhotos] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [formKey, setFormKey] = useState(0);
+  const shouldReset = useRef(false);
+
+  // Cache Components/Activity keeps this page mounted (hidden) after we navigate
+  // away, so reopening it would show the just-submitted form still filled in.
+  // Remount the form on hide, but only after a successful save.
+  useLayoutEffect(() => {
+    return () => {
+      if (!shouldReset.current) return;
+      shouldReset.current = false;
+      setFormKey((k) => k + 1);
+    };
+  }, []);
 
   // onSubmit instead of <form action>: React resets uncontrolled fields after a
   // form action, which would wipe the admin's edits when saving fails.
@@ -75,6 +88,7 @@ export function PlaceForm({
           if ("error" in result) {
             setProgress(null);
             if (!place) {
+              shouldReset.current = true;
               router.push(`/admin/places/${placeId}?erreur=photos`);
             } else {
               setError("L'envoi d'une photo a échoué. Enregistrez à nouveau pour réessayer.");
@@ -92,6 +106,7 @@ export function PlaceForm({
         } catch {
           setProgress(null);
           if (!place) {
+            shouldReset.current = true;
             router.push(`/admin/places/${placeId}?erreur=photos`);
           } else {
             setError("L'envoi d'une photo a échoué. Enregistrez à nouveau pour réessayer.");
@@ -101,12 +116,13 @@ export function PlaceForm({
       }
 
       setProgress(null);
+      shouldReset.current = true;
       router.push("/admin/places");
     });
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form key={formKey} onSubmit={handleSubmit} className="flex flex-col gap-4">
       {hasChildren ? (
         <p className="text-sm text-encre/70">
           Ce lieu a des spots : il ne peut pas lui-même avoir de lieu parent.
@@ -222,7 +238,7 @@ export function PlaceForm({
         onPreparingChange={setPreparingPhotos}
         disabled={isPending}
       />
-      <PlaceImageFields defaultUrls={imageUrls} />
+      <PlaceImageFields defaultImages={images} />
 
       {error && <p className="text-sm text-statut-rouge">{error}</p>}
       <button

@@ -237,7 +237,7 @@ export default async function PlaceDetailPage({
             </section>
           )}
 
-          <PracticalImages urls={place.images.map((img) => img.url)} />
+          <PracticalImages images={place.images} />
         </div>
 
         <aside className="order-first flex flex-col gap-5 md:sticky md:top-6 md:order-none">

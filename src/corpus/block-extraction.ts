@@ -21,7 +21,18 @@ Règles non négociables :
 Taxonomie disponible :
 - conditions : ${CONDITIONS.join(", ")}
 - audience : ${AUDIENCES.join(", ")}
-- claimType : ACCESS, CROWDING, SUITABILITY, TIP, AVOID, ALTERNATIVE, DECODING
+- claimType :
+  - ACCESS : comment s'y rendre, trajet, règles et restrictions d'accès
+  - PRACTICAL : équipements et infos sur place (parking, tarifs, toilettes, point d'eau, ombre, réseau)
+  - ACTIVITY : ce qu'on peut y faire (baignade, snorkeling, randonnée, pique-nique, escalade)
+  - NATURE : faune et flore à observer, et le bon moment pour les voir
+  - CROWDING : affluence selon l'heure, le jour ou la saison
+  - SUITABILITY : pour quel public le lieu convient ou non
+  - TIP : astuce qui ne relève d'aucun autre type
+  - SAFETY : risque physique concret (courants, chutes de pierres, chaleur, méduses, marée)
+  - AVOID : moment ou endroit décevant à éviter, sans risque physique
+  - ALTERNATIVE : autre lieu à privilégier
+  - DECODING : décryptage d'une règle ou d'un statut officiel
 - verdict : GO, GO_IF, AVOID, ALTERNATIVE
 - verification : FIELD_VERIFIED, OFFICIAL, LOCAL_TESTIMONY, HEURISTIC
 - decayClass : PERMANENT, SEASONAL, ANNUAL_CHECK
