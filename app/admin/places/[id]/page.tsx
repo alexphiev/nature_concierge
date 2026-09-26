@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/src/corpus/db";
 import { getAllPlaces, getGoverningAuthorities, getSignalZones } from "@/src/corpus/queries";
+import { placePhotoUrl } from "@/src/storage/place-photos";
 import { PlaceForm } from "../PlaceForm";
 import { updatePlace } from "../actions";
 
@@ -14,22 +15,26 @@ export const metadata: Metadata = {
 
 export default async function AdminEditPlacePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ erreur?: string }>;
 }) {
   await connection();
 
   const { id } = await params;
+  const { erreur } = await searchParams;
 
   const place = await prisma.place.findUnique({ where: { id } });
   if (!place) notFound();
 
-  const [zones, zonePlaces, places, governingAuthorities, images] = await Promise.all([
+  const [zones, zonePlaces, places, governingAuthorities, images, photos] = await Promise.all([
     getSignalZones(),
     prisma.zonePlace.findMany({ where: { placeId: id }, select: { signalZoneId: true } }),
     getAllPlaces(),
     getGoverningAuthorities(),
     prisma.placeImage.findMany({ where: { placeId: id }, orderBy: { order: "asc" } }),
+    prisma.placePhoto.findMany({ where: { placeId: id }, orderBy: { order: "asc" } }),
   ]);
   const selectedZoneIds = new Set(zonePlaces.map((zp) => zp.signalZoneId));
   const parentOptions = places.filter((p) => !p.parentId && p.id !== id);
@@ -49,6 +54,12 @@ export default async function AdminEditPlacePage({
           </Link>
         )}
       </div>
+      {erreur === "photos" && (
+        <p className="rounded-[10px] border border-statut-rouge/40 p-3 text-sm text-statut-rouge">
+          Le lieu a été créé, mais certaines photos n&apos;ont pas pu être envoyées. Ajoutez-les à
+          nouveau ci-dessous.
+        </p>
+      )}
       <PlaceForm
         action={updatePlace.bind(null, place.id)}
         place={place}
@@ -58,6 +69,7 @@ export default async function AdminEditPlacePage({
         hasChildren={hasChildren}
         governingAuthorities={governingAuthorities}
         imageUrls={images.map((img) => img.url)}
+        photos={photos.map((p) => ({ id: p.id, src: placePhotoUrl(p.key), credit: p.credit }))}
       />
     </main>
   );
