@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getActivePlaces, getPlaceBySlug } from "@/src/corpus/queries";
 import { getGooglePlaceDetails, googleMapsUrl } from "@/src/corpus/google-places";
+import { MIN_GALLERY_PHOTOS, buildGallerySlides, resolveCoverPhoto } from "@/src/corpus/place-photos";
 import {
   LiveStatusBlock,
   LiveStatusPill,
@@ -73,12 +74,9 @@ export default async function PlaceDetailPage({
   const typeLabel = TYPE_LABELS[place.type] ?? place.type;
 
   const [googleDetails, spotCards, activePlaces] = await Promise.all([
-    getGooglePlaceDetails(place.googlePlaceId),
+    place.photos.length < MIN_GALLERY_PHOTOS ? getGooglePlaceDetails(place.googlePlaceId) : null,
     Promise.all(
-      place.children.map(async (spot) => {
-        const spotDetails = await getGooglePlaceDetails(spot.googlePlaceId);
-        return { spot, photo: spotDetails?.photo ?? null };
-      }),
+      place.children.map(async (spot) => ({ spot, cover: await resolveCoverPhoto(spot) })),
     ),
     getActivePlaces(),
   ]);
@@ -86,9 +84,14 @@ export default async function PlaceDetailPage({
   const nearby = nearbyPlaces(place, activePlaces);
 
   const mapsUrl = googleMapsUrl(`${place.name}, ${place.commune}`, place.googlePlaceId);
-  const galleryTiles = spotCards
-    .filter(({ photo }) => photo)
-    .map(({ spot }) => ({ slug: spot.slug, name: spot.name }));
+  const slides = buildGallerySlides({
+    slug: place.slug,
+    uploaded: place.photos,
+    googleAttributions: googleDetails?.photo ? googleDetails.photoAttributions : [],
+  });
+  const galleryTiles = spotCards.flatMap(({ spot, cover }) =>
+    cover ? [{ slug: spot.slug, name: spot.name, cover }] : [],
+  );
 
   const metaItems = [
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
@@ -177,13 +180,7 @@ export default async function PlaceDetailPage({
       </header>
 
       <div className="mt-7">
-        <PlaceGallery
-          slug={place.slug}
-          typeLabel={typeLabel}
-          photo={googleDetails?.photo ?? null}
-          photoAttributions={googleDetails?.photoAttributions ?? []}
-          tiles={galleryTiles}
-        />
+        <PlaceGallery typeLabel={typeLabel} slides={slides} tiles={galleryTiles} />
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-10 md:mt-12 md:grid-cols-[minmax(0,1fr)_360px] md:items-start md:gap-16">
@@ -207,11 +204,11 @@ export default async function PlaceDetailPage({
                 {spotCards.length > 1 ? `Les ${spotCards.length} spots` : "Le spot"}
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {spotCards.map(({ spot, photo }) => (
+                {spotCards.map(({ spot, cover }) => (
                   <SpotCard
                     key={spot.id}
                     spot={spot}
-                    photo={photo}
+                    cover={cover}
                     status={
                       <Suspense fallback={<StatusPillFallback variant="bare" />}>
                         <LiveStatusPill placeId={spot.id} variant="bare" />

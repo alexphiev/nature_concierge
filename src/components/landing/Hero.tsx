@@ -1,18 +1,27 @@
+import { getImageProps } from "next/image";
 import type { Place } from "../../../prisma/generated/client";
-import type { GooglePlacePhoto } from "../../corpus/google-places";
+import type { DisplayPhoto } from "../../corpus/place-photos";
 import { ChatIcon, Monogram } from "./icons";
 import { ASK_HREF, CONTAINER, FOCUS_RING } from "./shared";
 
 export const HERO_DESCRIPTION =
   "Calanques, criques et sentiers : les lieux, les accès, les bons horaires. Avec les conseils des gens d’ici.";
 
-export type HeroPhoto = { place: Place; photo: GooglePlacePhoto };
+export type HeroPhoto = { place: Place; cover: DisplayPhoto };
 
 const TRANSPARENT_PIXEL =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
+const HERO_SIZES = "(min-width: 1024px) 50vw, 100vw";
+
+function heroSource(cover: DisplayPhoto): { srcSet: string; sizes?: string } {
+  if (!cover.uploaded) return { srcSet: cover.src };
+  const { props } = getImageProps({ src: cover.src, alt: "", width: 1200, height: 900, sizes: HERO_SIZES });
+  return { srcSet: props.srcSet ?? props.src, sizes: HERO_SIZES };
+}
+
 export function Hero({ heroPhoto }: { heroPhoto: HeroPhoto | null }) {
-  const attribution = heroPhoto?.photo.attribution;
+  const attribution = heroPhoto?.cover.credit;
   const showAttribution =
     !!attribution && attribution !== heroPhoto?.place.name;
 
@@ -69,10 +78,7 @@ export function Hero({ heroPhoto }: { heroPhoto: HeroPhoto | null }) {
         {heroPhoto && (
           <>
             <picture>
-              <source
-                media="(min-width: 768px)"
-                srcSet={`/lieux/${heroPhoto.place.slug}/photo`}
-              />
+              <source media="(min-width: 768px)" {...heroSource(heroPhoto.cover)} />
               {/* Transparent fallback: the hero image is hidden on mobile, so don't download it there. */}
               <img
                 src={TRANSPARENT_PIXEL}

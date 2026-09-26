@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import type { Place } from "../../prisma/generated/client";
 import { getActivePlaces } from "@/src/corpus/queries";
-import { getGooglePlaceDetails } from "@/src/corpus/google-places";
+import { resolveCoverPhoto } from "@/src/corpus/place-photos";
+import type { PlaceWithCover } from "@/src/corpus/queries";
 import { Hero, HERO_DESCRIPTION, type HeroPhoto } from "@/src/components/landing/Hero";
 import { GuideSection, type GuideCard } from "@/src/components/landing/GuideSection";
 import { HelpSection } from "@/src/components/landing/HelpSection";
@@ -34,25 +34,24 @@ const jsonLd = {
 
 const CARD_COUNT = 8;
 
-async function withPhoto(place: Place): Promise<GuideCard> {
-  const details = await getGooglePlaceDetails(place.googlePlaceId);
-  return { place, photo: details?.photo ?? null };
+async function withCover(place: PlaceWithCover): Promise<GuideCard> {
+  return { place, cover: await resolveCoverPhoto(place) };
 }
 
-async function findHeroPhoto(cards: GuideCard[], rest: Place[]): Promise<HeroPhoto | null> {
-  const fromCards = cards.find((card): card is HeroPhoto => card.photo !== null);
+async function findHeroPhoto(cards: GuideCard[], rest: PlaceWithCover[]): Promise<HeroPhoto | null> {
+  const fromCards = cards.find((card): card is HeroPhoto => card.cover !== null);
   if (fromCards) return fromCards;
 
   for (const place of rest) {
-    const card = await withPhoto(place);
-    if (card.photo) return { place, photo: card.photo };
+    const card = await withCover(place);
+    if (card.cover) return { place, cover: card.cover };
   }
   return null;
 }
 
 export default async function LandingPage() {
   const places = await getActivePlaces();
-  const cards = await Promise.all(places.slice(0, CARD_COUNT).map(withPhoto));
+  const cards = await Promise.all(places.slice(0, CARD_COUNT).map(withCover));
   const heroPhoto = await findHeroPhoto(cards, places.slice(CARD_COUNT));
 
   return (

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import type { DisplayPhoto } from "../corpus/place-photos";
+import { PhotoImage } from "./PhotoImage";
 
-function photoSrc(slug: string, index: number): string {
-  return `/lieux/${slug}/photo?i=${index}`;
-}
+const GALLERY_SIZES = "(min-width: 768px) 66vw, 100vw";
 
 function Chevron({ direction }: { direction: "left" | "right" }) {
   return (
@@ -27,35 +27,21 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
 const NAV_BUTTON =
   "absolute top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-calcaire/90 text-encre shadow-md transition-colors hover:bg-calcaire focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-calcaire";
 
-// Each photo is resolved (one Places media call) only when requested, so only
-// the current photo and the next one are ever fetched.
-export function PhotoCarousel({
-  slug,
-  attributions,
-}: {
-  slug: string;
-  attributions: (string | null)[];
-}) {
+// Each Google photo is still resolved only when requested; the current and
+// next slide are loaded.
+export function PhotoCarousel({ slides }: { slides: DisplayPhoto[] }) {
   const [index, setIndex] = useState(0);
-  const count = attributions.length;
-  const attribution = attributions[index];
-
-  useEffect(() => {
-    if (index + 1 < count) {
-      new Image().src = photoSrc(slug, index + 1);
-    }
-  }, [slug, index, count]);
+  const count = slides.length;
+  const credit = slides[index].credit;
 
   return (
     <>
-      <img
-        key={index}
-        src={photoSrc(slug, index)}
-        alt=""
-        width={1200}
-        height={900}
-        className="absolute inset-0 size-full object-cover"
-      />
+      <PhotoImage key={slides[index].src} photo={slides[index]} sizes={GALLERY_SIZES} preload={index === 0} />
+      {slides[index + 1] && (
+        <div aria-hidden className="invisible">
+          <PhotoImage key={slides[index + 1].src} photo={slides[index + 1]} sizes={GALLERY_SIZES} />
+        </div>
+      )}
 
       {index > 0 && (
         <button
@@ -84,9 +70,9 @@ export function PhotoCarousel({
       >
         {index + 1} / {count}
       </span>
-      {attribution && (
+      {credit && (
         <span className="absolute right-3 bottom-3 rounded bg-encre/55 px-2 py-0.5 font-mono text-[0.65rem] text-calcaire">
-          Photo : {attribution}
+          Photo : {credit}
         </span>
       )}
     </>

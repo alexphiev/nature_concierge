@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getActivePlaces } from "@/src/corpus/queries";
-import { getGooglePlaceDetails } from "@/src/corpus/google-places";
+import { resolveCoverPhoto } from "@/src/corpus/place-photos";
 import { PlaceCard } from "@/src/components/PlaceCard";
 import { LiveStatusPill, StatusPillFallback } from "@/src/components/LiveStatus";
 import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
@@ -21,10 +21,7 @@ export default async function PlacesIndexPage() {
   const places = activePlaces.filter((p) => !p.parentId || !activeIds.has(p.parentId));
 
   const cards = await Promise.all(
-    places.map(async (place) => {
-      const googleDetails = await getGooglePlaceDetails(place.googlePlaceId);
-      return { place, photo: googleDetails?.photo ?? null };
-    }),
+    places.map(async (place) => ({ place, cover: await resolveCoverPhoto(place) })),
   );
 
   const jsonLd = {
@@ -52,11 +49,11 @@ export default async function PlacesIndexPage() {
       </p>
       <h1 className="font-display text-3xl">Les lieux</h1>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map(({ place, photo }) => (
+        {cards.map(({ place, cover }) => (
           <PlaceCard
             key={place.id}
             place={place}
-            photo={photo}
+            cover={cover}
             status={
               <Suspense fallback={<StatusPillFallback variant="card" />}>
                 <LiveStatusPill placeId={place.id} variant="card" />
