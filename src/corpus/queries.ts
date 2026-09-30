@@ -19,6 +19,26 @@ export async function getActivePlaces(): Promise<PlaceWithCover[]> {
   });
 }
 
+export type SearchCorpusPlace = PlaceWithCover & { claims: Pick<Claim, "id" | "claimText">[] };
+
+export async function getSearchCorpus(): Promise<SearchCorpusPlace[]> {
+  "use cache";
+  cacheTag("corpus");
+  cacheLife("corpus");
+  return prisma.place.findMany({
+    where: { status: "ACTIVE" },
+    orderBy: { demandRank: "asc" },
+    include: {
+      photos: coverPhotoInclude,
+      claims: {
+        where: { isPublic: true, status: "PUBLISHED" },
+        orderBy: { createdAt: "asc" },
+        select: { id: true, claimText: true },
+      },
+    },
+  });
+}
+
 export async function getAllPlaces(): Promise<Place[]> {
   return prisma.place.findMany({
     orderBy: { demandRank: "asc" },
