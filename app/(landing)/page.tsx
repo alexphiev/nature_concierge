@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getActivePlaces } from "@/src/corpus/queries";
 import { resolveCoverPhoto } from "@/src/corpus/place-photos";
 import type { PlaceWithCover } from "@/src/corpus/queries";
+import { getShortcutsForNow } from "@/src/search/search-service";
 import { SearchHero } from "@/src/components/landing/SearchHero";
 import { GuideSection, type GuideCard } from "@/src/components/landing/GuideSection";
 import { HelpSection } from "@/src/components/landing/HelpSection";
@@ -53,7 +54,7 @@ export default async function LandingPage() {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <SearchHero />
+      <SearchHero shortcuts={getShortcutsForNow()} />
       <GuideSection cards={cards} placeCount={places.length} />
       <HelpSection />
     </main>

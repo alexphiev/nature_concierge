@@ -1,97 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { Suspense, use, useRef, useState, useTransition, type FormEvent } from "react";
+import { searchPlaces } from "@/app/(landing)/actions";
+import type { SearchResult, SearchResultPlace, ShortcutSuggestions } from "@/src/search/types";
+import { PhotoImage } from "../PhotoImage";
 import { ArrowIcon, BulbIcon, SearchIcon } from "./icons";
+import { GUIDE_HREF } from "./shared";
 
-type BadgeId = "kids" | "first" | "sunset" | "dog";
-
-type Tip = { text: string };
-type Result = { name: string; town: string; why: string; tips: Tip[] };
-type Answer = { q: string; intro: string; results: Result[]; empty?: boolean };
-
-const BADGES: { id: BadgeId; label: string; bg: string; fg: string }[] = [
-  { id: "kids", label: "Avec de jeunes enfants", bg: "#F6D98B", fg: "#4A3A0A" },
-  { id: "first", label: "Première fois à La Ciotat", bg: "#A9DCD3", fg: "#0B3A44" },
-  { id: "sunset", label: "Coucher de soleil", bg: "#F6B39A", fg: "#5A1E10" },
-  { id: "dog", label: "Avec un chien", bg: "#C9E0A8", fg: "#2A4318" },
-];
-
-const ANSWERS: Record<BadgeId, Answer> = {
-  first: {
-    q: "Première fois à La Ciotat",
-    intro:
-      "Trois lieux pour comprendre le coin en une journée : la roche rouge, la mer et la vue sur le Bec de l’Aigle.",
-    results: [
-      {
-        name: "Calanque de Figuerolles",
-        town: "La Ciotat",
-        why: "Les falaises de poudingue rouge, typiques de La Ciotat.",
-        tips: [{ text: "[Tip : accès à pied depuis le centre]" }, { text: "[Tip : meilleur moment de la journée]" }],
-      },
-      {
-        name: "Parc du Mugel",
-        town: "La Ciotat",
-        why: "Un jardin au pied du Bec de l’Aigle, la calanque à côté.",
-        tips: [{ text: "[Tip : où se garer]" }, { text: "[Tip : horaires du parc]" }],
-      },
-      {
-        name: "Île Verte",
-        town: "Au large de La Ciotat",
-        why: "La seule île boisée du coin, à quelques minutes de bateau.",
-        tips: [
-          { text: "Vérifiez que la navette tourne encore : le service change après l’été." },
-          { text: "[Tip : quoi emporter]" },
-        ],
-      },
-    ],
-  },
-  kids: {
-    q: "Avec de jeunes enfants",
-    intro:
-      "Ce dimanche, avec du mistral : visez court, abrité et avec de l’ombre. Évitez Port d’Alon, qui prend le vent de face.",
-    results: [
-      {
-        name: "La Madrague",
-        town: "Saint-Cyr-sur-Mer",
-        why: "Abritée du mistral, sentier court, faisable avec un 3 ans.",
-        tips: [{ text: "Visez avant 10h le week-end." }, { text: "[Tip : où se garer]" }],
-      },
-      {
-        name: "Parc du Mugel",
-        town: "La Ciotat",
-        why: "Allées ombragées, place pour courir, calanque juste à côté.",
-        tips: [{ text: "[Tip : poussette possible ?]" }, { text: "[Tip : toilettes, point d’eau]" }],
-      },
-      {
-        name: "Calanque du Mugel",
-        town: "La Ciotat",
-        why: "Petite crique à deux pas du parc pour finir par une baignade.",
-        tips: [{ text: "[Tip : entrée dans l’eau, chaussures]" }, { text: "[Tip : heure où ça se vide]" }],
-      },
-    ],
-  },
-  dog: {
-    q: "Avec un chien",
-    empty: true,
-    intro: "Je n’ai pas encore de conseil fiable sur les lieux où les chiens sont acceptés.",
-    results: [],
-  },
-  sunset: {
-    q: "Coucher de soleil",
-    intro: "Coucher du soleil vers 19h20. Un seul spot, mais le bon.",
-    results: [
-      {
-        name: "Route des Crêtes",
-        town: "Entre La Ciotat et Cassis",
-        why: "Vue sur les falaises et la baie depuis les hauteurs.",
-        tips: [
-          { text: "Fermée par grand vent ou risque incendie : vérifiez avant de monter." },
-          { text: "[Tip : meilleur belvédère, où se garer]" },
-        ],
-      },
-    ],
-  },
-};
+const BADGE_GRID = "grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:flex-nowrap md:justify-center md:gap-2.5";
+const BADGE_SHAPE =
+  "flex min-h-15 items-center justify-center gap-2.5 rounded-2xl border-3 px-3.5 py-2 text-[14px] leading-[1.25] md:min-h-auto md:h-12.5 md:justify-start md:rounded-full md:px-5 md:text-[15px]";
+const MOMENT_LABEL = "pt-1 text-[13px] text-[#BFD8D6] md:text-[14px]";
 
 function WaveDivider() {
   return (
@@ -120,135 +40,143 @@ function WaveDivider() {
   );
 }
 
-function ResultCard({ result }: { result: Result }) {
+function ShortcutPlaceholders() {
+  return (
+    <>
+      <span className={MOMENT_LABEL}>&nbsp;</span>
+      <div aria-hidden className={BADGE_GRID}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className={`${BADGE_SHAPE} w-full border-white/10 bg-white/10 md:w-44`} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ShortcutBadges({
+  suggestions,
+  selected,
+  onToggle,
+}: {
+  suggestions: Promise<ShortcutSuggestions>;
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
+  const { label, shortcuts } = use(suggestions);
+
+  return (
+    <>
+      <span className={MOMENT_LABEL}>{label}</span>
+      <div className={BADGE_GRID}>
+        {shortcuts.map((shortcut) => {
+          const active = selected.includes(shortcut.id);
+          return (
+            <button
+              key={shortcut.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onToggle(shortcut.id)}
+              style={{
+                borderColor: shortcut.bgColor,
+                background: active ? "#FFFFFF" : shortcut.bgColor,
+                color: shortcut.fgColor,
+              }}
+              className={`${BADGE_SHAPE} ${active ? "font-bold" : "font-semibold"}`}
+            >
+              {shortcut.label}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function ResultCard({ place }: { place: SearchResultPlace }) {
   return (
     <article className="flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-[#E4DACA] bg-[#FFFDF8] md:rounded-[20px]">
       <div className="flex items-center gap-3 p-3.5 md:block md:p-0">
-        <div className="flex size-18 shrink-0 items-center justify-center rounded-xl bg-[#D9E4E2] text-[11px] font-semibold text-[#34494C] md:size-auto md:h-[150px] md:items-end md:justify-start md:rounded-none md:p-2.5">
-          <span className="hidden rounded-xl bg-[#FFFDF8] px-2.5 py-1 md:block">Photo</span>
-          <span className="md:hidden">Photo</span>
+        <div className="relative size-18 shrink-0 overflow-hidden rounded-xl bg-[#D9E4E2] md:h-[150px] md:w-full md:rounded-none">
+          {place.cover && <PhotoImage photo={place.cover} sizes="(min-width: 768px) 380px, 72px" />}
         </div>
         <div className="flex min-w-0 flex-col gap-0.5 md:hidden">
-          <h3 className="font-landing-display text-[19px] leading-[1.2] font-semibold">{result.name}</h3>
-          <span className="text-[13px] text-[#5B6663]">{result.town}</span>
+          <h3 className="font-landing-display text-[19px] leading-[1.2] font-semibold">{place.name}</h3>
+          <span className="text-[13px] text-[#5B6663]">{place.commune}</span>
         </div>
       </div>
-      <div className="flex flex-col gap-2.5 px-3.5 pb-3.5 md:gap-2.5 md:px-5 md:pt-1 md:pb-5">
+      <div className="flex grow flex-col gap-2.5 px-3.5 pb-3.5 md:gap-2.5 md:px-5 md:pt-1 md:pb-5">
         <div className="hidden flex-col gap-0.5 md:flex">
-          <h3 className="font-landing-display text-[21px] leading-[1.2] font-semibold">{result.name}</h3>
-          <span className="text-[13px] text-[#5B6663]">{result.town}</span>
+          <h3 className="font-landing-display text-[21px] leading-[1.2] font-semibold">{place.name}</h3>
+          <span className="text-[13px] text-[#5B6663]">{place.commune}</span>
         </div>
-        <p className="text-[15px] leading-[1.45] font-semibold text-[#2E3A3C]">{result.why}</p>
-        <ul className="flex flex-col gap-1.5">
-          {result.tips.map((tip) => (
-            <li key={tip.text} className="flex items-start gap-2 text-[14px] leading-[1.45] text-[#3E4A4B]">
-              <BulbIcon className="mt-0.5 size-3.75 shrink-0 text-[#A34A25]" />
-              <span>{tip.text}</span>
-            </li>
-          ))}
-        </ul>
-        <a
-          href="#"
+        {place.excerpt && (
+          <p className="text-[15px] leading-[1.45] font-semibold text-[#2E3A3C]">{place.excerpt}</p>
+        )}
+        {place.tips.length > 0 && (
+          <ul className="flex flex-col gap-1.5">
+            {place.tips.map((tip) => (
+              <li key={tip} className="flex items-start gap-2 text-[14px] leading-[1.45] text-[#3E4A4B]">
+                <BulbIcon className="mt-0.5 size-3.75 shrink-0 text-[#A34A25]" />
+                <span>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Link
+          href={`/lieux/${place.slug}`}
           className="mt-auto flex h-9 items-center gap-1.5 pt-1.5 text-[15px] font-semibold text-[#0E4B5A] no-underline md:h-auto"
         >
           Voir la fiche
           <ArrowIcon className="size-4" />
-        </a>
+        </Link>
       </div>
     </article>
   );
 }
 
-export function SearchHero() {
-  const [selected, setSelected] = useState<BadgeId | null>(null);
-  const answer = selected ? ANSWERS[selected] : null;
-
+function Results({ result, pending, onClear }: { result: SearchResult; pending: boolean; onClear: () => void }) {
   return (
-    <>
-      <div style={{ background: "#0E4B5A" }} className="text-white">
-        <section className="mx-auto flex max-w-[800px] flex-col items-center gap-4 px-4 pt-10 pb-7 md:gap-5 md:px-0 md:pt-24 md:pb-14">
-          <h1 className="text-center font-landing-display text-[36px] leading-[1.08] font-semibold tracking-[-0.015em] md:text-[64px] md:leading-[1.06]">
-            Où aller en nature autour de La Ciotat ?
-          </h1>
-          <p className="max-w-[640px] text-center text-[17px] leading-[1.5] text-[#CFE3E1] md:text-[20px]">
-            Décrivez votre sortie, je vous dis où aller. Avec les conseils vérifiés des gens d’ici.
+    <section
+      aria-live="polite"
+      aria-busy={pending}
+      className={`mx-auto flex max-w-[1200px] flex-col gap-6 px-4 pb-10 transition-opacity md:gap-6 md:px-8 md:pb-24 ${
+        pending ? "opacity-60" : ""
+      }`}
+    >
+      {result.status === "error" ? (
+        <div className="flex flex-col gap-2.5 border-t border-[#E4DACA] pt-7 md:pt-10">
+          <p className="text-[17px] leading-[1.5] text-[#1D2A2E] md:text-[19px]">
+            La recherche est indisponible pour le moment.{" "}
+            <Link href={GUIDE_HREF} className="font-semibold text-[#0E4B5A]">
+              Voir tous les lieux du guide
+            </Link>
+            .
           </p>
-
-          <form className="relative mt-3.5 flex w-full max-w-[760px] items-center">
-            <label htmlFor="q" className="sr-only">
-              Décrivez votre sortie
-            </label>
-            <input
-              id="q"
-              type="text"
-              placeholder="Ex. : samedi matin, avec deux enfants et sans voiture"
-              className="h-14.5 w-full rounded-full border-0 bg-white pr-19 pl-5 text-[16px] text-[#1D2A2E] shadow-[0_10px_30px_rgba(4,26,32,0.35)] md:h-17 md:pr-19 md:pl-7 md:text-[18px] md:shadow-[0_12px_36px_rgba(4,26,32,0.35)]"
-            />
-            <button
-              type="button"
-              aria-label="Chercher"
-              className="absolute right-1.5 flex size-11.5 items-center justify-center rounded-full border-0 bg-[#A34A25] text-white md:right-2 md:size-13"
-            >
-              <SearchIcon className="size-5 md:size-5.5" />
-            </button>
-          </form>
-
-          <span className="pt-1 text-[13px] text-[#BFD8D6] md:text-[14px]">
-            Idées pour ce dimanche après-midi
-          </span>
-          <div className="grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:flex-nowrap md:justify-center md:gap-2.5">
-            {BADGES.map((badge) => {
-              const active = badge.id === selected;
-              return (
-                <button
-                  key={badge.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setSelected(active ? null : badge.id)}
-                  style={{
-                    borderColor: badge.bg,
-                    background: active ? "#FFFFFF" : badge.bg,
-                    color: badge.fg,
-                  }}
-                  className={`flex min-h-15 items-center justify-center gap-2.5 rounded-2xl border-3 px-3.5 py-2 text-[14px] leading-[1.25] md:min-h-auto md:h-12.5 md:justify-start md:rounded-full md:px-5 md:text-[15px] ${
-                    active ? "font-bold" : "font-semibold"
-                  }`}
-                >
-                  {badge.label}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      </div>
-      <WaveDivider />
-
-      {answer && (
-        <section aria-live="polite" className="mx-auto flex max-w-[1200px] flex-col gap-6 px-4 pb-10 md:gap-6 md:px-8 md:pb-24">
+        </div>
+      ) : (
+        <>
           <div className="flex flex-col gap-2.5 border-t border-[#E4DACA] pt-7 md:pt-10">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="font-landing-display text-[24px] font-semibold md:text-[32px]">{answer.q}</h2>
+              <h2 className="font-landing-display text-[24px] font-semibold md:text-[32px]">{result.title}</h2>
               <button
                 type="button"
-                onClick={() => setSelected(null)}
+                onClick={onClear}
                 className="shrink-0 border-0 bg-transparent text-[14px] font-semibold text-[#4A5557] underline md:text-[15px]"
               >
                 Effacer
               </button>
             </div>
-            <span className="text-[13px] leading-[1.4] text-[#6A7472]">
-              Conseils d’Alexandre et des gens d’ici · adaptés à aujourd’hui : mistral modéré, massifs ouverts
-            </span>
+            <span className="text-[13px] leading-[1.4] text-[#6A7472]">Conseils d’Alexandre et des gens d’ici</span>
             <p className="mt-1 max-w-[820px] text-[17px] leading-[1.5] text-[#1D2A2E] md:text-[19px]">
-              {answer.intro}
+              {result.intro}
             </p>
           </div>
 
-          {!answer.empty && (
+          {result.status === "ok" && (
             <div className="flex flex-col gap-4 md:gap-5">
               <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3 md:gap-5">
-                {answer.results.map((result) => (
-                  <ResultCard key={result.name} result={result} />
+                {result.places.map((place) => (
+                  <ResultCard key={place.slug} place={place} />
                 ))}
               </div>
               <p className="text-[14px] text-[#4A5557] md:text-[15px]">
@@ -265,7 +193,7 @@ export function SearchHero() {
             </div>
           )}
 
-          {answer.empty && (
+          {result.status === "empty" && (
             <div className="flex flex-col gap-3.5 rounded-[20px] border border-[#E4DACA] bg-[#FFFDF8] p-5 md:w-[760px] md:p-7">
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px]">
                 Je suis prévenu et j’irai vérifier. Laissez votre email si vous voulez la réponse.
@@ -289,8 +217,93 @@ export function SearchHero() {
               </form>
             </div>
           )}
-        </section>
+        </>
       )}
+    </section>
+  );
+}
+
+export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestions> }) {
+  const [text, setText] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [pending, startTransition] = useTransition();
+  // Only the latest search may update the results (older, slower ones are dropped).
+  const latestRequest = useRef(0);
+
+  function runSearch(nextText: string, nextSelected: string[]) {
+    const requestId = ++latestRequest.current;
+    if (!nextText.trim() && nextSelected.length === 0) {
+      setResult(null);
+      return;
+    }
+    startTransition(async () => {
+      const next = await searchPlaces({ text: nextText, shortcutIds: nextSelected });
+      if (requestId !== latestRequest.current) return;
+      startTransition(() => setResult(next));
+    });
+  }
+
+  function toggleShortcut(id: string) {
+    const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
+    setSelected(next);
+    runSearch(text, next);
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    runSearch(text, selected);
+  }
+
+  function clear() {
+    latestRequest.current++;
+    setText("");
+    setSelected([]);
+    setResult(null);
+  }
+
+  return (
+    <>
+      <div style={{ background: "#0E4B5A" }} className="text-white">
+        <section className="mx-auto flex max-w-[800px] flex-col items-center gap-4 px-4 pt-10 pb-7 md:gap-5 md:px-0 md:pt-24 md:pb-14">
+          <h1 className="text-center font-landing-display text-[36px] leading-[1.08] font-semibold tracking-[-0.015em] md:text-[64px] md:leading-[1.06]">
+            Où aller en nature autour de La Ciotat ?
+          </h1>
+          <p className="max-w-[640px] text-center text-[17px] leading-[1.5] text-[#CFE3E1] md:text-[20px]">
+            Décrivez votre sortie, je vous dis où aller. Avec les conseils vérifiés des gens d’ici.
+          </p>
+
+          <form onSubmit={submit} className="relative mt-3.5 flex w-full max-w-[760px] items-center">
+            <label htmlFor="q" className="sr-only">
+              Décrivez votre sortie
+            </label>
+            <input
+              id="q"
+              type="text"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              maxLength={300}
+              placeholder="Ex. : samedi matin, avec deux enfants et sans voiture"
+              className="h-14.5 w-full rounded-full border-0 bg-white pr-19 pl-5 text-[16px] text-[#1D2A2E] shadow-[0_10px_30px_rgba(4,26,32,0.35)] md:h-17 md:pr-19 md:pl-7 md:text-[18px] md:shadow-[0_12px_36px_rgba(4,26,32,0.35)]"
+            />
+            <button
+              type="submit"
+              aria-label="Chercher"
+              disabled={pending}
+              className="absolute right-1.5 flex size-11.5 items-center justify-center rounded-full border-0 bg-[#A34A25] text-white disabled:opacity-60 md:right-2 md:size-13"
+            >
+              <SearchIcon className="size-5 md:size-5.5" />
+            </button>
+          </form>
+
+          <Suspense fallback={<ShortcutPlaceholders />}>
+            <ShortcutBadges suggestions={shortcuts} selected={selected} onToggle={toggleShortcut} />
+          </Suspense>
+        </section>
+      </div>
+      <WaveDivider />
+
+      {result && <Results result={result} pending={pending} onClear={clear} />}
     </>
   );
 }
