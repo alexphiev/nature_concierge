@@ -238,7 +238,12 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
       return;
     }
     startTransition(async () => {
-      const next = await searchPlaces({ text: nextText, shortcutIds: nextSelected });
+      let next: SearchResult;
+      try {
+        next = await searchPlaces({ text: nextText, shortcutIds: nextSelected });
+      } catch {
+        next = { status: "error" };
+      }
       if (requestId !== latestRequest.current) return;
       startTransition(() => setResult(next));
     });
