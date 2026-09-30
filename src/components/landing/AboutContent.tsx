@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ArrowIcon, ChatIcon, CoffeeIcon, PinIcon, PlusIcon } from "./icons";
-import { ASK_HREF, CONTAINER, FOCUS_RING, GUIDE_HREF, PROPOSE_PLACE_HREF, SHARE_TIP_HREF } from "./shared";
-
-const TIPEEE_HREF = "#";
-const ACCESS_MAP_HREF_LOCAL = "#";
+import {
+  ACCESS_MAP_HREF,
+  ASK_HREF,
+  CONTAINER,
+  FOCUS_RING,
+  GUIDE_HREF,
+  PROPOSE_PLACE_HREF,
+  SHARE_TIP_HREF,
+  TIPEEE_HREF,
+} from "./shared";
 
 const COMMITMENTS = [
   "Gratuit, sans publicité, sans compte à créer.",
@@ -36,7 +42,7 @@ const FAQS = [
       <>
         L’accès dépend du risque incendie. La préfecture publie la carte chaque veille au soir. Je
         la signale dans mes réponses, mais c’est elle qui fait foi :{" "}
-        <a href={ACCESS_MAP_HREF_LOCAL} className="font-semibold">
+        <a href={ACCESS_MAP_HREF} className="font-semibold">
           carte des accès
         </a>
         .

@@ -20,7 +20,7 @@ export const ABOUT_HREF = "/a-propos";
 
 // Placeholders until the owner supplies the targets.
 export const STORY_HREF = "#";
-export const COFFEE_HREF = "#";
+export const TIPEEE_HREF = "#";
 export const ACCESS_MAP_HREF = "#";
 
 export const CONTAINER =

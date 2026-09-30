@@ -102,6 +102,22 @@ export function CloseIcon({ className }: IconProps) {
   );
 }
 
+export function SearchIcon({ className }: IconProps) {
+  return (
+    <StrokeIcon className={className}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </StrokeIcon>
+  );
+}
+
+export function HeartIcon({ className }: IconProps) {
+  return (
+    <StrokeIcon className={className}>
+      <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+    </StrokeIcon>
+  );
+}
+
 export function CoffeeIcon({ className }: IconProps) {
   return (
     <StrokeIcon className={className}>
