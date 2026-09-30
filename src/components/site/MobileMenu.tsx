@@ -3,16 +3,8 @@
 import { Suspense, useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChatIcon, CloseIcon, MenuIcon } from "../landing/icons";
-import {
-  ABOUT_HREF,
-  ACTIVE_LINK,
-  ASK_HREF,
-  CONTAINER,
-  FOCUS_RING,
-  GUIDE_HREF,
-  PROPOSE_PLACE_HREF,
-} from "../landing/shared";
+import { CloseIcon, HeartIcon, MenuIcon } from "../landing/icons";
+import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, GUIDE_HREF, TIPEEE_HREF } from "../landing/shared";
 
 const PANEL_ROW = `flex min-h-13 items-center ${FOCUS_RING}`;
 
@@ -78,13 +70,8 @@ export function MobileMenu({ guideActive }: { guideActive: boolean }) {
                 aria-current={guideActive ? "page" : undefined}
                 className={`${PANEL_ROW} ${guideActive ? ACTIVE_LINK : "text-[#1D2A2E]"}`}
               >
-                Le guide
+                Tous les lieux
               </Link>
-            </li>
-            <li>
-              <a href={PROPOSE_PLACE_HREF} onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>
-                Proposer un lieu
-              </a>
             </li>
             <li>
               <Link href={ABOUT_HREF} onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>
@@ -93,12 +80,12 @@ export function MobileMenu({ guideActive }: { guideActive: boolean }) {
             </li>
           </ul>
           <a
-            href={ASK_HREF}
+            href={TIPEEE_HREF}
             onClick={close}
-            className={`flex h-13.5 items-center justify-center gap-2.5 rounded-full bg-[#0E4B5A] text-[17px] font-semibold text-white ${FOCUS_RING}`}
+            className={`flex h-13.5 items-center justify-center gap-2.5 rounded-full bg-[#A34A25] text-[17px] font-semibold text-white ${FOCUS_RING}`}
           >
-            <ChatIcon className="size-5" />
-            Demander conseil sur WhatsApp
+            <HeartIcon className="size-5" />
+            Soutenir sur Tipeee
           </a>
         </div>
       </div>

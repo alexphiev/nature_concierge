@@ -1,7 +1,8 @@
-import { CoffeeIcon, Monogram } from "../landing/icons";
-import { ACCESS_MAP_HREF, COFFEE_HREF, CONTAINER, FOCUS_RING, STORY_HREF } from "../landing/shared";
+import { HeartIcon, Monogram } from "../landing/icons";
+import { ACCESS_MAP_HREF, CONTAINER, FOCUS_RING, STORY_HREF, TIPEEE_HREF } from "../landing/shared";
 
 const LINK = `text-[15px] font-semibold text-[#0E4B5A] hover:text-[#0A3843] ${FOCUS_RING}`;
+const TIPEEE_LINK = `text-[15px] font-semibold text-[#A34A25] hover:text-[#8A3D1E] ${FOCUS_RING}`;
 
 export function SiteFooter() {
   return (
@@ -13,8 +14,7 @@ export function SiteFooter() {
             <div className="flex flex-col gap-1.5">
               <p className="text-[15px] leading-[1.45] text-[#3E4A4B] md:text-[16px] md:leading-normal">
                 <strong className="text-[#1D2A2E]">Un guide tenu par Alexandre</strong>, habitant
-                de La Ciotat depuis 2025. Rien à vendre, pas de compte
-                <span className="hidden md:inline"> à créer</span>.
+                de La Ciotat depuis 2025. Gratuit, sans pub, sans compte.
               </p>
               <a href={STORY_HREF} className={`hidden self-start md:block ${LINK}`}>
                 L’histoire du projet
@@ -25,19 +25,19 @@ export function SiteFooter() {
             <a href={STORY_HREF} className={`flex h-11 items-center self-start ${LINK}`}>
               L’histoire du projet
             </a>
-            <a href={COFFEE_HREF} className={`flex h-11 items-center gap-2 self-start ${LINK}`}>
-              <CoffeeIcon className="size-4.5" />
-              Le guide vous a servi ? Offrir un café
+            <a href={TIPEEE_HREF} className={`flex h-11 items-center gap-2 self-start ${TIPEEE_LINK}`}>
+              <HeartIcon className="size-4.5" />
+              Le guide vous a servi ? Soutenir sur Tipeee
             </a>
           </div>
           <div className="hidden shrink-0 items-center gap-4 md:flex">
             <span className="text-[15px] text-[#3E4A4B]">Le guide vous a servi ?</span>
             <a
-              href={COFFEE_HREF}
-              className={`flex h-[51px] items-center gap-2 rounded-full border-[1.5px] border-[#1D2A2E] px-5 text-[15px] font-semibold text-[#1D2A2E] ${FOCUS_RING}`}
+              href={TIPEEE_HREF}
+              className={`flex h-[51px] items-center gap-2 rounded-full border-[1.5px] border-[#A34A25] px-5 text-[15px] font-semibold text-[#A34A25] ${FOCUS_RING}`}
             >
-              <CoffeeIcon className="size-4.5" />
-              Offrir un café
+              <HeartIcon className="size-4.5" />
+              Soutenir sur Tipeee
             </a>
           </div>
         </div>

@@ -1,15 +1,7 @@
 import Link from "next/link";
 import { SITE_NAME } from "../../site";
-import { ChatIcon, LogoIcon } from "../landing/icons";
-import {
-  ABOUT_HREF,
-  ACTIVE_LINK,
-  ASK_HREF,
-  CONTAINER,
-  FOCUS_RING,
-  GUIDE_HREF,
-  PROPOSE_PLACE_HREF,
-} from "../landing/shared";
+import { HeartIcon, LogoIcon } from "../landing/icons";
+import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, GUIDE_HREF, TIPEEE_HREF } from "../landing/shared";
 import { MobileMenu } from "./MobileMenu";
 
 export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
@@ -36,20 +28,17 @@ export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
             aria-current={guideActive ? "page" : undefined}
             className={`hidden md:block ${guideActive ? ACTIVE_LINK : "text-[#1D2A2E]"} ${FOCUS_RING}`}
           >
-            Le guide
+            Tous les lieux
           </Link>
-          <a href={PROPOSE_PLACE_HREF} className={`hidden text-[#1D2A2E] lg:block ${FOCUS_RING}`}>
-            Proposer un lieu
-          </a>
           <Link href={ABOUT_HREF} className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
             À propos
           </Link>
           <a
-            href={ASK_HREF}
-            className={`hidden h-11 items-center gap-2 rounded-full bg-[#0E4B5A] px-4.5 font-semibold text-white md:flex ${FOCUS_RING}`}
+            href={TIPEEE_HREF}
+            className={`hidden items-center gap-1.5 font-semibold text-[#A34A25] md:flex ${FOCUS_RING}`}
           >
-            <ChatIcon className="size-4.5" />
-            WhatsApp
+            <HeartIcon className="size-4.25" />
+            Soutenir
           </a>
           <MobileMenu guideActive={guideActive} />
         </nav>
