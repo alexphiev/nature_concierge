@@ -322,3 +322,15 @@ enum BlockStatus {
   ERROR
   RESOLVED
 }
+
+// ---------- Landing search ----------
+
+model SearchShortcut {
+  id      String  @id @default(cuid())
+  label   String  @unique
+  intro   String
+  bgColor String
+  fgColor String
+  order   Int     @default(0)
+  active  Boolean @default(true)
+}
