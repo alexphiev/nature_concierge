@@ -50,11 +50,6 @@ const SHORTCUTS = [
     label: "Nouvelle capture",
     description: "Soumettre une source à extraire pour un lieu.",
   },
-  {
-    href: "/admin/statut",
-    label: "Statut du jour",
-    description: "Confirmer ou mettre à jour les signaux du jour par zone.",
-  },
 ];
 
 function AdminShortcuts() {

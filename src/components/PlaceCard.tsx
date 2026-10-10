@@ -31,23 +31,21 @@ const CLAIM_TYPE_LABELS: Record<string, string> = {
 };
 
 export function CardStatusPill({ status }: { status: ResolvedStatus }) {
-  if (!status) {
+  const { colorTone, verdict } = presentStatus(status);
+
+  if (!colorTone) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-statut-inconnu/60 bg-calcaire/85 px-2.5 py-1 font-mono text-[0.7rem] uppercase tracking-wide text-statut-inconnu backdrop-blur-sm">
         <span aria-hidden className="size-1.5 rounded-full bg-current" />
-        Non vérifié
+        {verdict}
       </span>
     );
   }
 
-  const { colorTone, verdict } = presentStatus(status);
-
   const colorClass =
     colorTone === "rouge"
       ? "text-statut-rouge bg-statut-rouge/15"
-      : colorTone === "orange"
-        ? "text-statut-orange bg-statut-orange/15"
-        : "text-statut-vert bg-statut-vert/15";
+      : "text-statut-vert bg-statut-vert/15";
 
   return (
     <span

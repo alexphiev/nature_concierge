@@ -1,7 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "./db";
-import { parisToday } from "./paris-date";
-import type { Place, Claim, SignalZone, PlaceImage, PlacePhoto } from "../../prisma/generated/client";
+import type { Place, Claim, PlaceImage, PlacePhoto } from "../../prisma/generated/client";
 
 // `photos` only holds the cover (first photo), enough for cards.
 export type PlaceWithCover = Place & { photos: PlacePhoto[] };
@@ -55,13 +54,6 @@ export async function getGoverningAuthorities(): Promise<string[]> {
   return rows.map((r) => r.governingAuthority as string);
 }
 
-export async function getSignalZones(): Promise<SignalZone[]> {
-  return prisma.signalZone.findMany({
-    where: { active: true },
-    orderBy: { label: "asc" },
-  });
-}
-
 type PublicClaim = Claim & { alternativePlace: Pick<Place, "slug" | "name"> | null };
 
 export type PlaceWithPublicClaims = Place & {
@@ -103,121 +95,47 @@ export async function getPlaceBySlug(
   }) as Promise<PlaceWithPublicClaims | null>;
 }
 
-const zonePlaceInclude = {
-  signalZone: {
-    include: { signalSource: { select: { provider: true } } },
-  },
-} as const;
-
-// Spots inherit their parent's signal zone unless they have one of their own.
-async function findZonePlace(placeId: string) {
-  const own = await prisma.zonePlace.findFirst({
-    where: { placeId },
-    include: zonePlaceInclude,
-  });
-  if (own) return own;
-
-  const place = await prisma.place.findFirst({
-    where: { id: placeId },
-    select: { parentId: true },
-  });
-  if (!place?.parentId) return null;
-
-  return prisma.zonePlace.findFirst({
-    where: { placeId: place.parentId },
-    include: zonePlaceInclude,
-  });
-}
-
 export type ResolvedStatus = {
-  zoneValue: string;
-  displayValue: "vert" | "jaune" | "orange" | "rouge" | "extreme";
-  isOpen: boolean;
-  restricted: boolean;
-  detail: string | null;
-  confirmedAt: Date;
-  zoneLabel: string;
-  provider: string;
+  status: "open" | "closed" | "unknown";
+  cause: string | null;
+  sourceUrl: string;
+  sourceLabel: string | null;
+  checkedAt: Date | null;
 } | null;
 
+// Spots inherit their parent's status unless they have one of their own.
 export async function resolvePlaceStatus(
   placeId: string,
 ): Promise<ResolvedStatus> {
-  const zonePlace = await findZonePlace(placeId);
+  const rows = await prisma.$queryRaw<NonNullable<ResolvedStatus>[]>`
+    SELECT
+      s.status,
+      s.cause,
+      s.source_url AS "sourceUrl",
+      s.source_label AS "sourceLabel",
+      s.checked_at AS "checkedAt"
+    FROM "Place" p
+    JOIN place_current_status s ON s.place_id IN (p.id, p."parentId")
+    WHERE p.id = ${placeId}
+    ORDER BY (s.place_id = p.id) DESC
+    LIMIT 1
+  `;
 
-  if (!zonePlace) return null;
-
-  // Every StatusLog row's forDate is "the day the status applies to" (see
-  // app/admin/statut/actions.ts's forDateFor, which writes forDate = tomorrow
-  // for FIRE_ACCESS since the admin confirms each evening off a map already
-  // published for the next day). By the time that day arrives, the row that
-  // governs it has forDate === that day, so the read side always targets
-  // today exactly, for every signal type — never an offset applied again at
-  // read time, and never "earliest date >= today" (which can silently fall
-  // forward onto a different day's row).
-  const forDate = parisToday();
-
-  const statusLog = await prisma.statusLog.findFirst({
-    where: {
-      signalZoneId: zonePlace.signalZone.id,
-      forDate,
-    },
-    select: { value: true, detail: true, confirmedAt: true },
-  });
-
-  if (!statusLog) return null;
-
-  const place = await prisma.place.findFirst({
-    where: { id: placeId },
-    select: { zapef: true },
-  });
-
-  const displayValue = statusLog.value as NonNullable<ResolvedStatus>["displayValue"];
-
-  let isOpen: boolean;
-  let restricted = false;
-
-  if (displayValue === "extreme") {
-    isOpen = false;
-  } else if (displayValue === "rouge") {
-    isOpen = place?.zapef === true;
-    restricted = isOpen;
-  } else {
-    isOpen = true;
-  }
-
-  return {
-    zoneValue: statusLog.value,
-    displayValue,
-    isOpen,
-    restricted,
-    detail: statusLog.detail,
-    confirmedAt: statusLog.confirmedAt,
-    zoneLabel: zonePlace.signalZone.label,
-    provider: zonePlace.signalZone.signalSource.provider,
-  };
+  return rows[0] ?? null;
 }
 
 export async function getPlaceFreshness(placeId: string): Promise<Date> {
-  const zonePlace = await findZonePlace(placeId);
-
-  const [latestClaim, latestStatusLog] = await Promise.all([
+  const [latestClaim, status] = await Promise.all([
     prisma.claim.findFirst({
       where: { placeId, isPublic: true, status: "PUBLISHED" },
       orderBy: { updatedAt: "desc" },
       select: { updatedAt: true },
     }),
-    zonePlace
-      ? prisma.statusLog.findFirst({
-          where: { signalZoneId: zonePlace.signalZoneId },
-          orderBy: { confirmedAt: "desc" },
-          select: { confirmedAt: true },
-        })
-      : Promise.resolve(null),
+    resolvePlaceStatus(placeId),
   ]);
 
-  const candidates = [latestClaim?.updatedAt, latestStatusLog?.confirmedAt].filter(
-    (d): d is Date => d !== undefined,
+  const candidates = [latestClaim?.updatedAt, status?.checkedAt].filter(
+    (d): d is Date => d != null,
   );
 
   if (candidates.length > 0) {

@@ -5,8 +5,6 @@ const {
   updatePlaceMock,
   findUniqueOrThrowPlaceMock,
   countPlaceMock,
-  createManyZonePlaceMock,
-  deleteManyZonePlaceMock,
   createManyPlaceImageMock,
   deleteManyPlaceImageMock,
   findManyPlacePhotoMock,
@@ -22,8 +20,6 @@ const {
   updatePlaceMock: vi.fn(),
   findUniqueOrThrowPlaceMock: vi.fn(),
   countPlaceMock: vi.fn(),
-  createManyZonePlaceMock: vi.fn(),
-  deleteManyZonePlaceMock: vi.fn(),
   createManyPlaceImageMock: vi.fn(),
   deleteManyPlaceImageMock: vi.fn(),
   findManyPlacePhotoMock: vi.fn(),
@@ -43,10 +39,6 @@ vi.mock("@/src/corpus/db", () => ({
       update: updatePlaceMock,
       findUniqueOrThrow: findUniqueOrThrowPlaceMock,
       count: countPlaceMock,
-    },
-    zonePlace: {
-      createMany: createManyZonePlaceMock,
-      deleteMany: deleteManyZonePlaceMock,
     },
     placeImage: {
       createMany: createManyPlaceImageMock,
@@ -94,8 +86,6 @@ beforeEach(() => {
   updatePlaceMock.mockReset();
   findUniqueOrThrowPlaceMock.mockReset();
   countPlaceMock.mockReset();
-  createManyZonePlaceMock.mockReset();
-  deleteManyZonePlaceMock.mockReset();
   createManyPlaceImageMock.mockReset();
   deleteManyPlaceImageMock.mockReset();
   findManyPlacePhotoMock.mockReset();
@@ -110,11 +100,9 @@ beforeEach(() => {
 });
 
 describe("createPlace", () => {
-  it("creates a Place then ZonePlace rows for each selected zone", async () => {
+  it("creates a Place", async () => {
     createPlaceMock.mockResolvedValue({ id: "place-1" });
     const formData = baseFormData();
-    formData.append("zoneIds", "zone-1");
-    formData.append("zoneIds", "zone-2");
 
     const result = await createPlace(formData);
 
@@ -133,23 +121,7 @@ describe("createPlace", () => {
         }),
       }),
     );
-    expect(createManyZonePlaceMock).toHaveBeenCalledWith({
-      data: [
-        { signalZoneId: "zone-1", placeId: "place-1" },
-        { signalZoneId: "zone-2", placeId: "place-1" },
-      ],
-    });
     expect(updateTagMock).toHaveBeenCalledWith("corpus");
-    expect(result).toEqual({ id: "place-1" });
-  });
-
-  it("skips zonePlace.createMany when no zones are selected", async () => {
-    createPlaceMock.mockResolvedValue({ id: "place-1" });
-    const formData = baseFormData();
-
-    const result = await createPlace(formData);
-
-    expect(createManyZonePlaceMock).not.toHaveBeenCalled();
     expect(result).toEqual({ id: "place-1" });
   });
 
@@ -182,9 +154,8 @@ describe("createPlace", () => {
 });
 
 describe("updatePlace", () => {
-  it("replaces zone assignments by deleting then recreating, not merging", async () => {
+  it("updates the Place", async () => {
     const formData = baseFormData();
-    formData.append("zoneIds", "zone-3");
 
     const result = await updatePlace("place-1", formData);
 
@@ -194,25 +165,8 @@ describe("updatePlace", () => {
         data: expect.objectContaining({ name: "Port d'Alon" }),
       }),
     );
-    expect(deleteManyZonePlaceMock).toHaveBeenCalledWith({ where: { placeId: "place-1" } });
-    expect(createManyZonePlaceMock).toHaveBeenCalledWith({
-      data: [{ signalZoneId: "zone-3", placeId: "place-1" }],
-    });
-
-    const deleteOrder = deleteManyZonePlaceMock.mock.invocationCallOrder[0];
-    const createOrder = createManyZonePlaceMock.mock.invocationCallOrder[0];
-    expect(deleteOrder).toBeLessThan(createOrder);
     expect(updateTagMock).toHaveBeenCalledWith("corpus");
     expect(result).toEqual({ id: "place-1" });
-  });
-
-  it("skips zonePlace.createMany when no zones are selected, but still deletes existing assignments", async () => {
-    const formData = baseFormData();
-
-    await updatePlace("place-1", formData);
-
-    expect(deleteManyZonePlaceMock).toHaveBeenCalledWith({ where: { placeId: "place-1" } });
-    expect(createManyZonePlaceMock).not.toHaveBeenCalled();
   });
 });
 

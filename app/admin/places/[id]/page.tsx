@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/src/corpus/db";
-import { getAllPlaces, getGoverningAuthorities, getSignalZones } from "@/src/corpus/queries";
+import { getAllPlaces, getGoverningAuthorities } from "@/src/corpus/queries";
 import { placePhotoUrl } from "@/src/storage/place-photos";
 import { PlaceForm } from "../PlaceForm";
 import { updatePlace } from "../actions";
@@ -28,15 +28,12 @@ export default async function AdminEditPlacePage({
   const place = await prisma.place.findUnique({ where: { id } });
   if (!place) notFound();
 
-  const [zones, zonePlaces, places, governingAuthorities, images, photos] = await Promise.all([
-    getSignalZones(),
-    prisma.zonePlace.findMany({ where: { placeId: id }, select: { signalZoneId: true } }),
+  const [places, governingAuthorities, images, photos] = await Promise.all([
     getAllPlaces(),
     getGoverningAuthorities(),
     prisma.placeImage.findMany({ where: { placeId: id }, orderBy: { order: "asc" } }),
     prisma.placePhoto.findMany({ where: { placeId: id }, orderBy: { order: "asc" } }),
   ]);
-  const selectedZoneIds = new Set(zonePlaces.map((zp) => zp.signalZoneId));
   const parentOptions = places.filter((p) => !p.parentId && p.id !== id);
   const hasChildren = places.some((p) => p.parentId === id);
 
@@ -63,8 +60,6 @@ export default async function AdminEditPlacePage({
       <PlaceForm
         action={updatePlace.bind(null, place.id)}
         place={place}
-        zones={zones}
-        selectedZoneIds={selectedZoneIds}
         parentOptions={parentOptions}
         hasChildren={hasChildren}
         governingAuthorities={governingAuthorities}

@@ -16,7 +16,6 @@ function makePlace(overrides: Partial<PlaceWithPublicClaims> = {}): PlaceWithPub
     officialInfoUrl: null,
     description: null,
     demandRank: 1,
-    zapef: false,
     googlePlaceId: null,
     status: "ACTIVE",
     createdAt: new Date(),

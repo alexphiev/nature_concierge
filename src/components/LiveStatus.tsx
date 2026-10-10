@@ -1,6 +1,5 @@
 import { connection } from "next/server";
 import { resolvePlaceStatus } from "../corpus/queries";
-import { formatZoneLabel } from "../corpus/status-presentation";
 import { StatusBlock, StatusPill } from "./StatusBlock";
 import { CardStatusPill } from "./PlaceCard";
 
@@ -19,17 +18,7 @@ export async function LiveStatusPill({
   if (variant === "bare") return <StatusPill status={status} bare />;
   if (variant === "card") return <CardStatusPill status={status} />;
 
-  return (
-    <>
-      <StatusPill status={status} />
-      {status && (
-        <span className="flex items-center gap-3">
-          <span aria-hidden>·</span>
-          {`Zone feu ${formatZoneLabel(status.zoneLabel)}`}
-        </span>
-      )}
-    </>
-  );
+  return <StatusPill status={status} />;
 }
 
 export async function LiveStatusBlock({

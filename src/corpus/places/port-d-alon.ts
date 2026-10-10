@@ -11,7 +11,6 @@ export default definePlace({
   governingAuthority: "Ville de Saint-Cyr-sur-Mer — Service Espaces Naturels",
   officialInfoUrl: "https://www.var.gouv.fr/",
   demandRank: 3,
-  zapef: true,
   description:
     "Calanque préservée entre Saint-Cyr et Bandol, pinède et plage de galets.",
   sources: {

@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { Place, SignalZone } from "../../../prisma/generated/client";
+import type { Place } from "../../../prisma/generated/client";
 import { PlaceLocationFields } from "./PlaceLocationFields";
 import { PlaceImageFields } from "./PlaceImageFields";
 import { uploadPlacePhoto } from "./actions";
@@ -16,8 +16,6 @@ const inputClass = "w-full min-w-0 rounded-[10px] border border-sable/40 bg-calc
 export function PlaceForm({
   action,
   place,
-  zones,
-  selectedZoneIds,
   parentOptions,
   hasChildren = false,
   governingAuthorities,
@@ -26,8 +24,6 @@ export function PlaceForm({
 }: {
   action: (formData: FormData) => Promise<{ id: string } | { error: string }>;
   place?: Place;
-  zones: SignalZone[];
-  selectedZoneIds?: Set<string>;
   parentOptions: Pick<Place, "id" | "name" | "commune">[];
   hasChildren?: boolean;
   governingAuthorities: string[];
@@ -150,8 +146,6 @@ export function PlaceForm({
         defaultLat={place?.lat}
         defaultLng={place?.lng}
         defaultGooglePlaceId={place?.googlePlaceId}
-        zones={zones.map(({ id, label, departement }) => ({ id, label, departement }))}
-        selectedZoneIds={[...(selectedZoneIds ?? [])]}
       />
 
       <label className="flex flex-col gap-1">
@@ -225,11 +219,6 @@ export function PlaceForm({
             </option>
           ))}
         </select>
-      </label>
-
-      <label className="flex items-center gap-2">
-        <input type="checkbox" name="zapef" defaultChecked={place?.zapef ?? false} />
-        <span className="text-sm text-encre/70">ZAPEF (accessible même en rouge)</span>
       </label>
 
       <PlacePhotoFields

@@ -1,7 +1,6 @@
 import { discoverPlaceFiles } from "./discover-places";
 import { validatePlaceFile } from "../../src/corpus/schema";
 import { prisma } from "../../src/corpus/db";
-import { SIGNAL_SOURCES } from "../../src/corpus/signal-sources";
 
 async function main() {
   const places = await discoverPlaceFiles();
@@ -34,7 +33,6 @@ async function main() {
         officialInfoUrl: place.officialInfoUrl,
         description: place.description,
         demandRank: place.demandRank,
-        zapef: place.zapef,
         status: "ACTIVE",
       },
       update: {
@@ -48,7 +46,6 @@ async function main() {
         officialInfoUrl: place.officialInfoUrl,
         description: place.description,
         demandRank: place.demandRank,
-        zapef: place.zapef,
       },
     });
     placesUpserted++;
@@ -107,61 +104,8 @@ async function main() {
     }
   }
 
-  let signalSourcesUpserted = 0;
-  let signalZonesUpserted = 0;
-
-  for (const source of SIGNAL_SOURCES) {
-    const dbSource = await prisma.signalSource.upsert({
-      where: { provider_signalType: { provider: source.provider, signalType: source.signalType } },
-      create: {
-        signalType: source.signalType,
-        provider: source.provider,
-        url: source.url,
-        updateSchedule: source.updateSchedule,
-        format: source.format,
-      },
-      update: {
-        url: source.url,
-        updateSchedule: source.updateSchedule,
-        format: source.format,
-      },
-    });
-    signalSourcesUpserted++;
-
-    for (const zone of source.zones) {
-      await prisma.signalZone.upsert({
-        where: { signalSourceId_label: { signalSourceId: dbSource.id, label: zone.label } },
-        create: {
-          signalSourceId: dbSource.id,
-          label: zone.label,
-          departement: zone.departement,
-          externalRef: zone.externalRef,
-          parseNotes: zone.parseNotes,
-        },
-        update: {
-          departement: zone.departement,
-          externalRef: zone.externalRef,
-          parseNotes: zone.parseNotes,
-        },
-      });
-      signalZonesUpserted++;
-    }
-  }
-
-  const sainteBaumeZone = await prisma.signalZone.findFirst({
-    where: { label: "SAINTE BAUME" },
-  });
-  const portDAlon = await prisma.place.findUnique({ where: { slug: "port-d-alon" } });
-  if (sainteBaumeZone && portDAlon) {
-    await prisma.zonePlace.upsert({
-      where: { signalZoneId_placeId: { signalZoneId: sainteBaumeZone.id, placeId: portDAlon.id } },
-      create: { signalZoneId: sainteBaumeZone.id, placeId: portDAlon.id },
-      update: {},
-    });
-  }
-
   console.log(
-    `corpus:seed done — ${placesUpserted} place(s), ${claimsUpserted} claim(s), ${signalSourcesUpserted} signal source(s), ${signalZonesUpserted} signal zone(s)`,
+    `corpus:seed done — ${placesUpserted} place(s), ${claimsUpserted} claim(s)`,
   );
 
   await pingProdRevalidate();

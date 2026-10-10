@@ -1,81 +1,40 @@
 import { describe, it, expect } from "vitest";
-import { presentStatus, formatZoneLabel } from "./status-presentation";
+import { presentStatus, sourceName } from "./status-presentation";
 import type { ResolvedStatus } from "./queries";
 
 function makeStatus(
   overrides: Partial<NonNullable<ResolvedStatus>>,
 ): NonNullable<ResolvedStatus> {
   return {
-    zoneValue: "vert",
-    displayValue: "vert",
-    isOpen: true,
-    restricted: false,
-    detail: null,
-    confirmedAt: new Date(),
-    zoneLabel: "Zone",
-    provider: "Provider",
+    status: "open",
+    cause: null,
+    sourceUrl: "https://www.example.fr/acces",
+    sourceLabel: null,
+    checkedAt: new Date(),
     ...overrides,
   };
 }
 
 describe("presentStatus", () => {
-  it("shows green Ouvert for vert (open, not restricted)", () => {
-    const result = presentStatus(
-      makeStatus({ displayValue: "vert", isOpen: true, restricted: false }),
-    );
-
-    expect(result).toEqual({ colorTone: "vert", verdict: "Ouvert" });
+  it("shows green Ouvert for open", () => {
+    expect(presentStatus(makeStatus({ status: "open" }))).toEqual({ colorTone: "vert", verdict: "Ouvert" });
   });
 
-  it("shows orange Ouvert for jaune (open, not restricted)", () => {
-    const result = presentStatus(
-      makeStatus({ displayValue: "jaune", isOpen: true, restricted: false }),
-    );
-
-    expect(result).toEqual({ colorTone: "orange", verdict: "Ouvert" });
+  it("shows red Fermé for closed", () => {
+    expect(presentStatus(makeStatus({ status: "closed" }))).toEqual({ colorTone: "rouge", verdict: "Fermé" });
   });
 
-  it("shows orange Ouvert for orange (open, not restricted)", () => {
-    const result = presentStatus(
-      makeStatus({ displayValue: "orange", isOpen: true, restricted: false }),
-    );
+  it("shows toneless Statut inconnu for unknown and for no status", () => {
+    const unknown = { colorTone: null, verdict: "Statut inconnu" };
 
-    expect(result).toEqual({ colorTone: "orange", verdict: "Ouvert" });
-  });
-
-  it("shows orange restricted verdict for rouge+zapef (open, restricted)", () => {
-    const result = presentStatus(
-      makeStatus({ displayValue: "rouge", isOpen: true, restricted: true }),
-    );
-
-    expect(result).toEqual({
-      colorTone: "orange",
-      verdict: "Ouvert — accès restreint",
-    });
-  });
-
-  it("shows red Fermé for rouge+non-zapef (closed)", () => {
-    const result = presentStatus(
-      makeStatus({ displayValue: "rouge", isOpen: false, restricted: false }),
-    );
-
-    expect(result).toEqual({ colorTone: "rouge", verdict: "Fermé" });
-  });
-
-  it("shows red Fermé for extreme (closed, regardless of zapef)", () => {
-    const result = presentStatus(
-      makeStatus({ displayValue: "extreme", isOpen: false, restricted: false }),
-    );
-
-    expect(result).toEqual({ colorTone: "rouge", verdict: "Fermé" });
+    expect(presentStatus(makeStatus({ status: "unknown" }))).toEqual(unknown);
+    expect(presentStatus(null)).toEqual(unknown);
   });
 });
 
-describe("formatZoneLabel", () => {
-  it("title-cases upper-case zone labels, including after hyphens and apostrophes", () => {
-    expect(formatZoneLabel("CAP CANAILLE")).toBe("Cap Canaille");
-    expect(formatZoneLabel("SAINTE-VICTOIRE")).toBe("Sainte-Victoire");
-    expect(formatZoneLabel("ILES D'HYERES")).toBe("Iles D'Hyeres");
-    expect(formatZoneLabel("CHAÎNE DES CÔTES")).toBe("Chaîne Des Côtes");
+describe("sourceName", () => {
+  it("uses the label when present, the URL host otherwise", () => {
+    expect(sourceName(makeStatus({ sourceLabel: "Site officiel" }))).toBe("Site officiel");
+    expect(sourceName(makeStatus({ sourceLabel: null }))).toBe("example.fr");
   });
 });

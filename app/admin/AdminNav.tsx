@@ -7,7 +7,6 @@ const TABS = [
   { href: "/admin", label: "Corpus" },
   { href: "/admin/places", label: "Lieux" },
   { href: "/admin/ingest", label: "Nouvelle capture" },
-  { href: "/admin/statut", label: "Statut du jour" },
 ];
 
 function isActive(pathname: string, href: string): boolean {

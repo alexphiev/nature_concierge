@@ -1,26 +1,20 @@
 import type { ResolvedStatus } from "./queries";
 
 export type StatusPresentation = {
-  colorTone: "vert" | "orange" | "rouge";
+  colorTone: "vert" | "rouge" | null;
   verdict: string;
 };
 
-// Signal zones are stored upper-case ("CAP CANAILLE"); display them in title case.
-export function formatZoneLabel(label: string): string {
-  return label.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (_, sep, letter) => sep + letter.toUpperCase());
-}
-
-export function presentStatus(
-  status: NonNullable<ResolvedStatus>,
-): StatusPresentation {
-  if (!status.isOpen) {
+export function presentStatus(status: ResolvedStatus): StatusPresentation {
+  if (status?.status === "closed") {
     return { colorTone: "rouge", verdict: "Fermé" };
   }
-  if (status.restricted) {
-    return { colorTone: "orange", verdict: "Ouvert — accès restreint" };
+  if (status?.status === "open") {
+    return { colorTone: "vert", verdict: "Ouvert" };
   }
-  if (status.displayValue === "orange" || status.displayValue === "jaune") {
-    return { colorTone: "orange", verdict: "Ouvert" };
-  }
-  return { colorTone: "vert", verdict: "Ouvert" };
+  return { colorTone: null, verdict: "Statut inconnu" };
+}
+
+export function sourceName(status: NonNullable<ResolvedStatus>): string {
+  return status.sourceLabel ?? new URL(status.sourceUrl).hostname.replace(/^www\./, "");
 }

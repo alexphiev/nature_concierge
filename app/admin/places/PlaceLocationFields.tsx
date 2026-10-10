@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CommuneSuggestion } from "@/src/corpus/geo";
-import type { SignalZone } from "../../../prisma/generated/client";
 
 const inputClass = "w-full min-w-0 rounded-[10px] border border-sable/40 bg-calcaire-deep p-3";
 
@@ -13,8 +12,6 @@ export function PlaceLocationFields({
   defaultLat,
   defaultLng,
   defaultGooglePlaceId,
-  zones,
-  selectedZoneIds,
 }: {
   defaultName?: string;
   defaultCommune?: string;
@@ -22,8 +19,6 @@ export function PlaceLocationFields({
   defaultLat?: number;
   defaultLng?: number;
   defaultGooglePlaceId?: string | null;
-  zones: Pick<SignalZone, "id" | "label" | "departement">[];
-  selectedZoneIds: string[];
 }) {
   const [name, setName] = useState(defaultName ?? "");
   const [commune, setCommune] = useState(defaultCommune ?? "");
@@ -38,7 +33,6 @@ export function PlaceLocationFields({
   const [geocodeError, setGeocodeError] = useState(false);
 
   const canSuggest = commune.trim().length >= 2;
-  const departementZones = zones.filter((z) => z.departement === departement);
 
   useEffect(() => {
     if (!canSuggest) return;
@@ -196,35 +190,6 @@ export function PlaceLocationFields({
           className={inputClass}
         />
       </label>
-
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm text-encre/70">
-          Zones de signal{departement ? ` (département ${departement})` : ""}
-        </legend>
-        {!departement ? (
-          <p className="text-sm text-encre/70">
-            Sélectionnez la commune dans la liste pour afficher ses zones.
-          </p>
-        ) : departementZones.length === 0 ? (
-          <p className="text-sm text-encre/70">Aucune zone active pour ce département.</p>
-        ) : (
-          <ul className="flex flex-col gap-1">
-            {departementZones.map((zone) => (
-              <li key={zone.id}>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="zoneIds"
-                    value={zone.id}
-                    defaultChecked={selectedZoneIds.includes(zone.id)}
-                  />
-                  <span className="text-sm">{zone.label}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        )}
-      </fieldset>
     </>
   );
 }

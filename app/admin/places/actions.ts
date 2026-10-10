@@ -65,7 +65,6 @@ async function savePhotoEdits(placeId: string, formData: FormData): Promise<void
 }
 
 function readPlaceFields(formData: FormData) {
-  const zoneIds = formData.getAll("zoneIds").filter((v): v is string => typeof v === "string");
   return {
     name: String(formData.get("name") ?? ""),
     slug: String(formData.get("slug") ?? "") || slugify(String(formData.get("name") ?? "")),
@@ -79,10 +78,8 @@ function readPlaceFields(formData: FormData) {
     googlePlaceId: String(formData.get("googlePlaceId") ?? "") || null,
     description: String(formData.get("description") ?? "") || null,
     demandRank: Number(formData.get("demandRank") ?? 999),
-    zapef: formData.get("zapef") === "on",
     status: String(formData.get("status") ?? "DRAFT"),
     parentId: String(formData.get("parentId") ?? "") || null,
-    zoneIds,
   };
 }
 
@@ -134,7 +131,6 @@ export async function createPlace(
         googlePlaceId: fields.googlePlaceId,
         description: fields.description,
         demandRank: fields.demandRank,
-        zapef: fields.zapef,
         status: fields.status as never,
         parentId: fields.parentId,
       },
@@ -143,12 +139,6 @@ export async function createPlace(
     const slugError = slugConflictError(e);
     if (slugError) return { error: slugError };
     throw e;
-  }
-
-  if (fields.zoneIds.length > 0) {
-    await prisma.zonePlace.createMany({
-      data: fields.zoneIds.map((signalZoneId) => ({ signalZoneId, placeId: place.id })),
-    });
   }
 
   const images = readImages(formData);
@@ -186,7 +176,6 @@ export async function updatePlace(
         googlePlaceId: fields.googlePlaceId,
         description: fields.description,
         demandRank: fields.demandRank,
-        zapef: fields.zapef,
         status: fields.status as never,
         parentId: fields.parentId,
       },
@@ -195,13 +184,6 @@ export async function updatePlace(
     const slugError = slugConflictError(e);
     if (slugError) return { error: slugError };
     throw e;
-  }
-
-  await prisma.zonePlace.deleteMany({ where: { placeId } });
-  if (fields.zoneIds.length > 0) {
-    await prisma.zonePlace.createMany({
-      data: fields.zoneIds.map((signalZoneId) => ({ signalZoneId, placeId })),
-    });
   }
 
   const images = readImages(formData);

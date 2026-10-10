@@ -22,7 +22,6 @@ model Place {
   officialInfoUrl    String?
   description        String?
   demandRank         Int         @default(999)
-  zapef              Boolean     @default(false)
   googlePlaceId      String?
   status             PlaceStatus @default(DRAFT)
   createdAt          DateTime    @default(now())
@@ -33,9 +32,9 @@ model Place {
   parent   Place?  @relation("PlaceHierarchy", fields: [parentId], references: [id])
   children Place[] @relation("PlaceHierarchy")
 
-  claims          Claim[]          @relation("PlaceClaims")
-  alternativeOf   Claim[]          @relation("AlternativePlace")
-  zones           ZonePlace[]
+  claims          Claim[]             @relation("PlaceClaims")
+  alternativeOf   Claim[]             @relation("AlternativePlace")
+  statusSources   PlaceStatusSource[]
   ingestionDrafts IngestionDraft[]
   images          PlaceImage[]
   photos          PlacePhoto[]
@@ -158,68 +157,66 @@ model Source {
   ingestionBlocks IngestionBlock[]
 }
 
-// ---------- Real-time layer (separate lane, automatable later) ----------
+// ---------- Place status (written by the functions/placestatus scraper, plain SQL) ----------
 
-model SignalSource {
-  id             String     @id @default(cuid())
-  signalType     SignalType
-  provider       String
-  url            String
-  updateSchedule String
-  format         String
-  active         Boolean    @default(true)
+model PlaceStatusSource {
+  id      String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  placeId String  @map("place_id")
+  place   Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  label   String?
+  url     String
+  enabled Boolean @default(true)
+  config  Json    @default("{\"version\":1,\"rules\":[],\"ai\":{\"mode\":\"fallback\"}}")
 
-  zones SignalZone[]
+  checkIntervalMinutes Int       @default(360) @map("check_interval_minutes")
+  nextCheckAt          DateTime  @default(now()) @map("next_check_at") @db.Timestamptz
+  leaseUntil           DateTime? @map("lease_until") @db.Timestamptz
 
-  @@unique([provider, signalType])
+  lastStatus          String    @default("unknown") @map("last_status")
+  lastMethod          String?   @map("last_method")
+  lastConfidence      Float?    @map("last_confidence") @db.Real
+  lastEvidence        String?   @map("last_evidence")
+  lastCheckedAt       DateTime? @map("last_checked_at") @db.Timestamptz
+  lastChangedAt       DateTime? @map("last_changed_at") @db.Timestamptz
+  lastContentHash     String?   @map("last_content_hash")
+  lastEtag            String?   @map("last_etag")
+  lastModified        String?   @map("last_modified")
+  lastError           String?   @map("last_error")
+  consecutiveFailures Int       @default(0) @map("consecutive_failures")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  checks PlaceStatusCheck[]
+
+  @@unique([placeId, url])
+  @@index([placeId])
+  @@map("place_status_source")
 }
 
-model SignalZone {
-  id             String       @id @default(cuid())
-  signalSourceId String
-  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
+model PlaceStatusCheck {
+  id           BigInt            @id @default(autoincrement())
+  sourceId     String            @map("source_id") @db.Uuid
+  source       PlaceStatusSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  invocationId String            @map("invocation_id")
+  checkedAt    DateTime          @default(now()) @map("checked_at") @db.Timestamptz
+  status       String
+  method       String
 
-  label       String
-  departement String
-  externalRef String?
-  parseNotes  String
-  active      Boolean @default(true)
+  ruleIndex      Int?    @map("rule_index")
+  confidence     Float?  @db.Real
+  evidence       String?
+  httpStatus     Int?    @map("http_status")
+  contentHash    String? @map("content_hash")
+  durationMs     Int?    @map("duration_ms")
+  aiModel        String? @map("ai_model")
+  aiInputTokens  Int?    @map("ai_input_tokens")
+  aiOutputTokens Int?    @map("ai_output_tokens")
+  error          String?
 
-  places     ZonePlace[]
-  statusLogs StatusLog[]
-
-  @@unique([signalSourceId, label])
-}
-
-model ZonePlace {
-  signalZoneId String
-  placeId      String
-  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
-  place        Place      @relation(fields: [placeId], references: [id])
-
-  @@id([signalZoneId, placeId])
-}
-
-enum SignalType {
-  FIRE_ACCESS
-  WATER_QUALITY
-  AIR_QUALITY
-  PARKING
-  RESERVATION_QUOTA
-}
-
-model StatusLog {
-  id           String     @id @default(cuid())
-  signalZoneId String
-  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
-
-  forDate     DateTime @db.Date
-  value       String
-  detail      String?
-  confirmedAt DateTime @default(now())
-
-  @@unique([signalZoneId, forDate])
-  @@index([forDate])
+  @@unique([sourceId, invocationId])
+  @@index([sourceId, checkedAt(sort: Desc)])
+  @@map("place_status_check")
 }
 
 // ---------- Concierge log (the validation instrument) ----------
