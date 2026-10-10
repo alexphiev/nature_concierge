@@ -82,7 +82,7 @@ describe("placeDescription", () => {
   it("falls back to the generic sentence when no description and no claims", () => {
     const place = makePlace({ name: "Calanque du Mugel", description: null, claims: [] });
     expect(placeDescription(place)).toBe(
-      "Statut du jour, accès et conseils pour Calanque du Mugel.",
+      "Accès et conseils pour Calanque du Mugel.",
     );
   });
 

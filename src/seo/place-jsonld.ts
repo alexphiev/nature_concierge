@@ -42,7 +42,7 @@ export function placeDescription(
   const raw =
     place.description ??
     place.claims[0]?.claimText ??
-    `Statut du jour, accès et conseils pour ${place.name}.`;
+    `Accès et conseils pour ${place.name}.`;
 
   const collapsed = raw.replace(/\s+/g, " ").trim();
   if (collapsed.length <= MAX_DESCRIPTION_LENGTH) return collapsed;

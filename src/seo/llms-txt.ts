@@ -9,24 +9,19 @@ export type LlmsTxtPlace = Pick<
 
 const HEADER = `# ${SITE_NAME}
 
-> Le guide local pour la nature entre Marseille et Bandol : statut du jour (accès incendie) et conseils vérifiés sur le terrain, lieu par lieu.
+> Le guide local pour la nature entre Marseille et Bandol : des conseils vérifiés sur le terrain, lieu par lieu.
 
 ## Mission
 
 Le guide local pour la nature entre Marseille et Bandol : structurellement
 neutre, inter-communes, opinionated, et attentif aux conditions du jour.
-Chaque lieu a sa propre page avec un statut du jour (accès incendie, qualité
-de l'eau) et des conseils vérifiés sur le terrain — pas un résumé du web.
+Chaque lieu a sa propre page avec des conseils vérifiés sur le terrain — pas
+un résumé du web.
 
 ## Territoire couvert
 
 Littoral entre Marseille et Bandol, ouest Var, et le massif de la
-Sainte-Baume.
-
-## Mise à jour
-
-Les statuts (accès incendie, qualité de l'eau) sont vérifiés et mis à jour
-chaque jour, généralement en fin d'après-midi.`;
+Sainte-Baume.`;
 
 const CONTACT = `## Contact
 

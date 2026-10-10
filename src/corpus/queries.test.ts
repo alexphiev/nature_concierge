@@ -3,14 +3,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
   findManyPlaceMock,
   findFirstPlaceMock,
-  queryRawMock,
   findFirstClaimMock,
   cacheTagMock,
   cacheLifeMock,
 } = vi.hoisted(() => ({
   findManyPlaceMock: vi.fn(),
   findFirstPlaceMock: vi.fn(),
-  queryRawMock: vi.fn(),
   findFirstClaimMock: vi.fn(),
   cacheTagMock: vi.fn(),
   cacheLifeMock: vi.fn(),
@@ -25,7 +23,6 @@ vi.mock("./db", () => ({
     claim: {
       findFirst: findFirstClaimMock,
     },
-    $queryRaw: queryRawMock,
   },
 }));
 
@@ -34,7 +31,6 @@ vi.mock("next/cache", () => ({ cacheTag: cacheTagMock, cacheLife: cacheLifeMock 
 import {
   getActivePlaces,
   getPlaceBySlug,
-  resolvePlaceStatus,
   getPlaceFreshness,
   getAllPlaces,
 } from "./queries";
@@ -42,7 +38,6 @@ import {
 beforeEach(() => {
   findManyPlaceMock.mockReset();
   findFirstPlaceMock.mockReset();
-  queryRawMock.mockReset();
   findFirstClaimMock.mockReset();
   cacheTagMock.mockReset();
   cacheLifeMock.mockReset();
@@ -118,41 +113,11 @@ describe("getPlaceBySlug", () => {
   });
 });
 
-describe("resolvePlaceStatus", () => {
-  it("returns null when neither the place nor its parent has a row in place_current_status", async () => {
-    queryRawMock.mockResolvedValue([]);
-
-    const result = await resolvePlaceStatus("place-id-1");
-
-    expect(result).toBeNull();
-  });
-
-  it("returns the status row read from the place_current_status view", async () => {
-    const row = {
-      status: "closed",
-      cause: "Massif fermé jusqu'à nouvel ordre",
-      sourceUrl: "https://www.example.fr/acces",
-      sourceLabel: "Site officiel",
-      checkedAt: new Date("2026-07-21T16:00:00.000Z"),
-    };
-    queryRawMock.mockResolvedValue([row]);
-
-    const result = await resolvePlaceStatus("place-id-1");
-
-    expect(result).toEqual(row);
-    expect(queryRawMock).toHaveBeenCalledTimes(1);
-    const [strings, placeId] = queryRawMock.mock.calls[0];
-    expect(strings.join("?")).toContain("place_current_status");
-    expect(placeId).toBe("place-id-1");
-  });
-});
-
 describe("getPlaceFreshness", () => {
-  it("returns the most recent of latest claim.updatedAt and the status checkedAt", async () => {
+  it("returns the latest public claim's updatedAt", async () => {
     findFirstClaimMock.mockResolvedValue({
       updatedAt: new Date("2026-07-20T10:00:00.000Z"),
     });
-    queryRawMock.mockResolvedValue([{ checkedAt: new Date("2026-07-21T16:00:00.000Z") }]);
 
     const result = await getPlaceFreshness("place-id-1");
 
@@ -161,34 +126,11 @@ describe("getPlaceFreshness", () => {
       orderBy: { updatedAt: "desc" },
       select: { updatedAt: true },
     });
-    expect(result).toEqual(new Date("2026-07-21T16:00:00.000Z"));
-  });
-
-  it("returns the claim's updatedAt when it is more recent than the status check", async () => {
-    findFirstClaimMock.mockResolvedValue({
-      updatedAt: new Date("2026-07-22T10:00:00.000Z"),
-    });
-    queryRawMock.mockResolvedValue([{ checkedAt: new Date("2026-07-21T16:00:00.000Z") }]);
-
-    const result = await getPlaceFreshness("place-id-1");
-
-    expect(result).toEqual(new Date("2026-07-22T10:00:00.000Z"));
-  });
-
-  it("ignores a status that was never checked", async () => {
-    findFirstClaimMock.mockResolvedValue({
-      updatedAt: new Date("2026-07-20T10:00:00.000Z"),
-    });
-    queryRawMock.mockResolvedValue([{ checkedAt: null }]);
-
-    const result = await getPlaceFreshness("place-id-1");
-
     expect(result).toEqual(new Date("2026-07-20T10:00:00.000Z"));
   });
 
-  it("falls back to place.updatedAt when there are no claims and no status", async () => {
+  it("falls back to place.updatedAt when there are no claims", async () => {
     findFirstClaimMock.mockResolvedValue(null);
-    queryRawMock.mockResolvedValue([]);
     findFirstPlaceMock.mockResolvedValue({
       updatedAt: new Date("2026-07-15T08:00:00.000Z"),
     });

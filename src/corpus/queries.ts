@@ -95,52 +95,14 @@ export async function getPlaceBySlug(
   }) as Promise<PlaceWithPublicClaims | null>;
 }
 
-export type ResolvedStatus = {
-  status: "open" | "closed" | "unknown";
-  cause: string | null;
-  sourceUrl: string;
-  sourceLabel: string | null;
-  checkedAt: Date | null;
-} | null;
-
-// Spots inherit their parent's status unless they have one of their own.
-export async function resolvePlaceStatus(
-  placeId: string,
-): Promise<ResolvedStatus> {
-  const rows = await prisma.$queryRaw<NonNullable<ResolvedStatus>[]>`
-    SELECT
-      s.status,
-      s.cause,
-      s.source_url AS "sourceUrl",
-      s.source_label AS "sourceLabel",
-      s.checked_at AS "checkedAt"
-    FROM "Place" p
-    JOIN place_current_status s ON s.place_id IN (p.id, p."parentId")
-    WHERE p.id = ${placeId}
-    ORDER BY (s.place_id = p.id) DESC
-    LIMIT 1
-  `;
-
-  return rows[0] ?? null;
-}
-
 export async function getPlaceFreshness(placeId: string): Promise<Date> {
-  const [latestClaim, status] = await Promise.all([
-    prisma.claim.findFirst({
-      where: { placeId, isPublic: true, status: "PUBLISHED" },
-      orderBy: { updatedAt: "desc" },
-      select: { updatedAt: true },
-    }),
-    resolvePlaceStatus(placeId),
-  ]);
+  const latestClaim = await prisma.claim.findFirst({
+    where: { placeId, isPublic: true, status: "PUBLISHED" },
+    orderBy: { updatedAt: "desc" },
+    select: { updatedAt: true },
+  });
 
-  const candidates = [latestClaim?.updatedAt, status?.checkedAt].filter(
-    (d): d is Date => d != null,
-  );
-
-  if (candidates.length > 0) {
-    return candidates.reduce((latest, d) => (d > latest ? d : latest));
-  }
+  if (latestClaim) return latestClaim.updatedAt;
 
   const place = await prisma.place.findFirst({
     where: { id: placeId },

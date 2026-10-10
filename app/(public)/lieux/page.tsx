@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getActivePlaces } from "@/src/corpus/queries";
 import { resolveCoverPhoto } from "@/src/corpus/place-photos";
 import { PlaceCard } from "@/src/components/PlaceCard";
-import { LiveStatusPill, StatusPillFallback } from "@/src/components/LiveStatus";
 import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
 
 export const metadata: Metadata = {
   title: "Les lieux",
   description:
-    "Calanques, plages, massifs et sentiers entre Marseille et Bandol, avec leur statut du jour.",
+    "Calanques, plages, massifs et sentiers entre Marseille et Bandol.",
   alternates: { canonical: "/lieux" },
   openGraph: { ...BASE_OPEN_GRAPH, url: "/lieux" },
 };
@@ -54,11 +52,6 @@ export default async function PlacesIndexPage() {
             key={place.id}
             place={place}
             cover={cover}
-            status={
-              <Suspense fallback={<StatusPillFallback variant="card" />}>
-                <LiveStatusPill placeId={place.id} variant="card" />
-              </Suspense>
-            }
           />
         ))}
       </div>

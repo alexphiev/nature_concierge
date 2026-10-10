@@ -17,10 +17,10 @@ function makePlace(overrides: Partial<LlmsTxtPlace> = {}): LlmsTxtPlace {
 const SITE_URL = "http://localhost:3000";
 
 describe("buildLlmsTxt", () => {
-  it("includes the header, mission, territoire, mise a jour and contact sections verbatim", () => {
+  it("includes the header, mission, territoire and contact sections verbatim", () => {
     const result = buildLlmsTxt([], SITE_URL);
     expect(result).toContain(
-      "> Le guide local pour la nature entre Marseille et Bandol : statut du jour (accès incendie) et conseils vérifiés sur le terrain, lieu par lieu.",
+      "> Le guide local pour la nature entre Marseille et Bandol : des conseils vérifiés sur le terrain, lieu par lieu.",
     );
     expect(result).toContain("## Mission");
     expect(result).toContain(
@@ -29,10 +29,6 @@ describe("buildLlmsTxt", () => {
     expect(result).toContain("## Territoire couvert");
     expect(result).toContain(
       "Littoral entre Marseille et Bandol, ouest Var, et le massif de la\nSainte-Baume.",
-    );
-    expect(result).toContain("## Mise à jour");
-    expect(result).toContain(
-      "Les statuts (accès incendie, qualité de l'eau) sont vérifiés et mis à jour\nchaque jour, généralement en fin d'après-midi.",
     );
     expect(result).toContain("## Contact");
     expect(result).toContain(

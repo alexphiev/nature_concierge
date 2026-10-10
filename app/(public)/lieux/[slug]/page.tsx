@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getActivePlaces, getPlaceBySlug } from "@/src/corpus/queries";
 import { getGooglePlaceDetails, googleMapsUrl } from "@/src/corpus/google-places";
 import { MIN_GALLERY_PHOTOS, buildGallerySlides, resolveCoverPhoto } from "@/src/corpus/place-photos";
-import {
-  LiveStatusBlock,
-  LiveStatusPill,
-  StatusBlockFallback,
-  StatusPillFallback,
-} from "@/src/components/LiveStatus";
 import { ClaimList } from "@/src/components/ClaimList";
 import { WhatsAppBar, WhatsAppCTA } from "@/src/components/WhatsAppCTA";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
@@ -142,12 +135,9 @@ export default async function PlaceDetailPage({
             {place.name}
           </h1>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-encre/75">
-            <Suspense fallback={<StatusPillFallback />}>
-              <LiveStatusPill placeId={place.id} />
-            </Suspense>
-            {metaItems.map((item) => (
+            {metaItems.map((item, index) => (
               <span key={item} className="flex items-center gap-3">
-                <span aria-hidden>·</span>
+                {index > 0 && <span aria-hidden>·</span>}
                 {item}
               </span>
             ))}
@@ -205,11 +195,6 @@ export default async function PlaceDetailPage({
                     key={spot.id}
                     spot={spot}
                     cover={cover}
-                    status={
-                      <Suspense fallback={<StatusPillFallback variant="bare" />}>
-                        <LiveStatusPill placeId={spot.id} variant="bare" />
-                      </Suspense>
-                    }
                   />
                 ))}
               </div>
@@ -242,10 +227,7 @@ export default async function PlaceDetailPage({
 
         <aside className="order-first flex flex-col gap-5 md:sticky md:top-6 md:order-none">
           <div className="flex flex-col gap-5 rounded-[18px] border border-sable/55 bg-[#FFFCF6] p-6 shadow-[0_8px_28px_rgba(28,43,51,0.08)]">
-            <Suspense fallback={<StatusBlockFallback />}>
-              <LiveStatusBlock placeId={place.id} officialInfoUrl={place.officialInfoUrl} />
-            </Suspense>
-            <div className="hidden border-t border-sable/45 pt-5 md:block">
+            <div className="hidden md:block">
               <WhatsAppCTA placeName={place.name} />
             </div>
             <div className="flex justify-center gap-5 text-sm">

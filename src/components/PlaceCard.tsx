@@ -1,8 +1,6 @@
 import Link from "next/link";
 import type { Place } from "../../prisma/generated/client";
-import type { ResolvedStatus } from "../corpus/queries";
 import type { DisplayPhoto } from "../corpus/place-photos";
-import { presentStatus } from "../corpus/status-presentation";
 import { PhotoImage } from "./PhotoImage";
 
 export const TYPE_LABELS: Record<Place["type"], string> = {
@@ -30,40 +28,11 @@ const CLAIM_TYPE_LABELS: Record<string, string> = {
   NATURE: "Faune & flore",
 };
 
-export function CardStatusPill({ status }: { status: ResolvedStatus }) {
-  const { colorTone, verdict } = presentStatus(status);
-
-  if (!colorTone) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-statut-inconnu/60 bg-calcaire/85 px-2.5 py-1 font-mono text-[0.7rem] uppercase tracking-wide text-statut-inconnu backdrop-blur-sm">
-        <span aria-hidden className="size-1.5 rounded-full bg-current" />
-        {verdict}
-      </span>
-    );
-  }
-
-  const colorClass =
-    colorTone === "rouge"
-      ? "text-statut-rouge bg-statut-rouge/15"
-      : "text-statut-vert bg-statut-vert/15";
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[0.7rem] uppercase tracking-wide backdrop-blur-sm ${colorClass}`}
-    >
-      <span aria-hidden className="size-1.5 rounded-full bg-current" />
-      {verdict}
-    </span>
-  );
-}
-
 export function PlaceCard({
   place,
-  status,
   cover,
 }: {
   place: Place;
-  status: React.ReactNode;
   cover: DisplayPhoto | null;
 }) {
   const hookClaim = null as { claimType: string; claimText: string } | null; // see note below — Task 5 does not add a hook-claim query; left null for now.
@@ -96,7 +65,6 @@ export function PlaceCard({
         <span className="relative rounded-full border border-sable/50 bg-calcaire/90 px-2.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-wide text-pin">
           {TYPE_LABELS[place.type]}
         </span>
-        <div className="absolute top-3 right-3">{status}</div>
       </div>
 
       <div className="p-4.5">

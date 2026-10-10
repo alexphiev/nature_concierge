@@ -8,11 +8,9 @@ const STRIPES =
 
 export function SpotCard({
   spot,
-  status,
   cover,
 }: {
   spot: Place;
-  status: React.ReactNode;
   cover: DisplayPhoto | null;
 }) {
   return (
@@ -31,7 +29,6 @@ export function SpotCard({
         {spot.description && (
           <span className="line-clamp-1 text-[0.8125rem] text-encre/70">{spot.description}</span>
         )}
-        {status}
       </div>
     </Link>
   );

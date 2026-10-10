@@ -62,7 +62,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             {SITE_NAME}
           </div>
           <div style={{ display: "flex", fontSize: 20, color: "#0F4C5C" }}>
-            Statut du jour, accès, conseils vérifiés
+            Accès, conseils vérifiés
           </div>
         </div>
       </div>
