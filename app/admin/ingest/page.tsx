@@ -4,6 +4,7 @@ import { getAllPlaces } from "@/src/corpus/queries";
 import { SourceTypeSchema } from "@/src/corpus/schema";
 import { BlockList } from "./BlockList";
 import { createCapture } from "./actions";
+import { SubmitButton } from "../SubmitButton";
 
 export const metadata: Metadata = {
   title: "Nouvelle capture — Admin",
@@ -46,12 +47,9 @@ export default async function AdminIngestPage() {
 
         <BlockList sourceTypes={sourceTypes} />
 
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white transition-colors hover:bg-mediterranee-deep sm:w-auto"
-        >
+        <SubmitButton className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-mediterranee px-5 py-3 text-white transition-colors hover:bg-mediterranee-deep sm:w-auto">
           Lancer l&apos;extraction
-        </button>
+        </SubmitButton>
       </form>
     </main>
   );

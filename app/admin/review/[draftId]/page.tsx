@@ -13,6 +13,7 @@ import {
 } from "@/src/corpus/schema";
 import { addBlock } from "../../ingest/actions";
 import { VerdictFields } from "./VerdictFields";
+import { SubmitButton } from "../../SubmitButton";
 import {
   approveClaim,
   rejectClaim,
@@ -332,18 +333,15 @@ function ClaimCard({
         <ClaimFields prefix={`claim-${claim.id}`} claim={claim} />
         <SourceFields blockId={blockId} draftSource={draftSource} />
         <div className="flex gap-2">
-          <button
-            type="submit"
-            className="rounded-[10px] bg-mediterranee px-4 py-2 text-sm text-white"
-          >
+          <SubmitButton className="rounded-[10px] bg-mediterranee px-4 py-2 text-sm text-white">
             Approuver
-          </button>
+          </SubmitButton>
         </div>
       </form>
       <form action={rejectClaim.bind(null, blockId, claim.id)} className="mt-2">
-        <button type="submit" className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm">
+        <SubmitButton className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm">
           Rejeter
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );
@@ -414,12 +412,9 @@ export default async function AdminReviewDraftPage({
                   {JSON.stringify(block.rawModelOutput, null, 2)}
                 </pre>
                 <form action={retryExtraction.bind(null, block.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm"
-                  >
+                  <SubmitButton className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm">
                     Réessayer l&apos;extraction
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
             ) : (
@@ -447,12 +442,9 @@ export default async function AdminReviewDraftPage({
                         Aucune revendication extraite de ce bloc.
                       </p>
                       <form action={acknowledgeEmptyBlock.bind(null, block.id)} className="mt-2">
-                        <button
-                          type="submit"
-                          className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm"
-                        >
+                        <SubmitButton className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm">
                           Marquer comme traité
-                        </button>
+                        </SubmitButton>
                       </form>
                     </div>
                   )}
@@ -489,21 +481,15 @@ export default async function AdminReviewDraftPage({
                               })),
                             )}
                           >
-                            <button
-                              type="submit"
-                              className="rounded-[10px] bg-mediterranee px-4 py-2 text-sm text-white"
-                            >
+                            <SubmitButton className="rounded-[10px] bg-mediterranee px-4 py-2 text-sm text-white">
                               Tout approuver
-                            </button>
+                            </SubmitButton>
                           </form>
                         )}
                         <form action={rejectAllInBlock.bind(null, block.id)}>
-                          <button
-                            type="submit"
-                            className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm"
-                          >
+                          <SubmitButton className="rounded-[10px] border border-sable/40 px-4 py-2 text-sm">
                             Tout rejeter
-                          </button>
+                          </SubmitButton>
                         </form>
                       </div>
                     </div>
@@ -541,12 +527,9 @@ export default async function AdminReviewDraftPage({
             <span className="text-sm text-encre/70">Images</span>
             <input type="file" name="images" multiple accept="image/*" className={inputClass} />
           </label>
-          <button
-            type="submit"
-            className="self-start rounded-[10px] bg-mediterranee px-5 py-3 text-white"
-          >
+          <SubmitButton className="self-start rounded-[10px] bg-mediterranee px-5 py-3 text-white">
             Ajouter
-          </button>
+          </SubmitButton>
         </form>
       </footer>
     </main>
