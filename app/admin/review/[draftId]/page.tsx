@@ -139,7 +139,7 @@ function SourceFields({ blockId, draftSource }: { blockId: string; draftSource: 
           <input
             type="date"
             name={`block-${blockId}-source-dateCollected`}
-            defaultValue={draftSource?.dateCollected?.slice(0, 10) ?? todayIso()}
+            defaultValue={todayIso()}
             className={inputClass}
           />
         </label>
@@ -250,7 +250,7 @@ function ClaimFields({ prefix, claim }: { prefix: string; claim: DraftClaim }) {
       </label>
 
       <label className="flex items-center gap-2">
-        <input type="checkbox" name={`${prefix}-isPublic`} defaultChecked={false} />
+        <input type="checkbox" name={`${prefix}-isPublic`} defaultChecked />
         <span className="text-xs text-encre/70">Public (visible sur le site)</span>
       </label>
 
@@ -476,8 +476,10 @@ export default async function AdminReviewDraftPage({
                                 verification: claim.verification,
                                 decayClass: claim.decayClass,
                                 verifiedOn: todayIso(),
-                                isPublic: false,
-                                editedSource: draftSource ?? undefined,
+                                isPublic: true,
+                                editedSource: draftSource
+                                  ? { ...draftSource, dateCollected: todayIso() }
+                                  : undefined,
                               })),
                             )}
                           >
