@@ -96,6 +96,7 @@ model Claim {
   verifiedOn   DateTime
   isPublic     Boolean      @default(false)
   status       ClaimStatus  @default(DRAFT)
+  qualityScore Int?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 

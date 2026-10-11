@@ -46,7 +46,24 @@ type DraftClaim = {
   reasoning: string | null;
   needsReview: boolean;
   placeMismatch: boolean;
+  qualityScore?: number | null;
 };
+
+function QualityBadge({ score }: { score?: number | null }) {
+  const color =
+    score == null
+      ? "bg-gray-200 text-gray-700"
+      : score >= 7
+        ? "bg-green-600 text-white"
+        : score >= 4
+          ? "bg-orange-500 text-white"
+          : "bg-red-600 text-white";
+  return (
+    <span className={`self-start rounded-full px-3 py-1 text-sm font-semibold ${color}`}>
+      {score == null ? "JEV · non noté" : `JEV · ${score}/10`}
+    </span>
+  );
+}
 
 type DraftSource = {
   type: string;
@@ -318,7 +335,8 @@ function ClaimCard({
 }) {
   if (claim.resolution !== "pending") {
     return (
-      <div className={`${cardClass} ${claim.resolution === "rejected" ? "opacity-50" : ""}`}>
+      <div className={`${cardClass} flex flex-col gap-2 ${claim.resolution === "rejected" ? "opacity-50" : ""}`}>
+        <QualityBadge score={claim.qualityScore} />
         <p className="text-sm">{claim.claimText}</p>
         <p className="text-xs text-encre/70">
           {claim.resolution === "approved" ? "Approuvée" : "Rejetée"}
@@ -330,6 +348,7 @@ function ClaimCard({
   return (
     <div className={cardClass}>
       <form action={approveClaimFromForm.bind(null, blockId, claim.id)} className="flex flex-col gap-3">
+        <QualityBadge score={claim.qualityScore} />
         <ClaimFields prefix={`claim-${claim.id}`} claim={claim} />
         <SourceFields blockId={blockId} draftSource={draftSource} />
         <div className="flex gap-2">

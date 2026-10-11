@@ -11,6 +11,7 @@
     "corpus:check": "tsx scripts/corpus/check.ts",
     "corpus:seed": "tsx scripts/corpus/seed.ts",
     "corpus:stats": "tsx scripts/corpus/stats.ts",
+    "corpus:score": "tsx scripts/corpus/score-claims.ts",
     "search:seed": "tsx scripts/search/seed-shortcuts.ts",
     "test": "vitest run"
   },

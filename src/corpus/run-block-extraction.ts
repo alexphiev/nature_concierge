@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto"; // Node's built-in, no new dependency 
                                           // Prisma's own default)
 import { extractBlock, transcribeImage } from "./block-extraction";
 import { BlockExtractionResultSchema } from "./ingestion-schema";
+import { scoreClaim } from "./claim-scoring";
 import type { Prisma } from "../../prisma/generated/client";
 
 export async function runBlockExtraction(
@@ -43,15 +44,21 @@ export async function runBlockExtraction(
     const parsed = JSON.parse(rawText);
     const extraction = BlockExtractionResultSchema.parse(parsed);
 
+    // A Jev failure must not block ingestion: the claim just stays unscored.
+    const qualityScores = await Promise.all(
+      extraction.claims.map((claim) => scoreClaim(placeName, claim).catch(() => null)),
+    );
+
     return {
       status: "PENDING_REVIEW",
       transcript: transcript ?? null,
       rawModelOutput: null,
       draftSource: extraction.source,
-      draftClaims: extraction.claims.map((claim) => ({
+      draftClaims: extraction.claims.map((claim, i) => ({
         ...claim,
         id: randomUUID(),
         resolution: "pending" as const,
+        qualityScore: qualityScores[i],
       })),
     };
   } catch (err) {

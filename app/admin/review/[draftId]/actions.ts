@@ -111,7 +111,7 @@ async function approveClaimNoRollup(
   });
 
   const claims = block.draftClaims as unknown as DraftClaim[];
-  findClaimById(claims, claimId); // throws if claimId doesn't match any draft claim
+  const draftClaim = findClaimById(claims, claimId); // throws if claimId doesn't match any draft claim
 
   const parsedClaim = EditedClaimSchema.parse(editedClaim);
 
@@ -170,6 +170,7 @@ async function approveClaimNoRollup(
       verifiedOn: parsedClaim.verifiedOn,
       isPublic: parsedClaim.isPublic,
       status: parsedClaim.status,
+      qualityScore: typeof draftClaim.qualityScore === "number" ? draftClaim.qualityScore : null,
     },
   });
 

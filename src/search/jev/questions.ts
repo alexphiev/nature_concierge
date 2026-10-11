@@ -33,3 +33,8 @@ export function ideaIsTimely(key: string) {
     },
   );
 }
+
+export const CLAIM_IS_USEFUL = noul("`claim` is specific, useful local knowledge about `place`.", {
+  true: "Precise and actionable: a time, number, named spot, condition or insider trick a visitor could not guess.",
+  false: "Generic, vague, obvious or promotional; could be written without knowing the place.",
+});
