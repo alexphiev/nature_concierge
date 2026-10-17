@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { getActivePlaces, getPlaceBySlug } from "@/src/corpus/queries";
 import { getGooglePlaceDetails, googleMapsUrl } from "@/src/corpus/google-places";
 import { MIN_GALLERY_PHOTOS, buildGallerySlides, resolveCoverPhoto } from "@/src/corpus/place-photos";
+import { ContributionBanner } from "@/src/components/contribute/ContributionBanner";
+import { PendingContributions } from "@/src/components/contribute/PendingContributions";
 import { ClaimList } from "@/src/components/ClaimList";
 import { WhatsAppBar, WhatsAppCTA } from "@/src/components/WhatsAppCTA";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
@@ -178,7 +181,13 @@ export default async function PlaceDetailPage({
             </section>
           )}
 
-          <ClaimList claims={place.claims} />
+          <div className="flex flex-col gap-6">
+            <Suspense fallback={null}>
+              <ContributionBanner />
+              <PendingContributions placeIds={[place.id, ...place.children.map((c) => c.id)]} />
+            </Suspense>
+            <ClaimList claims={place.claims} addTipHref={`/lieux/${slug}/astuce`} />
+          </div>
 
           {parent && (
             <ClaimList claims={parent.claims} title={`Valable pour tout ${parent.name}`} />
