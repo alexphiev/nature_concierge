@@ -186,11 +186,17 @@ export default async function PlaceDetailPage({
               <ContributionBanner />
               <PendingContributions placeIds={[place.id, ...place.children.map((c) => c.id)]} />
             </Suspense>
-            <ClaimList claims={place.claims} addTipHref={`/lieux/${slug}/astuce`} />
+            <ClaimList claims={place.claims} addTipHref={`/lieux/${slug}/astuce`}
+              correctHref={(id) => `/lieux/${slug}/corriger/${id}`}
+            />
           </div>
 
           {parent && (
-            <ClaimList claims={parent.claims} title={`Valable pour tout ${parent.name}`} />
+            <ClaimList
+              claims={parent.claims}
+              title={`Valable pour tout ${parent.name}`}
+              correctHref={(id) => `/lieux/${slug}/corriger/${id}`}
+            />
           )}
 
           {spotCards.length > 0 && (
@@ -248,6 +254,9 @@ export default async function PlaceDetailPage({
               <a href={mapsUrl} className="text-mediterranee underline underline-offset-2">
                 Google Maps ↗
               </a>
+              <Link href={`/lieux/${slug}/corriger`} className="text-mediterranee underline underline-offset-2">
+                Signaler une erreur
+              </Link>
             </div>
           </div>
           <AlternativeCallout claims={[...place.claims, ...(parent?.claims ?? [])]} />

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ClaimType, ContributionType } from "../../prisma/generated/client";
+import type { ClaimType, ContributionType, CorrectionKind } from "../../prisma/generated/client";
 
 export const TIP_THEMES: { value: ClaimType; label: string }[] = [
   { value: "ACCESS", label: "Accès" },
@@ -18,6 +18,22 @@ const themeValues = TIP_THEMES.map((t) => t.value) as [ClaimType, ...ClaimType[]
 export const TipInputSchema = z.object({
   claimType: z.enum(themeValues).default("TIP"),
   text: z.string().trim().min(10).max(500),
+});
+
+export const CORRECTION_KINDS: { value: CorrectionKind; label: string }[] = [
+  { value: "OUTDATED", label: "N'est plus vrai" },
+  { value: "WRONG", label: "Inexact" },
+  { value: "MISSING_DETAIL", label: "Il manque une précision" },
+];
+
+const correctionKindValues = CORRECTION_KINDS.map((k) => k.value) as [
+  CorrectionKind,
+  ...CorrectionKind[],
+];
+
+export const CorrectionInputSchema = z.object({
+  correctionKind: z.enum(correctionKindValues),
+  text: z.string().trim().min(10).max(1000),
 });
 
 export const DisplayNameSchema = z.string().trim().min(2).max(40);

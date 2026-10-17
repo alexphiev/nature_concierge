@@ -98,10 +98,12 @@ export function ClaimList({
   claims,
   title = "Conseils des gens d'ici",
   addTipHref,
+  correctHref,
 }: {
   claims: PublicClaim[];
   title?: string;
   addTipHref?: string;
+  correctHref?: (claimId: string) => string;
 }) {
   if (claims.length === 0 && !addTipHref) return null;
 
@@ -163,6 +165,14 @@ export function ClaimList({
                   >
                     {claim.claimText}
                     <span className="mt-0.5 block text-xs text-encre/60">{claimMeta(claim)}</span>
+                    {correctHref && (
+                      <Link
+                        href={correctHref(claim.id)}
+                        className="mt-0.5 inline-block text-xs text-mediterranee hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                      >
+                        Corriger
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
