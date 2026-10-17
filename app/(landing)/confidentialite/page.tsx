@@ -37,11 +37,15 @@ export default function PrivacyPage() {
         Vos données sont conservées jusqu’à la suppression de votre compte. Les contributions
         non confirmées par le lien reçu par email sont supprimées au bout de 7 jours.
       </p>
+      <p>
+        Après la suppression de votre compte, vos astuces publiées restent en ligne, créditées
+        « Un ancien contributeur ».
+      </p>
       <h2>Vos droits</h2>
       <p>
-        Vous pouvez accéder à vos données, les corriger ou les supprimer depuis{" "}
-        <Link href="/compte">votre compte</Link>, ou en écrivant à{" "}
-        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+        Depuis <Link href="/compte">votre compte</Link>, vous pouvez corriger votre nom et votre
+        commune, ou supprimer votre compte. Pour obtenir une copie de vos données ou pour toute
+        autre demande, écrivez à <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
       </p>
     </LegalPage>
   );

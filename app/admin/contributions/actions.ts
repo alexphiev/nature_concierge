@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { assertAdmin } from "@/src/admin/assert-admin";
 import { prisma } from "@/src/corpus/db";
 import { TipInputSchema } from "@/src/contributions/schema";
 import { sendEmail } from "@/src/email/send";
@@ -21,6 +22,7 @@ async function notify(to: string, content: { subject: string; text: string }): P
 }
 
 export async function publishTip(contributionId: string, formData: FormData): Promise<void> {
+  await assertAdmin();
   const contribution = await prisma.contribution.findUnique({
     where: { id: contributionId },
     include: { user: true, place: true },
@@ -95,6 +97,7 @@ export async function rejectContribution(
   contributionId: string,
   formData: FormData,
 ): Promise<void> {
+  await assertAdmin();
   const contribution = await prisma.contribution.findUnique({
     where: { id: contributionId },
     include: { user: true, photos: true },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { safeNextPath } from "@/src/contributions/paths";
 import { readPendingCookie } from "@/src/contributions/pending-cookie";
 import { CONTAINER, FOCUS_RING } from "@/src/components/landing/shared";
 import { ResendForm } from "./ResendForm";
@@ -34,7 +35,7 @@ async function VerifyContent({ searchParams }: { searchParams: Promise<{ erreur?
         {cookie ? (
           <>
             <ResendForm />
-            <Link href={cookie.formPath} className={`font-semibold underline ${FOCUS_RING}`}>
+            <Link href={safeNextPath(cookie.formPath)} className={`font-semibold underline ${FOCUS_RING}`}>
               Mauvaise adresse ? Recommencer
             </Link>
           </>

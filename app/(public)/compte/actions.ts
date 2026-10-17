@@ -31,7 +31,7 @@ export async function updateAccount(_prev: FormState, formData: FormData): Promi
     where: { id: user.id },
     data: { name: name.data, commune: commune.data },
   });
-  updateTag("corpus");
+  if ((await prisma.claim.count({ where: { authorId: user.id } })) > 0) updateTag("corpus");
   return { values: { ...values, saved: "1" } };
 }
 
@@ -49,7 +49,14 @@ export async function deleteAccount(_prev: FormState, formData: FormData): Promi
   }
 
   const photos = await prisma.contributionPhoto.findMany({
-    where: { contribution: { userId: user.id, status: { not: "APPROVED" } } },
+    where: {
+      contribution: {
+        OR: [
+          { userId: user.id, status: { not: "APPROVED" } },
+          { status: "UNCONFIRMED", pendingEmail: user.email },
+        ],
+      },
+    },
     select: { key: true },
   });
 
@@ -57,6 +64,7 @@ export async function deleteAccount(_prev: FormState, formData: FormData): Promi
 
   await prisma.$transaction([
     prisma.claim.updateMany({ where: { authorId: user.id }, data: { authorDeleted: true } }),
+    prisma.contribution.deleteMany({ where: { status: "UNCONFIRMED", pendingEmail: user.email } }),
     prisma.user.delete({ where: { id: user.id } }),
   ]);
 

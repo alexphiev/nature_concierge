@@ -10,6 +10,8 @@ import { magicLinkEmail } from "@/src/email/templates";
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   verification: { modelName: "authVerification" },
+  // Names go through our own 2–40 validation in /compte; the generic endpoint would bypass it.
+  disabledPaths: ["/update-user"],
   user: {
     additionalFields: {
       commune: { type: "string", required: false, input: false },
