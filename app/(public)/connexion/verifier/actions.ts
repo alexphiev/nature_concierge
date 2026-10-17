@@ -1,7 +1,7 @@
 "use server";
 
 import { sendContributionMagicLink } from "@/src/contributions/submit";
-import { hasUnconfirmedContribution } from "@/src/contributions/service";
+import { findLatestUnconfirmed } from "@/src/contributions/service";
 import {
   clearPendingCookie,
   readPendingCookie,
@@ -16,7 +16,8 @@ export async function resendContributionLink(): Promise<ResendState> {
   const cookie = await readPendingCookie();
   const expired = { error: "Session expirée, recommencez depuis le formulaire." };
   if (!cookie) return expired;
-  if (!(await hasUnconfirmedContribution(cookie.email))) {
+  const latest = await findLatestUnconfirmed(cookie.email);
+  if (!latest) {
     await clearPendingCookie();
     return expired;
   }
@@ -24,7 +25,11 @@ export async function resendContributionLink(): Promise<ResendState> {
     return { error: "Patientez une minute avant de redemander un lien." };
   }
   try {
-    await sendContributionMagicLink({ email: cookie.email, name: "", next: cookie.next });
+    await sendContributionMagicLink({
+      email: cookie.email,
+      name: latest.pendingName ?? "",
+      next: cookie.next,
+    });
   } catch (error) {
     console.error("[contributions] magic link resend failed", error);
     return { error: "L'email n'a pas pu partir. Votre contribution est bien gardée : réessayez." };

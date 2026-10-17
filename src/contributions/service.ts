@@ -99,11 +99,14 @@ export async function createUnconfirmedContribution(
   return { id: created.id };
 }
 
-export async function hasUnconfirmedContribution(email: string): Promise<boolean> {
-  const count = await prisma.contribution.count({
+export async function findLatestUnconfirmed(
+  email: string,
+): Promise<{ pendingName: string | null } | null> {
+  return prisma.contribution.findFirst({
     where: { status: "UNCONFIRMED", pendingEmail: email },
+    orderBy: { createdAt: "desc" },
+    select: { pendingName: true },
   });
-  return count > 0;
 }
 
 export async function attachUnconfirmedContributions(user: SessionUser): Promise<number> {
@@ -111,11 +114,21 @@ export async function attachUnconfirmedContributions(user: SessionUser): Promise
     const rows = await tx.contribution.findMany({
       where: { status: "UNCONFIRMED", pendingEmail: user.email },
       orderBy: { createdAt: "desc" },
-      select: { id: true, type: true, placeId: true, placeName: true, pendingCommune: true },
+      select: {
+        id: true,
+        type: true,
+        placeId: true,
+        placeName: true,
+        pendingName: true,
+        pendingCommune: true,
+      },
     });
     if (rows.length === 0) return rows;
-    if (!user.commune && rows[0].pendingCommune) {
-      await tx.user.update({ where: { id: user.id }, data: { commune: rows[0].pendingCommune } });
+    const profile: { name?: string; commune?: string } = {};
+    if (!user.name.trim() && rows[0].pendingName) profile.name = rows[0].pendingName;
+    if (!user.commune && rows[0].pendingCommune) profile.commune = rows[0].pendingCommune;
+    if (profile.name || profile.commune) {
+      await tx.user.update({ where: { id: user.id }, data: profile });
     }
     await tx.contribution.updateMany({
       where: { id: { in: rows.map((r) => r.id) } },
