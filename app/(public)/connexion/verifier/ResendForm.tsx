@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { FOCUS_RING } from "@/src/components/landing/shared";
-import { SubmitButton } from "@/app/admin/SubmitButton";
+import { SubmitButton } from "@/src/components/SubmitButton";
 import { resendContributionLink, type ResendState } from "./actions";
 
 export function ResendForm() {
