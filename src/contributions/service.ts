@@ -109,6 +109,19 @@ export async function findLatestUnconfirmed(
   });
 }
 
+const RECENT_PENDING_MS = 15 * 60 * 1000;
+
+export async function hasRecentPendingContribution(userId: string): Promise<boolean> {
+  const count = await prisma.contribution.count({
+    where: {
+      userId,
+      status: "PENDING",
+      createdAt: { gte: new Date(Date.now() - RECENT_PENDING_MS) },
+    },
+  });
+  return count > 0;
+}
+
 export async function attachUnconfirmedContributions(user: SessionUser): Promise<number> {
   const attached = await prisma.$transaction(async (tx) => {
     const rows = await tx.contribution.findMany({

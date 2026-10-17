@@ -10,12 +10,17 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-async function AccountContent() {
-  const user = await getSessionUser();
+async function AccountContent({ searchParams }: { searchParams: Promise<{ erreur?: string }> }) {
+  const [{ erreur }, user] = await Promise.all([searchParams, getSessionUser()]);
 
   if (!user) {
     return (
       <>
+        {erreur === "lien" && (
+          <p role="alert" className="mt-4 text-lg text-pin">
+            Ce lien a expiré ou a déjà servi. Demandez-en un nouveau.
+          </p>
+        )}
         <p className="mt-4 text-lg">
           Saisissez votre email : nous vous envoyons un lien de connexion, sans mot de passe.
         </p>
@@ -47,12 +52,16 @@ async function AccountContent() {
   );
 }
 
-export default function AccountPage() {
+export default function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erreur?: string }>;
+}) {
   return (
     <main className={`${CONTAINER} max-w-[720px]! py-10 md:py-14`}>
       <h1 className="font-display text-[2rem] leading-tight font-semibold">Mon compte</h1>
       <Suspense>
-        <AccountContent />
+        <AccountContent searchParams={searchParams} />
       </Suspense>
     </main>
   );

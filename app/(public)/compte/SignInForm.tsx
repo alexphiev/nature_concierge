@@ -14,7 +14,11 @@ export function SignInForm() {
     const email = String(new FormData(event.currentTarget).get("email") ?? "").trim();
     setStatus("sending");
     try {
-      const { error } = await authClient.signIn.magicLink({ email, callbackURL: "/compte" });
+      const { error } = await authClient.signIn.magicLink({
+        email,
+        callbackURL: "/compte",
+        errorCallbackURL: "/compte?erreur=lien",
+      });
       setStatus(error ? "error" : "sent");
     } catch {
       setStatus("error");
