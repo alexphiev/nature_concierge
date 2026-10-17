@@ -1,7 +1,12 @@
 "use server";
 
 import { sendContributionMagicLink } from "@/src/contributions/submit";
-import { readPendingCookie, writePendingCookie } from "@/src/contributions/pending-cookie";
+import { hasUnconfirmedContribution } from "@/src/contributions/service";
+import {
+  clearPendingCookie,
+  readPendingCookie,
+  writePendingCookie,
+} from "@/src/contributions/pending-cookie";
 
 export type ResendState = { error?: string; sent?: boolean };
 
@@ -9,7 +14,12 @@ const RESEND_DELAY_MS = 60_000;
 
 export async function resendContributionLink(): Promise<ResendState> {
   const cookie = await readPendingCookie();
-  if (!cookie) return { error: "Session expirée, recommencez depuis le formulaire." };
+  const expired = { error: "Session expirée, recommencez depuis le formulaire." };
+  if (!cookie) return expired;
+  if (!(await hasUnconfirmedContribution(cookie.email))) {
+    await clearPendingCookie();
+    return expired;
+  }
   if (Date.now() - cookie.sentAt < RESEND_DELAY_MS) {
     return { error: "Patientez une minute avant de redemander un lien." };
   }

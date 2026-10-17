@@ -99,6 +99,13 @@ export async function createUnconfirmedContribution(
   return { id: created.id };
 }
 
+export async function hasUnconfirmedContribution(email: string): Promise<boolean> {
+  const count = await prisma.contribution.count({
+    where: { status: "UNCONFIRMED", pendingEmail: email },
+  });
+  return count > 0;
+}
+
 export async function attachUnconfirmedContributions(user: SessionUser): Promise<number> {
   const attached = await prisma.$transaction(async (tx) => {
     const rows = await tx.contribution.findMany({
