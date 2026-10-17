@@ -82,6 +82,7 @@ export function PhotoForm({ slug, user }: { slug: string; user: SessionUser | nu
         const compressed = await compressPhoto(file, {
           maxSizeMB: 0.6,
           maxWidthOrHeight: 1600,
+          alwaysReencode: true,
           maxBytes: CONTRIBUTION_PHOTO_MAX_BYTES,
         });
         formData.append("photos", compressed, compressed.name);

@@ -31,7 +31,11 @@ export async function updateAccount(_prev: FormState, formData: FormData): Promi
     where: { id: user.id },
     data: { name: name.data, commune: commune.data },
   });
-  if ((await prisma.claim.count({ where: { authorId: user.id } })) > 0) updateTag("corpus");
+  const [claims, places] = await Promise.all([
+    prisma.claim.count({ where: { authorId: user.id } }),
+    prisma.place.count({ where: { proposedById: user.id } }),
+  ]);
+  if (claims > 0 || places > 0) updateTag("corpus");
   else refresh();
   return { values: { ...values, saved: "1" } };
 }

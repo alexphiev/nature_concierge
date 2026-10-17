@@ -22,7 +22,7 @@ export function CorrectionReview({ c }: { c: ReviewContribution & { claim: Claim
       {kind && <p className="text-sm font-medium">{kind}</p>}
       <p className="text-sm whitespace-pre-wrap">{c.text}</p>
 
-      {c.claim ? (
+      {c.claim?.status === "PUBLISHED" ? (
         <>
           <blockquote className="border-l-2 border-sable/60 pl-3 text-sm text-encre/70">
             {c.claim.claimText}
@@ -52,6 +52,7 @@ export function CorrectionReview({ c }: { c: ReviewContribution & { claim: Claim
         </>
       ) : (
         <form action={acknowledgeCorrection.bind(null, c.id)} className="flex flex-col gap-3">
+          {c.claim && <p className="text-sm text-encre/70">Ce conseil n&apos;est plus en ligne.</p>}
           {c.place && (
             <p className="text-sm text-encre/70">
               <Link

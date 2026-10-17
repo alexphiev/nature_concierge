@@ -35,11 +35,17 @@ export async function compressPhoto(
     maxSizeMB = 1.5,
     maxWidthOrHeight = 2400,
     maxBytes = MAX_PHOTO_BYTES,
-  }: { maxSizeMB?: number; maxWidthOrHeight?: number; maxBytes?: number } = {},
+    alwaysReencode = false,
+  }: {
+    maxSizeMB?: number;
+    maxWidthOrHeight?: number;
+    maxBytes?: number;
+    alwaysReencode?: boolean;
+  } = {},
 ): Promise<File> {
   const file = looksLikeHeic(input) ? await heicToJpeg(input) : input;
   if (!isPlacePhotoType(file.type)) throw new Error("format non supporté (JPEG, PNG, WebP ou HEIC)");
-  if (file.size <= maxSizeMB * 1024 * 1024) {
+  if (!alwaysReencode && file.size <= maxSizeMB * 1024 * 1024) {
     await assertDecodable(file);
     return file;
   }
@@ -49,6 +55,7 @@ export async function compressPhoto(
     maxWidthOrHeight,
     useWebWorker: true,
   });
+  // Re-encoding through a canvas drops EXIF (GPS, device) unless preserveExif is set.
   if (compressed.size > maxBytes) throw new Error("trop lourde, même après compression");
   await assertDecodable(compressed);
   return compressed;

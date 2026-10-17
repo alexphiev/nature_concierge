@@ -113,6 +113,8 @@ async function loadPending(contributionId: string, type: "CORRECTION" | "PLACE")
   return contribution;
 }
 
+class ClaimGoneError extends Error {}
+
 async function resolveCorrection(
   contributionId: string,
   formData: FormData,
@@ -121,7 +123,7 @@ async function resolveCorrection(
   await assertAdmin();
   const contribution = await loadPending(contributionId, "CORRECTION");
   if (!contribution || !contribution.place) return;
-  if (mode !== "acknowledge" && !contribution.claim) return;
+  if (mode !== "acknowledge" && contribution.claim?.status !== "PUBLISHED") return;
 
   let newText: string | null = null;
   if (mode === "apply") {
@@ -138,18 +140,17 @@ async function resolveCorrection(
       data: { status: "APPROVED", reviewedAt: now, reviewNote: note },
     });
     if (claimed.count === 0) return false;
-    if (mode === "apply") {
-      await tx.claim.update({
-        where: { id: contribution.claim!.id },
-        data: { claimText: newText!, verifiedOn: now },
-      });
-    } else if (mode === "retire") {
-      await tx.claim.update({
-        where: { id: contribution.claim!.id },
-        data: { status: "RETIRED" },
-      });
-    }
+    if (mode === "acknowledge") return true;
+    const changed = await tx.claim.updateMany({
+      where: { id: contribution.claim!.id, status: "PUBLISHED" },
+      data:
+        mode === "apply" ? { claimText: newText!, verifiedOn: now } : { status: "RETIRED" },
+    });
+    if (changed.count === 0) throw new ClaimGoneError();
     return true;
+  }).catch((e: unknown) => {
+    if (e instanceof ClaimGoneError) return false;
+    throw e;
   });
   if (!resolved) return;
 

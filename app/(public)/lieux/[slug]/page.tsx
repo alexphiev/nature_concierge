@@ -187,7 +187,9 @@ export default async function PlaceDetailPage({
               <ContributionBanner />
               <PendingContributions placeIds={[place.id, ...place.children.map((c) => c.id)]} />
             </Suspense>
-            <ClaimList claims={place.claims} addTipHref={`/lieux/${slug}/astuce`}
+            <ClaimList
+              claims={place.claims}
+              addTipHref={`/lieux/${slug}/astuce`}
               correctHref={(id) => `/lieux/${slug}/corriger/${id}`}
             />
           </div>
