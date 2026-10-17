@@ -24,6 +24,10 @@ export const MAX_AWAITING_REVIEW = 10;
 
 const UNCONFIRMED_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+const GLOBAL_UNCONFIRMED_CAP = 30;
+const GLOBAL_UNCONFIRMED_WINDOW_MS = 10 * 60 * 1000;
+const BUSY_ERROR = "Trop de demandes en ce moment, réessayez dans quelques minutes.";
+
 const CAP_ERROR = `Vous avez déjà ${MAX_AWAITING_REVIEW} contributions en relecture. Merci de patienter un peu.`;
 
 async function notifyAdmin(contribution: {
@@ -81,6 +85,13 @@ export async function createUnconfirmedContribution(
   data: ContributionData,
 ): Promise<{ id: string } | { error: string }> {
   await purgeStaleUnconfirmed();
+  const recentTotal = await prisma.contribution.count({
+    where: {
+      status: "UNCONFIRMED",
+      createdAt: { gte: new Date(Date.now() - GLOBAL_UNCONFIRMED_WINDOW_MS) },
+    },
+  });
+  if (recentTotal >= GLOBAL_UNCONFIRMED_CAP) return { error: BUSY_ERROR };
   const count = await prisma.contribution.count({
     where: { status: "UNCONFIRMED", pendingEmail: identity.email },
   });

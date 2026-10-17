@@ -30,11 +30,25 @@ function formValue(formData: FormData, key: string): string {
   return typeof v === "string" ? v : "";
 }
 
+export const MAGIC_LINK_THROTTLE_MESSAGE = "Patientez une minute avant de redemander un lien.";
+
+export class MagicLinkThrottledError extends Error {}
+
+const MAGIC_LINK_THROTTLE_MS = 60_000;
+
 export async function sendContributionMagicLink(input: {
   email: string;
   name: string;
   next: string;
 }): Promise<void> {
+  // The magic-link plugin stores JSON.stringify({ type, email, name }) as the verification value.
+  const recent = await prisma.authVerification.count({
+    where: {
+      createdAt: { gte: new Date(Date.now() - MAGIC_LINK_THROTTLE_MS) },
+      value: { contains: `"email":${JSON.stringify(input.email)}` },
+    },
+  });
+  if (recent > 0) throw new MagicLinkThrottledError();
   await auth.api.signInMagicLink({
     body: {
       email: input.email,
@@ -95,12 +109,15 @@ export async function submitContribution(input: {
   if ("error" in result) return { error: result.error };
 
   let sent = true;
+  let throttled = false;
   try {
     await sendContributionMagicLink({ email, name, next });
   } catch (error) {
-    console.error("[contributions] magic link failed", error);
+    if (error instanceof MagicLinkThrottledError) throttled = true;
+    else console.error("[contributions] magic link failed", error);
     sent = false;
   }
   await writePendingCookie({ email, next, formPath, sentAt: Date.now() });
+  if (throttled) return { error: MAGIC_LINK_THROTTLE_MESSAGE };
   redirect(sent ? "/connexion/verifier" : "/connexion/verifier?erreur=envoi");
 }

@@ -1,6 +1,10 @@
 "use server";
 
-import { sendContributionMagicLink } from "@/src/contributions/submit";
+import {
+  MAGIC_LINK_THROTTLE_MESSAGE,
+  MagicLinkThrottledError,
+  sendContributionMagicLink,
+} from "@/src/contributions/submit";
 import { findLatestUnconfirmed } from "@/src/contributions/service";
 import {
   clearPendingCookie,
@@ -22,7 +26,7 @@ export async function resendContributionLink(): Promise<ResendState> {
     return expired;
   }
   if (Date.now() - cookie.sentAt < RESEND_DELAY_MS) {
-    return { error: "Patientez une minute avant de redemander un lien." };
+    return { error: MAGIC_LINK_THROTTLE_MESSAGE };
   }
   try {
     await sendContributionMagicLink({
@@ -31,6 +35,7 @@ export async function resendContributionLink(): Promise<ResendState> {
       next: cookie.next,
     });
   } catch (error) {
+    if (error instanceof MagicLinkThrottledError) return { error: MAGIC_LINK_THROTTLE_MESSAGE };
     console.error("[contributions] magic link resend failed", error);
     return { error: "L'email n'a pas pu partir. Votre contribution est bien gardée : réessayez." };
   }
