@@ -6,12 +6,15 @@ claims. Human approval is mandatory and final; nothing is auto-published.
 
 ## Access
 
-`proxy.ts` protects `/admin/:path*` (pages and their server-action POSTs) with
+`proxy.ts` protects `/admin/:path*` (pages and their server-action POSTs) and
+`/api/geo/:path*` (geocode and commune lookups used by the place form) with
 HTTP Basic Auth against `ADMIN_PASSWORD` (timing-safe compare) and adds
 `X-Robots-Tag: noindex`. Single user, not linked from the public site.
 
-Caveat: `/api/geo/*` (used by the place form) is outside that matcher, and
-`/api/geo/geocode` calls the billed Google Geocoding API.
+`/api/geo/geocode` calls the billed Google Geocoding API, so it must stay
+behind the matcher. The browser re-sends the Basic Auth credentials on
+same-origin `fetch` calls from the admin page, so the place form needs no
+extra handling.
 
 ## Navigation
 
