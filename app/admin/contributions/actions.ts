@@ -1,11 +1,19 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
+import { redirect } from "next/navigation";
 import { assertAdmin } from "@/src/admin/assert-admin";
 import { prisma } from "@/src/corpus/db";
 import { TipInputSchema } from "@/src/contributions/schema";
 import { sendEmail } from "@/src/email/send";
-import { contributionRejectedEmail, tipPublishedEmail } from "@/src/email/templates";
+import {
+  contributionRejectedEmail,
+  correctionAcceptedEmail,
+  placeAcceptedEmail,
+  tipPublishedEmail,
+} from "@/src/email/templates";
+import { uniquePlaceSlug } from "@/src/corpus/slug";
+import { z } from "zod";
 import { deletePlacePhotos } from "@/src/storage/place-photos";
 import { SITE_URL } from "@/src/site";
 
@@ -91,6 +99,135 @@ export async function publishTip(contributionId: string, formData: FormData): Pr
     );
   }
   revalidatePath("/admin/contributions");
+}
+
+async function loadPending(contributionId: string, type: "CORRECTION" | "PLACE") {
+  const contribution = await prisma.contribution.findUnique({
+    where: { id: contributionId },
+    include: { user: true, place: true, claim: true },
+  });
+  if (!contribution || contribution.type !== type || contribution.status !== "PENDING") {
+    return null;
+  }
+  return contribution;
+}
+
+async function resolveCorrection(
+  contributionId: string,
+  formData: FormData,
+  mode: "apply" | "retire" | "acknowledge",
+): Promise<void> {
+  await assertAdmin();
+  const contribution = await loadPending(contributionId, "CORRECTION");
+  if (!contribution || !contribution.place) return;
+  if (mode !== "acknowledge" && !contribution.claim) return;
+
+  let newText: string | null = null;
+  if (mode === "apply") {
+    const parsed = z.string().trim().min(10).max(500).safeParse(formData.get("text"));
+    if (!parsed.success) return;
+    newText = parsed.data;
+  }
+  const note = readNote(formData);
+  const now = new Date();
+
+  const resolved = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.contribution.updateMany({
+      where: { id: contribution.id, status: "PENDING", type: "CORRECTION" },
+      data: { status: "APPROVED", reviewedAt: now, reviewNote: note },
+    });
+    if (claimed.count === 0) return false;
+    if (mode === "apply") {
+      await tx.claim.update({
+        where: { id: contribution.claim!.id },
+        data: { claimText: newText!, verifiedOn: now },
+      });
+    } else if (mode === "retire") {
+      await tx.claim.update({
+        where: { id: contribution.claim!.id },
+        data: { status: "RETIRED" },
+      });
+    }
+    return true;
+  });
+  if (!resolved) return;
+
+  if (mode !== "acknowledge") updateTag("corpus");
+  if (contribution.user) {
+    await notify(
+      contribution.user.email,
+      correctionAcceptedEmail({
+        placeName: contribution.place.name,
+        placeUrl: `${SITE_URL}/lieux/${contribution.place.slug}`,
+        updated: mode !== "acknowledge",
+        note,
+      }),
+    );
+  }
+  revalidatePath("/admin/contributions");
+}
+
+export async function applyCorrection(contributionId: string, formData: FormData): Promise<void> {
+  await resolveCorrection(contributionId, formData, "apply");
+}
+
+export async function retireCorrectedClaim(
+  contributionId: string,
+  formData: FormData,
+): Promise<void> {
+  await resolveCorrection(contributionId, formData, "retire");
+}
+
+export async function acknowledgeCorrection(
+  contributionId: string,
+  formData: FormData,
+): Promise<void> {
+  await resolveCorrection(contributionId, formData, "acknowledge");
+}
+
+export async function createPlaceDraft(contributionId: string, formData: FormData): Promise<void> {
+  await assertAdmin();
+  const contribution = await loadPending(contributionId, "PLACE");
+  if (!contribution || !contribution.placeName || !contribution.placeCommune) return;
+
+  const note = readNote(formData);
+  const slug = await uniquePlaceSlug(contribution.placeName);
+  const description =
+    (contribution.text ?? "") +
+    (contribution.locationHint ? `\n\nComment le trouver : ${contribution.locationHint}` : "");
+
+  const placeId = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.contribution.updateMany({
+      where: { id: contribution.id, status: "PENDING", type: "PLACE" },
+      data: { status: "APPROVED", reviewedAt: new Date(), reviewNote: note },
+    });
+    if (claimed.count === 0) return null;
+    const place = await tx.place.create({
+      data: {
+        slug,
+        name: contribution.placeName!,
+        commune: contribution.placeCommune!,
+        departement: "13",
+        lat: 43.1748,
+        lng: 5.6047,
+        type: "SITE",
+        status: "DRAFT",
+        description,
+        proposedById: contribution.userId,
+      },
+    });
+    return place.id;
+  });
+  if (!placeId) return;
+
+  if (contribution.user) {
+    await notify(
+      contribution.user.email,
+      placeAcceptedEmail({ placeName: contribution.placeName, note }),
+    );
+  }
+  revalidatePath("/admin/contributions");
+  redirect(`/admin/places/${placeId}`);
 }
 
 export async function rejectContribution(

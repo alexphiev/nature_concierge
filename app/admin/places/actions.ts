@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/src/corpus/db";
+import { slugify } from "@/src/corpus/slug";
 import { Prisma } from "../../../prisma/generated/client";
 import {
   deletePlacePhotos,
@@ -10,15 +11,6 @@ import {
   putPlacePhoto,
 } from "@/src/storage/place-photos";
 import { MAX_PHOTO_BYTES, isPlacePhotoType } from "@/src/storage/photo-types";
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 function readImages(formData: FormData): { url: string; source: string | null }[] {
   const sources = formData.getAll("imageSources").map((v) => String(v).trim());

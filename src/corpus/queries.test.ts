@@ -97,6 +97,7 @@ describe("getPlaceBySlug", () => {
         },
         images: { orderBy: { order: "asc" } },
         photos: { orderBy: { order: "asc" } },
+        proposedBy: { select: { name: true } },
       },
     });
     expect(result).toEqual({

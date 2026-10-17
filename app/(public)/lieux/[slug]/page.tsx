@@ -88,6 +88,7 @@ export default async function PlaceDetailPage({
   const metaItems = [
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
+    place.proposedBy && `Lieu proposé par ${place.proposedBy.name}`,
   ].filter((item): item is string => Boolean(item));
 
   const jsonLd = buildPlaceJsonLd({

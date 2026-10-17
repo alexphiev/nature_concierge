@@ -65,6 +65,7 @@ export type PlaceWithPublicClaims = Place & {
   children: PlaceWithCover[];
   images: PlaceImage[];
   photos: PlacePhoto[];
+  proposedBy: { name: string } | null;
 };
 
 const publicClaimsInclude = {
@@ -95,6 +96,7 @@ export async function getPlaceBySlug(
       },
       images: { orderBy: { order: "asc" } },
       photos: { orderBy: { order: "asc" } },
+      proposedBy: { select: { name: true } },
     },
   }) as Promise<PlaceWithPublicClaims | null>;
 }

@@ -57,3 +57,30 @@ export function contributionRejectedEmail(input: { note: string | null }): Email
     text: `Bonjour,\n\nMerci pour votre contribution. Elle n'a pas été retenue.\n\n${reason}\n\n${SIGNATURE}`,
   };
 }
+
+export function correctionAcceptedEmail(input: {
+  placeName: string;
+  placeUrl: string;
+  updated: boolean;
+  note: string | null;
+}): EmailContent {
+  const note = input.note ? `\n\nMon commentaire :\n${input.note}` : "";
+  const subject = input.updated
+    ? `Merci, la fiche ${input.placeName} a été mise à jour`
+    : `Merci, on en a tenu compte pour la fiche ${input.placeName}`;
+  const body = input.updated
+    ? `Votre correction a été prise en compte, la fiche est à jour :\n${input.placeUrl}`
+    : `Votre correction a bien été lue et prise en compte pour la fiche :\n${input.placeUrl}`;
+  return {
+    subject,
+    text: `Bonjour,\n\n${body}${note}\n\nMerci d'aider le guide à rester juste.\n\n${SIGNATURE}`,
+  };
+}
+
+export function placeAcceptedEmail(input: { placeName: string; note: string | null }): EmailContent {
+  const note = input.note ? `\n\nMon commentaire :\n${input.note}` : "";
+  return {
+    subject: `Bonne idée : ${input.placeName} va rejoindre le guide`,
+    text: `Bonjour,\n\nMerci pour votre proposition. ${input.placeName} va rejoindre le guide : je prépare la fiche et elle sera en ligne prochainement.${note}\n\nMerci d'avoir partagé votre connaissance du terrain.\n\n${SIGNATURE}`,
+  };
+}
