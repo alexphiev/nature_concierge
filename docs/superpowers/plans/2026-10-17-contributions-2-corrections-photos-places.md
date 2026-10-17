@@ -20,7 +20,7 @@
 - Every form follows the tip-form pattern: shell + review notice + charter, `IdentityFields`, honeypot, `submitContribution`, return `values` on every error so typed text survives (files cannot be restored; the error says « Sélectionnez à nouveau vos photos. » for the photo form).
 - Session-dependent UI inside `<Suspense>`; `/lieux` and `/lieux/[slug]` stay prerendered (◐ in build output).
 - Limits (zod, server-side): correction text 10–1000; place name 2–120; place commune 2–80 (required); location hint ≤ 500 (optional); why-this-place 10–1000; photos 1–6 files, each ≤ 1 MB, total ≤ 4 MB, JPEG/PNG/WebP after browser conversion (HEIC → JPEG).
-- Browser compression for contributor photos: any file over 0.6 MB is compressed to `maxSizeMB: 0.6`, `maxWidthOrHeight: 1600` (keeps one request under Vercel's 4.5 MB body limit).
+- Contributors may pick photos of any size or resolution (no input limit, HEIC included). The browser resizes before upload: any file over 0.6 MB is compressed to `maxSizeMB: 0.6`, `maxWidthOrHeight: 1600` (keeps one request under Vercel's 4.5 MB body limit). The server-side 1 MB / 4 MB checks apply to the resized files only, as a safety net against requests that bypass the form.
 - Admin decisions are atomic: a conditional `updateMany({ where: { id, status: "PENDING", type } })` inside the transaction is the gate; emails after commit, failures logged; `updateTag("corpus")` when public content changed.
 - Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
