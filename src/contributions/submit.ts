@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/src/auth/auth";
 import { getSessionUser } from "@/src/auth/session";
 import { prisma } from "@/src/corpus/db";
-import { withSentFlag } from "./paths";
+import { safeNextPath, withSentFlag } from "./paths";
 import { writePendingCookie } from "./pending-cookie";
-import { DisplayNameSchema, IdentitySchema } from "./schema";
+import { CommuneSchema, DisplayNameSchema, IdentitySchema } from "./schema";
 import {
   createPendingContribution,
   createUnconfirmedContribution,
@@ -35,7 +35,7 @@ export async function sendContributionMagicLink(input: {
     body: {
       email: input.email,
       name: input.name,
-      callbackURL: `/connexion/confirmer?next=${encodeURIComponent(input.next)}`,
+      callbackURL: `/connexion/confirmer?next=${encodeURIComponent(safeNextPath(input.next))}`,
       errorCallbackURL: "/connexion/verifier?erreur=lien",
     },
     headers: await headers(),
@@ -48,7 +48,8 @@ export async function submitContribution(input: {
   formPath: string;
   next: string;
 }): Promise<FormState> {
-  const { data, formData, formPath, next } = input;
+  const { data, formData, formPath } = input;
+  const next = safeNextPath(input.next);
 
   if (formValue(formData, "website").trim()) redirect(withSentFlag(next));
 
@@ -58,10 +59,11 @@ export async function submitContribution(input: {
     if (!user.name.trim()) {
       const name = DisplayNameSchema.safeParse(formValue(formData, "name"));
       if (!name.success) return { fieldErrors: { name: FIELD_MESSAGES.name } };
-      const commune = formValue(formData, "commune").trim();
+      const commune = CommuneSchema.safeParse(formValue(formData, "commune"));
+      if (!commune.success) return { fieldErrors: { commune: FIELD_MESSAGES.commune } };
       await prisma.user.update({
         where: { id: user.id },
-        data: { name: name.data, ...(commune ? { commune } : {}) },
+        data: { name: name.data, ...(commune.data ? { commune: commune.data } : {}) },
       });
     }
     const result = await createPendingContribution(user.id, data);

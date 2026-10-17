@@ -22,13 +22,15 @@ export const TipInputSchema = z.object({
 
 export const DisplayNameSchema = z.string().trim().min(2).max(40);
 
+export const CommuneSchema = z
+  .string()
+  .trim()
+  .transform((v) => v || null)
+  .pipe(z.string().min(2).max(80).nullable());
+
 export const IdentitySchema = z.object({
   name: DisplayNameSchema,
-  commune: z
-    .string()
-    .trim()
-    .transform((v) => v || null)
-    .pipe(z.string().min(2).max(80).nullable()),
+  commune: CommuneSchema,
   email: z.string().trim().toLowerCase().pipe(z.email()),
   consent: z.literal("on"),
 });
