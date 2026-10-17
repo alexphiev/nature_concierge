@@ -42,7 +42,12 @@ export async function publishTip(contributionId: string, formData: FormData): Pr
   const note = readNote(formData);
   const now = new Date();
 
-  await prisma.$transaction(async (tx) => {
+  const published = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.contribution.updateMany({
+      where: { id: contribution.id, status: "PENDING", type: "TIP" },
+      data: { status: "APPROVED", reviewedAt: now, reviewNote: note },
+    });
+    if (claimed.count === 0) return false;
     const source = await tx.source.create({
       data: {
         type: "contribution",
@@ -68,11 +73,9 @@ export async function publishTip(contributionId: string, formData: FormData): Pr
         authorId: contribution.userId,
       },
     });
-    await tx.contribution.update({
-      where: { id: contribution.id },
-      data: { status: "APPROVED", reviewedAt: now, reviewNote: note },
-    });
+    return true;
   });
+  if (!published) return;
 
   updateTag("corpus");
   if (contribution.user) {
@@ -99,10 +102,11 @@ export async function rejectContribution(
   if (!contribution || contribution.status !== "PENDING") return;
 
   const note = readNote(formData);
-  await prisma.contribution.update({
-    where: { id: contribution.id },
+  const rejected = await prisma.contribution.updateMany({
+    where: { id: contribution.id, status: "PENDING" },
     data: { status: "REJECTED", reviewNote: note, reviewedAt: new Date() },
   });
+  if (rejected.count === 0) return;
 
   if (contribution.photos.length > 0) {
     try {
