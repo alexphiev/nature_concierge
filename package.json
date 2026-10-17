@@ -23,12 +23,14 @@
     "@prisma/client": "7.9.0",
     "@typesafe-ai/sdk": "^0.6.0",
     "@vercel/analytics": "^2.0.1",
+    "better-auth": "1.7.7",
     "browser-image-compression": "^2.0.2",
     "dotenv": "^17.4.2",
     "heic-to": "^1.5.2",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "resend": "6.32.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
