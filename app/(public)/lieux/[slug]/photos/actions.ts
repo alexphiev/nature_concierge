@@ -9,8 +9,10 @@ import {
   CONTRIBUTION_PHOTOS_MAX,
   CONTRIBUTION_PHOTOS_TOTAL_MAX_BYTES,
   isPlacePhotoType,
+  sniffPlacePhotoType,
 } from "@/src/storage/photo-types";
 
+const BAD_FORMAT = "Format non supporté (JPEG, PNG ou WebP).";
 const TOO_HEAVY = "Photos trop lourdes, réessayez avec moins de photos.";
 
 export async function submitPhotos(
@@ -25,17 +27,23 @@ export async function submitPhotos(
   if (files.length < 1 || files.length > CONTRIBUTION_PHOTOS_MAX) {
     return photoError("Ajoutez entre 1 et 6 photos.");
   }
-  const photos: ContributionPhotoUpload[] = [];
+  const valid: File[] = [];
   let total = 0;
   for (const file of files) {
-    if (!(file instanceof File) || !isPlacePhotoType(file.type)) {
-      return photoError("Format non supporté (JPEG, PNG ou WebP).");
-    }
+    if (!(file instanceof File) || !isPlacePhotoType(file.type)) return photoError(BAD_FORMAT);
     if (file.size > CONTRIBUTION_PHOTO_MAX_BYTES) return photoError(TOO_HEAVY);
     total += file.size;
-    photos.push({ body: new Uint8Array(await file.arrayBuffer()), type: file.type });
+    valid.push(file);
   }
   if (total > CONTRIBUTION_PHOTOS_TOTAL_MAX_BYTES) return photoError(TOO_HEAVY);
+
+  const photos: ContributionPhotoUpload[] = [];
+  for (const file of valid) {
+    const body = new Uint8Array(await file.arrayBuffer());
+    const type = sniffPlacePhotoType(body);
+    if (!type) return photoError(BAD_FORMAT);
+    photos.push({ body, type });
+  }
 
   if (formData.get("photosConsent") !== "on") {
     return {

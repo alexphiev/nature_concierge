@@ -28,12 +28,7 @@ export function PhotoForm({ slug, user }: { slug: string; user: SessionUser | nu
   const fileInput = useRef<HTMLInputElement>(null);
   const objectUrls = useRef(new Set<string>());
 
-  // Files cannot survive a server round trip: drop the selection on every returned state.
-  const [handledState, setHandledState] = useState(state);
-  if (state !== handledState) {
-    setHandledState(state);
-    setSelected([]);
-  }
+  const [selectionChangedFor, setSelectionChangedFor] = useState<FormState | null>(null);
 
   useEffect(() => {
     const urls = objectUrls.current;
@@ -52,6 +47,7 @@ export function PhotoForm({ slug, user }: { slug: string; user: SessionUser | nu
       return { id: crypto.randomUUID(), file, src };
     });
     setSelectionError(picked.length > room ? "6 photos maximum." : null);
+    setSelectionChangedFor(state);
     setCompressErrors([]);
     setSelected([...selected, ...added]);
     if (fileInput.current) fileInput.current.value = "";
@@ -64,6 +60,7 @@ export function PhotoForm({ slug, user }: { slug: string; user: SessionUser | nu
       objectUrls.current.delete(item.src);
     }
     setSelectionError(null);
+    setSelectionChangedFor(state);
     setCompressErrors([]);
     setSelected(selected.filter((s) => s.id !== id));
   }
@@ -104,7 +101,8 @@ export function PhotoForm({ slug, user }: { slug: string; user: SessionUser | nu
     startTransition(() => action(formData));
   }
 
-  const photosError = selectionError ?? state.fieldErrors?.photos;
+  const photosError =
+    selectionError ?? (selectionChangedFor === state ? undefined : state.fieldErrors?.photos);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
