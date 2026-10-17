@@ -71,13 +71,20 @@ export async function createPendingContribution(
 }
 
 async function purgeStaleUnconfirmed(): Promise<void> {
-  const stale = await prisma.contribution.findMany({
-    where: { status: "UNCONFIRMED", createdAt: { lt: new Date(Date.now() - UNCONFIRMED_TTL_MS) } },
-    select: { id: true, photos: { select: { key: true } } },
-  });
-  if (stale.length === 0) return;
-  await deletePlacePhotos(stale.flatMap((c) => c.photos.map((p) => p.key)));
-  await prisma.contribution.deleteMany({ where: { id: { in: stale.map((c) => c.id) } } });
+  try {
+    const stale = await prisma.contribution.findMany({
+      where: {
+        status: "UNCONFIRMED",
+        createdAt: { lt: new Date(Date.now() - UNCONFIRMED_TTL_MS) },
+      },
+      select: { id: true, photos: { select: { key: true } } },
+    });
+    if (stale.length === 0) return;
+    await deletePlacePhotos(stale.flatMap((c) => c.photos.map((p) => p.key)));
+    await prisma.contribution.deleteMany({ where: { id: { in: stale.map((c) => c.id) } } });
+  } catch (error) {
+    console.error("[contributions] stale purge failed", error);
+  }
 }
 
 export async function createUnconfirmedContribution(
@@ -154,17 +161,21 @@ export async function attachUnconfirmedContributions(user: SessionUser): Promise
     if (profile.name || profile.commune) {
       await tx.user.update({ where: { id: user.id }, data: profile });
     }
-    await tx.contribution.updateMany({
-      where: { id: { in: rows.map((r) => r.id) } },
-      data: {
-        userId: user.id,
-        status: "PENDING",
-        pendingEmail: null,
-        pendingName: null,
-        pendingCommune: null,
-      },
-    });
-    return rows;
+    const updated: typeof rows = [];
+    for (const row of rows) {
+      const { count } = await tx.contribution.updateMany({
+        where: { id: row.id, status: "UNCONFIRMED" },
+        data: {
+          userId: user.id,
+          status: "PENDING",
+          pendingEmail: null,
+          pendingName: null,
+          pendingCommune: null,
+        },
+      });
+      if (count > 0) updated.push(row);
+    }
+    return updated;
   });
   await Promise.all(attached.map(notifyAdmin));
   return attached.length;

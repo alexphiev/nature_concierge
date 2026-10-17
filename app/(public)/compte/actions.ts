@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { updateTag } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { auth } from "@/src/auth/auth";
 import { getSessionUser } from "@/src/auth/session";
 import { CommuneSchema, DisplayNameSchema } from "@/src/contributions/schema";
@@ -32,6 +32,7 @@ export async function updateAccount(_prev: FormState, formData: FormData): Promi
     data: { name: name.data, commune: commune.data },
   });
   if ((await prisma.claim.count({ where: { authorId: user.id } })) > 0) updateTag("corpus");
+  else refresh();
   return { values: { ...values, saved: "1" } };
 }
 

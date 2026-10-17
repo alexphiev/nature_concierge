@@ -109,15 +109,14 @@ export async function submitContribution(input: {
   if ("error" in result) return { error: result.error };
 
   let sent = true;
-  let throttled = false;
   try {
     await sendContributionMagicLink({ email, name, next });
   } catch (error) {
-    if (error instanceof MagicLinkThrottledError) throttled = true;
-    else console.error("[contributions] magic link failed", error);
-    sent = false;
+    if (!(error instanceof MagicLinkThrottledError)) {
+      console.error("[contributions] magic link failed", error);
+      sent = false;
+    }
   }
   await writePendingCookie({ email, next, formPath, sentAt: Date.now() });
-  if (throttled) return { error: MAGIC_LINK_THROTTLE_MESSAGE };
   redirect(sent ? "/connexion/verifier" : "/connexion/verifier?erreur=envoi");
 }
