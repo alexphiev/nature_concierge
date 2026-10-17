@@ -13,10 +13,31 @@ const MAX_LENGTH = 500;
 
 export function TipForm({ slug, user }: { slug: string; user: SessionUser | null }) {
   const [state, action] = useActionState<FormState, FormData>(submitTip.bind(null, slug), {});
-  const [length, setLength] = useState(0);
 
   return (
     <form action={action} className="space-y-6">
+      <TipFields key={JSON.stringify(state.values ?? {})} state={state} user={user} />
+      {state.error && (
+        <p role="alert" className="text-base text-pin">
+          {state.error}
+        </p>
+      )}
+      <SubmitButton
+        className={`rounded-full bg-mediterranee px-6 py-3 text-base font-semibold text-white ${FOCUS_RING}`}
+      >
+        Envoyer pour relecture
+      </SubmitButton>
+    </form>
+  );
+}
+
+function TipFields({ state, user }: { state: FormState; user: SessionUser | null }) {
+  const values = state.values;
+  const [length, setLength] = useState(values?.text.length ?? 0);
+  const selectedTheme = values?.claimType || "TIP";
+
+  return (
+    <div className="space-y-6">
       <fieldset>
         <legend className="font-semibold">Thème</legend>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -26,7 +47,7 @@ export function TipForm({ slug, user }: { slug: string; user: SessionUser | null
                 type="radio"
                 name="claimType"
                 value={theme.value}
-                defaultChecked={theme.value === "TIP"}
+                defaultChecked={theme.value === selectedTheme}
                 className="peer sr-only"
               />
               <span
@@ -53,34 +74,27 @@ export function TipForm({ slug, user }: { slug: string; user: SessionUser | null
           minLength={10}
           maxLength={MAX_LENGTH}
           rows={5}
+          defaultValue={values?.text}
           onChange={(e) => setLength(e.target.value.length)}
-          aria-describedby="tip-text-hint tip-text-error"
+          aria-describedby={state.fieldErrors?.text ? "tip-text-hint tip-text-error" : "tip-text-hint"}
           aria-invalid={Boolean(state.fieldErrors?.text)}
           className={`mt-1 block w-full rounded-lg border border-encre/30 bg-white px-3 py-2 text-base ${FOCUS_RING}`}
         />
         <div className="mt-1 flex justify-between gap-4">
-          <p id="tip-text-error" role="alert" className="text-sm text-pin">
-            {state.fieldErrors?.text}
-          </p>
+          {state.fieldErrors?.text ? (
+            <p id="tip-text-error" role="alert" className="text-sm text-pin">
+              {state.fieldErrors.text}
+            </p>
+          ) : (
+            <span />
+          )}
           <p className="font-mono text-xs text-encre/65" aria-live="off">
             {length} / {MAX_LENGTH}
           </p>
         </div>
       </div>
 
-      <IdentityFields user={user} fieldErrors={state.fieldErrors} />
-
-      {state.error && (
-        <p role="alert" className="text-base text-pin">
-          {state.error}
-        </p>
-      )}
-
-      <SubmitButton
-        className={`rounded-full bg-mediterranee px-6 py-3 text-base font-semibold text-white ${FOCUS_RING}`}
-      >
-        Envoyer pour relecture
-      </SubmitButton>
-    </form>
+      <IdentityFields user={user} fieldErrors={state.fieldErrors} values={values} />
+    </div>
   );
 }

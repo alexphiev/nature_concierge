@@ -16,9 +16,11 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export function IdentityFields({
   user,
   fieldErrors,
+  values,
 }: {
   user: SessionUser | null;
   fieldErrors?: Record<string, string>;
+  values?: Record<string, string>;
 }) {
   const showIdentity = !user || !user.name.trim();
 
@@ -44,7 +46,8 @@ export function IdentityFields({
               minLength={2}
               maxLength={40}
               autoComplete="given-name"
-              aria-describedby="contrib-name-hint contrib-name-error"
+              aria-describedby={fieldErrors?.name ? "contrib-name-hint contrib-name-error" : "contrib-name-hint"}
+              defaultValue={values?.name}
               aria-invalid={Boolean(fieldErrors?.name)}
               className={INPUT}
             />
@@ -59,7 +62,8 @@ export function IdentityFields({
               name="commune"
               maxLength={80}
               autoComplete="address-level2"
-              aria-describedby="contrib-commune-error"
+              aria-describedby={fieldErrors?.commune ? "contrib-commune-error" : undefined}
+              defaultValue={values?.commune}
               aria-invalid={Boolean(fieldErrors?.commune)}
               className={INPUT}
             />
@@ -92,7 +96,8 @@ export function IdentityFields({
               type="email"
               required
               autoComplete="email"
-              aria-describedby="contrib-email-error"
+              aria-describedby={fieldErrors?.email ? "contrib-email-error" : undefined}
+              defaultValue={values?.email}
               aria-invalid={Boolean(fieldErrors?.email)}
               className={INPUT}
             />
@@ -104,7 +109,9 @@ export function IdentityFields({
                 type="checkbox"
                 name="consent"
                 required
-                aria-describedby="contrib-consent-error"
+                aria-describedby={fieldErrors?.consent ? "contrib-consent-error" : undefined}
+                aria-invalid={Boolean(fieldErrors?.consent)}
+                defaultChecked={values?.consent === "on"}
                 className="mt-1 size-5 shrink-0"
               />
               <span>

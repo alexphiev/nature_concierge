@@ -12,7 +12,11 @@ import {
   type ContributionData,
 } from "./service";
 
-export type FormState = { error?: string; fieldErrors?: Record<string, string> };
+export type FormState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  values?: Record<string, string>;
+};
 
 const FIELD_MESSAGES: Record<string, string> = {
   name: "Choisissez un nom de 2 à 40 caractères.",
