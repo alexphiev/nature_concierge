@@ -1,6 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
+import { prisma } from "@/src/corpus/db";
 import { AdminNav } from "./AdminNav";
+
+async function PendingAdminNav() {
+  await connection();
+  const pendingCount = await prisma.contribution.count({ where: { status: "PENDING" } });
+  return <AdminNav pendingCount={pendingCount} />;
+}
 
 export default function AdminLayout({
   children,
@@ -20,7 +28,7 @@ export default function AdminLayout({
           </Link>
         </div>
         <Suspense>
-          <AdminNav />
+          <PendingAdminNav />
         </Suspense>
       </header>
       <div className="w-full min-w-0">

@@ -4,7 +4,7 @@ import { getAllPlaces } from "@/src/corpus/queries";
 import { SourceTypeSchema } from "@/src/corpus/schema";
 import { BlockList } from "./BlockList";
 import { createCapture } from "./actions";
-import { SubmitButton } from "../SubmitButton";
+import { SubmitButton } from "@/src/components/SubmitButton";
 
 export const metadata: Metadata = {
   title: "Nouvelle capture — Admin",

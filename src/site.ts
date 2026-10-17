@@ -9,3 +9,7 @@ export const BASE_OPEN_GRAPH = {
   locale: "fr_FR",
   type: "website",
 } as const;
+
+export const GUIDE_AUTHOR = { name: "Alexandre", commune: "La Ciotat" } as const;
+
+export const CONTACT_EMAIL = "contact@laciotatnature.fr";

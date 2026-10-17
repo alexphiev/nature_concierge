@@ -3,23 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = [
-  { href: "/admin", label: "Corpus" },
-  { href: "/admin/places", label: "Lieux" },
-  { href: "/admin/ingest", label: "Nouvelle capture" },
-];
+function getTabs(pendingCount: number) {
+  return [
+    { href: "/admin", label: "Corpus" },
+    { href: "/admin/places", label: "Lieux" },
+    { href: "/admin/contributions", label: `Contributions (${pendingCount})` },
+    { href: "/admin/ingest", label: "Nouvelle capture" },
+  ];
+}
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/admin") return pathname === "/admin";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminNav() {
+export function AdminNav({ pendingCount }: { pendingCount: number }) {
   const pathname = usePathname();
 
   return (
     <nav className="flex flex-wrap gap-2">
-      {TABS.map((tab) => {
+      {getTabs(pendingCount).map((tab) => {
         const active = isActive(pathname, tab.href);
         return (
           <Link

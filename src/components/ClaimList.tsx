@@ -1,4 +1,22 @@
+import Link from "next/link";
 import type { Claim } from "../../prisma/generated/client";
+import type { PublicClaim } from "@/src/corpus/queries";
+import { GUIDE_AUTHOR } from "@/src/site";
+
+const monthYear = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
+
+function claimMeta(claim: PublicClaim): string {
+  const author = claim.authorDeleted ? null : (claim.author ?? GUIDE_AUTHOR);
+  const parts = claim.authorDeleted
+    ? ["Un ancien contributeur"]
+    : [author?.name, author?.commune].filter((part): part is string => Boolean(part));
+  return [...parts, monthYear.format(claim.verifiedOn)].join(" · ");
+}
+
+const ADD_TIP_LINK =
+  "inline-flex self-start rounded-[10px] border border-sable/70 px-4 py-2.5 text-sm font-medium text-encre transition-colors hover:border-mediterranee hover:text-mediterranee";
+const ADD_TIP_LINK_PROMINENT =
+  "inline-flex self-start rounded-[10px] bg-mediterranee px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90";
 
 const THEME_ORDER: Claim["claimType"][] = [
   "ACCESS",
@@ -78,12 +96,14 @@ const THEME_ICONS: Record<Claim["claimType"], string> = {
 
 export function ClaimList({
   claims,
-  title = "Conseils du guide",
+  title = "Conseils des gens d'ici",
+  addTipHref,
 }: {
-  claims: Claim[];
+  claims: PublicClaim[];
   title?: string;
+  addTipHref?: string;
 }) {
-  if (claims.length === 0) return null;
+  if (claims.length === 0 && !addTipHref) return null;
 
   const groups = THEME_ORDER.map((type) => ({
     type,
@@ -95,6 +115,11 @@ export function ClaimList({
       <h2 className="font-display text-[1.625rem] leading-tight font-semibold">
         {title}
       </h2>
+      {claims.length === 0 && (
+        <p className="leading-relaxed">
+          Aucun conseil pour l&apos;instant. Vous connaissez ce lieu ? Partagez la première astuce.
+        </p>
+      )}
       <ul className="columns-1 gap-3 sm:columns-2">
         {groups.map(({ type, claims: groupClaims }) => {
           const accent = THEME_ACCENTS[type];
@@ -137,6 +162,7 @@ export function ClaimList({
                     className="relative pl-4 leading-relaxed before:absolute before:top-[0.7em] before:left-0 before:size-1.5 before:rounded-full before:bg-sable"
                   >
                     {claim.claimText}
+                    <span className="mt-0.5 block text-xs text-encre/60">{claimMeta(claim)}</span>
                   </li>
                 ))}
               </ul>
@@ -144,6 +170,14 @@ export function ClaimList({
           );
         })}
       </ul>
+      {addTipHref && (
+        <Link
+          href={addTipHref}
+          className={claims.length === 0 ? ADD_TIP_LINK_PROMINENT : ADD_TIP_LINK}
+        >
+          Ajouter une astuce
+        </Link>
+      )}
     </section>
   );
 }

@@ -80,6 +80,7 @@ describe("getPlaceBySlug", () => {
       where: { isPublic: true, status: "PUBLISHED" },
       include: {
         alternativePlace: { select: { slug: true, name: true } },
+        author: { select: { name: true, commune: true } },
       },
     };
     expect(findFirstPlaceMock).toHaveBeenCalledWith({

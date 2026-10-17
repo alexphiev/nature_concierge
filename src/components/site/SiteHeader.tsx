@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { SITE_NAME } from "../../site";
 import { HeartIcon, LogoIcon } from "../landing/icons";
 import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, GUIDE_HREF, TIPEEE_HREF } from "../landing/shared";
+import { AccountLink } from "./AccountLink";
 import { MobileMenu } from "./MobileMenu";
 
 export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
@@ -40,6 +42,9 @@ export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
             <HeartIcon className="size-4.25" />
             Soutenir
           </a>
+          <Suspense fallback={null}>
+            <AccountLink />
+          </Suspense>
           <MobileMenu guideActive={guideActive} />
         </nav>
       </div>

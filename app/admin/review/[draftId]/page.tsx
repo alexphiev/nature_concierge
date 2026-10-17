@@ -13,7 +13,7 @@ import {
 } from "@/src/corpus/schema";
 import { addBlock } from "../../ingest/actions";
 import { VerdictFields } from "./VerdictFields";
-import { SubmitButton } from "../../SubmitButton";
+import { SubmitButton } from "@/src/components/SubmitButton";
 import {
   approveClaim,
   rejectClaim,
