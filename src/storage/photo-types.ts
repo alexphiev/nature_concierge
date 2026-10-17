@@ -18,3 +18,8 @@ export function isPlacePhotoType(type: string): type is PlacePhotoType {
 export function photoExtension(type: PlacePhotoType): string {
   return EXTENSIONS[type];
 }
+
+// Contributor photos are resized in the browser first; these are server-side safety nets.
+export const CONTRIBUTION_PHOTO_MAX_BYTES = 1024 * 1024;
+export const CONTRIBUTION_PHOTOS_TOTAL_MAX_BYTES = 4 * 1024 * 1024;
+export const CONTRIBUTION_PHOTOS_MAX = 6;

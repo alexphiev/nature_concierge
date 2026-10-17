@@ -2,7 +2,7 @@
 
 import { useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { PLACE_PHOTO_TYPES } from "@/src/storage/photo-types";
-import { HEIC_INPUT_TYPES, compressPhoto } from "./compress-photo";
+import { HEIC_INPUT_TYPES, compressPhoto } from "@/src/storage/compress-photo";
 
 export type PhotoItem =
   | { kind: "saved"; id: string; src: string; credit: string }

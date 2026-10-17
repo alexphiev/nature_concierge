@@ -3,7 +3,8 @@ import { prisma } from "@/src/corpus/db";
 import type { SessionUser } from "@/src/auth/session";
 import { sendEmail } from "@/src/email/send";
 import { adminNewContributionEmail } from "@/src/email/templates";
-import { deletePlacePhotos } from "@/src/storage/place-photos";
+import { contributionPhotoKey, deletePlacePhotos, putPlacePhoto } from "@/src/storage/place-photos";
+import type { PlacePhotoType } from "@/src/storage/photo-types";
 import { CONTRIBUTION_TYPE_LABELS } from "./schema";
 
 export type ContributionData = Pick<
@@ -20,6 +21,8 @@ export type ContributionData = Pick<
   | "photosConsentAt"
 >;
 
+export type ContributionPhotoUpload = { body: Uint8Array; type: PlacePhotoType };
+
 export const MAX_AWAITING_REVIEW = 10;
 
 const UNCONFIRMED_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -29,6 +32,39 @@ const GLOBAL_UNCONFIRMED_WINDOW_MS = 10 * 60 * 1000;
 const BUSY_ERROR = "Trop de demandes en ce moment, réessayez dans quelques minutes.";
 
 const CAP_ERROR = `Vous avez déjà ${MAX_AWAITING_REVIEW} contributions en relecture. Merci de patienter un peu.`;
+
+const PHOTO_UPLOAD_ERROR = "Une photo n'a pas pu être envoyée, réessayez.";
+
+// On any failure, removes what was stored and the contribution itself, so no
+// half-submitted photo contribution remains. allSettled (not all) so no upload
+// is still in flight when the cleanup runs.
+async function storeContributionPhotos(
+  contributionId: string,
+  photos: ContributionPhotoUpload[],
+): Promise<boolean> {
+  if (photos.length === 0) return true;
+  const keys = photos.map((photo) => contributionPhotoKey(contributionId, photo.type));
+  try {
+    const results = await Promise.allSettled(
+      photos.map((photo, i) => putPlacePhoto(keys[i], photo.body, photo.type)),
+    );
+    const failed = results.find((r) => r.status === "rejected");
+    if (failed) throw failed.reason;
+    await prisma.contributionPhoto.createMany({
+      data: keys.map((key, order) => ({ contributionId, key, order })),
+    });
+    return true;
+  } catch (error) {
+    console.error("[contributions] photo upload failed", error);
+    try {
+      await deletePlacePhotos(keys);
+    } catch (cleanupError) {
+      console.error("[contributions] photo cleanup failed", cleanupError);
+    }
+    await prisma.contribution.delete({ where: { id: contributionId } });
+    return false;
+  }
+}
 
 async function notifyAdmin(contribution: {
   type: ContributionType;
@@ -59,6 +95,7 @@ async function notifyAdmin(contribution: {
 export async function createPendingContribution(
   userId: string,
   data: ContributionData,
+  photos: ContributionPhotoUpload[] = [],
 ): Promise<{ id: string } | { error: string }> {
   const count = await prisma.contribution.count({ where: { userId, status: "PENDING" } });
   if (count >= MAX_AWAITING_REVIEW) return { error: CAP_ERROR };
@@ -66,6 +103,7 @@ export async function createPendingContribution(
     data: { ...data, userId, status: "PENDING" },
     select: { id: true, type: true, placeId: true, placeName: true },
   });
+  if (!(await storeContributionPhotos(created.id, photos))) return { error: PHOTO_UPLOAD_ERROR };
   await notifyAdmin(created);
   return { id: created.id };
 }
@@ -90,6 +128,7 @@ async function purgeStaleUnconfirmed(): Promise<void> {
 export async function createUnconfirmedContribution(
   identity: { email: string; name: string; commune: string | null },
   data: ContributionData,
+  photos: ContributionPhotoUpload[] = [],
 ): Promise<{ id: string } | { error: string }> {
   await purgeStaleUnconfirmed();
   const recentTotal = await prisma.contribution.count({
@@ -114,6 +153,7 @@ export async function createUnconfirmedContribution(
     },
     select: { id: true },
   });
+  if (!(await storeContributionPhotos(created.id, photos))) return { error: PHOTO_UPLOAD_ERROR };
   return { id: created.id };
 }
 

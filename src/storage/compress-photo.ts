@@ -1,8 +1,6 @@
 import imageCompression from "browser-image-compression";
 import { MAX_PHOTO_BYTES, isPlacePhotoType } from "@/src/storage/photo-types";
 
-const COMPRESS_ABOVE_MB = 1.5;
-
 async function assertDecodable(file: Blob): Promise<void> {
   try {
     const bitmap = await createImageBitmap(file);
@@ -31,20 +29,27 @@ async function heicToJpeg(file: File): Promise<File> {
   }
 }
 
-export async function compressPhoto(input: File): Promise<File> {
+export async function compressPhoto(
+  input: File,
+  {
+    maxSizeMB = 1.5,
+    maxWidthOrHeight = 2400,
+    maxBytes = MAX_PHOTO_BYTES,
+  }: { maxSizeMB?: number; maxWidthOrHeight?: number; maxBytes?: number } = {},
+): Promise<File> {
   const file = looksLikeHeic(input) ? await heicToJpeg(input) : input;
   if (!isPlacePhotoType(file.type)) throw new Error("format non supporté (JPEG, PNG, WebP ou HEIC)");
-  if (file.size <= COMPRESS_ABOVE_MB * 1024 * 1024) {
+  if (file.size <= maxSizeMB * 1024 * 1024) {
     await assertDecodable(file);
     return file;
   }
 
   const compressed = await imageCompression(file, {
-    maxSizeMB: COMPRESS_ABOVE_MB,
-    maxWidthOrHeight: 2400,
+    maxSizeMB,
+    maxWidthOrHeight,
     useWebWorker: true,
   });
-  if (compressed.size > MAX_PHOTO_BYTES) throw new Error("trop lourde, même après compression");
+  if (compressed.size > maxBytes) throw new Error("trop lourde, même après compression");
   await assertDecodable(compressed);
   return compressed;
 }

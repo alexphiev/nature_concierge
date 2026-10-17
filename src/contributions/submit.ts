@@ -10,6 +10,7 @@ import {
   createPendingContribution,
   createUnconfirmedContribution,
   type ContributionData,
+  type ContributionPhotoUpload,
 } from "./service";
 
 export type FormState = {
@@ -62,11 +63,12 @@ export async function sendContributionMagicLink(input: {
 
 export async function submitContribution(input: {
   data: ContributionData;
+  photos?: ContributionPhotoUpload[];
   formData: FormData;
   formPath: string;
   next: string;
 }): Promise<FormState> {
-  const { data, formData, formPath } = input;
+  const { data, photos, formData, formPath } = input;
   const next = safeNextPath(input.next);
 
   if (formValue(formData, "website").trim()) redirect(withSentFlag(next));
@@ -84,7 +86,7 @@ export async function submitContribution(input: {
         data: { name: name.data, ...(commune.data ? { commune: commune.data } : {}) },
       });
     }
-    const result = await createPendingContribution(user.id, data);
+    const result = await createPendingContribution(user.id, data, photos);
     if ("error" in result) return { error: result.error };
     redirect(withSentFlag(next));
   }
@@ -105,7 +107,7 @@ export async function submitContribution(input: {
   }
   const { name, commune, email } = parsed.data;
 
-  const result = await createUnconfirmedContribution({ email, name, commune }, data);
+  const result = await createUnconfirmedContribution({ email, name, commune }, data, photos);
   if ("error" in result) return { error: result.error };
 
   let sent = true;

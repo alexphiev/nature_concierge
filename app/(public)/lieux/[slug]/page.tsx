@@ -169,7 +169,7 @@ export default async function PlaceDetailPage({
       </header>
 
       <div className="mt-7">
-        <PlaceGallery typeLabel={typeLabel} slides={slides} />
+        <PlaceGallery slides={slides} addPhotosHref={`/lieux/${slug}/photos`} />
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-10 md:mt-12 md:grid-cols-[minmax(0,1fr)_360px] md:items-start md:gap-16">

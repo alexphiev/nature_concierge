@@ -24,6 +24,10 @@ export function placePhotoKey(placeId: string, type: PlacePhotoType): string {
   return `places/${placeId}/${randomUUID()}.${photoExtension(type)}`;
 }
 
+export function contributionPhotoKey(contributionId: string, type: PlacePhotoType): string {
+  return `contributions/${contributionId}/${randomUUID()}.${photoExtension(type)}`;
+}
+
 export function placePhotoUrl(key: string): string {
   const endpoint = process.env.AWS_ENDPOINT_URL_S3;
   if (!endpoint) throw new Error("AWS_ENDPOINT_URL_S3 is not set: cannot build place photo URLs");
