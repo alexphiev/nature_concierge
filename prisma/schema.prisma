@@ -37,6 +37,10 @@ model Place {
   ingestionDrafts IngestionDraft[]
   images          PlaceImage[]
   photos          PlacePhoto[]
+  contributions   Contribution[]
+
+  proposedById String?
+  proposedBy   User?   @relation("PlaceProposer", fields: [proposedById], references: [id], onDelete: SetNull)
 
   @@index([status, demandRank])
   @@index([parentId])
@@ -100,8 +104,11 @@ model Claim {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  requestsUsedIn    RequestClaimUsed[]
-  requestsCreatedBy RequestClaimCreated[]
+  authorId      String?
+  author        User?   @relation("ClaimAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorDeleted Boolean @default(false)
+
+  contributions Contribution[]
 
   @@index([placeId, status])
 }
@@ -155,61 +162,6 @@ model Source {
   notes           String?
   claims          Claim[]
   ingestionBlocks IngestionBlock[]
-}
-
-// ---------- Concierge log (the validation instrument) ----------
-
-model Request {
-  id               String   @id @default(cuid())
-  date             DateTime @default(now())
-  channel          Channel
-  userRef          String
-  requestText      String
-  requestType      String?
-  constraintsGiven String[]
-  timeSpentMin     Int?
-  outcome          Outcome  @default(ANSWERED)
-  outcomeNotes     String?
-
-  placesRecommended String[]
-  claimsUsed        RequestClaimUsed[]
-  claimsCreated     RequestClaimCreated[]
-}
-
-model RequestClaimUsed {
-  requestId String
-  claimId   String
-  request   Request @relation(fields: [requestId], references: [id])
-  claim     Claim   @relation(fields: [claimId], references: [id])
-
-  @@id([requestId, claimId])
-}
-
-model RequestClaimCreated {
-  requestId String
-  claimId   String
-  request   Request @relation(fields: [requestId], references: [id])
-  claim     Claim   @relation(fields: [claimId], references: [id])
-
-  @@id([requestId, claimId])
-}
-
-enum Channel {
-  WHATSAPP
-  FORM
-  REDDIT
-  FACEBOOK
-  CAMPING_QR
-  OTHER
-}
-
-enum Outcome {
-  ANSWERED
-  USER_WENT
-  USER_REPORTED_BACK
-  RETURNED_NEW_REQUEST
-  REFERRED_SOMEONE
-  SILENT
 }
 
 model IngestionDraft {
@@ -268,4 +220,139 @@ model SearchShortcut {
   fgColor String
   order   Int     @default(0)
   active  Boolean @default(true)
+}
+
+// ---------- Accounts (Better Auth) ----------
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  commune       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  sessions       Session[]
+  accounts       Account[]
+  contributions  Contribution[]
+  claims         Claim[]        @relation("ClaimAuthor")
+  proposedPlaces Place[]        @relation("PlaceProposer")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+// Named AuthVerification because the Verification enum already exists.
+model AuthVerification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---------- Community contributions ----------
+
+model Contribution {
+  id     String             @id @default(cuid())
+  type   ContributionType
+  status ContributionStatus @default(UNCONFIRMED)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Signed-out submit: held until the magic link is clicked.
+  pendingEmail   String?
+  pendingName    String?
+  pendingCommune String?
+
+  placeId String?
+  place   Place?  @relation(fields: [placeId], references: [id])
+  claimId String?
+  claim   Claim?  @relation(fields: [claimId], references: [id])
+
+  text            String?
+  claimType       ClaimType?
+  correctionKind  CorrectionKind?
+  placeName       String?
+  placeCommune    String?
+  locationHint    String?
+  photos          ContributionPhoto[]
+  photosConsentAt DateTime?
+
+  reviewNote String?
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([userId, placeId, status])
+  @@index([pendingEmail, status])
+}
+
+model ContributionPhoto {
+  id             String       @id @default(cuid())
+  contributionId String
+  contribution   Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  key            String
+  order          Int          @default(0)
+}
+
+enum ContributionType {
+  TIP
+  CORRECTION
+  PLACE
+  PHOTOS
+}
+
+enum ContributionStatus {
+  UNCONFIRMED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CorrectionKind {
+  OUTDATED
+  WRONG
+  MISSING_DETAIL
 }
