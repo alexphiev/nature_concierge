@@ -1,79 +1,79 @@
 # 00 — Scope
 
-## Mission (5 lines)
+## Mission
 
-We are building the local guide that no office de tourisme can be: structurally neutral,
-cross-commune, opinionated, and condition-aware. It answers "où aller dans la nature,
-là, maintenant, avec mes contraintes" for the littoral between Marseille and Bandol
-(+ Sainte-Baume) at the quality of an excellent human local — because its knowledge
-is a hand-verified corpus of claims and real-time access data, not open-web mush.
+The Guide Nature de La Ciotat is a free local guide to the calanques, criques,
+sentiers and natural sites of La Ciotat and its surroundings (littoral
+Marseille–Bandol, Sainte-Baume). It answers « où aller en nature, avec mes
+envies et mes contraintes » with concrete, conditional advice: when to go,
+where to park, who it suits, what to avoid.
 
-## The MVP's single job
+The guide is **written by the people who live here and curated by
+Alexandre**: anyone can read it anonymously; locals who want to contribute
+create an account and add tips, corrections, photos or new places; every
+contribution is reviewed before publication.
 
-**Strangers find place pages, trust them, and open a WhatsApp conversation.**
+## Current state (October 2026)
 
-The MVP is a shop window plus a logbook:
+Live at https://laciotatnature.fr ("Site en cours de construction" banner).
 
-1. A public site: places index + one page per place, with a live status block
-   (fire access / water quality) and a curated subset of claims.
-2. A landing page explaining the mission, converting to a WhatsApp chat.
-3. A Postgres database implementing the corpus schema, fed by seed files in the repo.
-4. Operational scripts for daily status updates and concierge request logging.
+- **Public site**: landing with AI-ranked search (`04-landing-search.md`),
+  places index and place pages (`03-public-site.md`), About page.
+- **Admin** (`/admin`, Alexandre only): places with photos, AI-assisted claim
+  capture and review (`05-admin.md`).
+- **Corpus**: places and claims live in Postgres, entered through the admin
+  (`02-corpus-ops.md`).
+- Contributions currently go through WhatsApp links; there are no user
+  accounts yet.
 
-The concierge itself is **a human (Alexandre) on WhatsApp**. There is no AI answering
-engine in this MVP. The AI-facing value of this phase is producing a v1-compatible
-corpus while validating demand.
+## Next: community contributions
 
-## Explicit non-goals (any PR touching these is rejected)
+Specified in
+`docs/superpowers/specs/2026-10-17-community-contributions-design.md`:
+contributor accounts (email magic link), tip / correction / photo / new-place
+forms, review queue at `/admin/contributions`, attribution on published tips,
+rework of every public page around « un guide écrit par les gens d'ici », and
+removal of WhatsApp and of the unused concierge `Request` tables. The spec
+files below describe the product **as built**; update them when that work
+ships.
 
-- ❌ No AI chat/answering engine, no RAG pipeline, no embeddings.
-- ❌ No scrapers or cron automation (daily status is updated by a manual script run).
-- ❌ No user accounts, auth, or profiles.
-- ❌ No admin UI for the public-facing product (no user accounts, no CMS for
-  visitors). A **private corpus-ingestion/review tool** at `/admin` for
-  Alexandre only is in scope — see `10-corpus-ingestion.md`. It drafts
-  Place/Claim records from pasted text or photos for manual approval; it does
-  not replace the seed-file pipeline as the system of record, it feeds it.
-- ❌ No map-and-filter explorer UI. (The index page is a list, not a map product.)
-- ❌ No multi-region anything. Territory is hardcoded: littoral 13 + Var ouest + Sainte-Baume.
-- ❌ No bookings, no payments, no partnerships features.
-- ❌ No native app.
+## Non-goals
 
-## Success metrics (pre-committed — do not revise after launch)
+- ❌ No accounts for readers. Accounts exist only for contributors (email
+  magic link), with no profiles, followers, likes or comments.
+- ❌ No publication without review. Every contribution is read by Alexandre
+  first; there is no trusted-contributor bypass.
+- ❌ No generated text shown to visitors. AI ranks and drafts (search
+  relevance, claim extraction, quality score); people write what's published.
+- ❌ No scraping of third-party content. A web page, post or reel can be a
+  lead (`Source`), never published content.
+- ❌ No live status layer (fire access, water quality). It was built and
+  removed; the site links to the official fire-access map instead.
+- ❌ No map-and-filter explorer, no bookings, payments or partnerships, no
+  native app.
+- ❌ No multi-region. Territory is hardcoded to the littoral 13 + ouest Var +
+  Sainte-Baume.
 
-Concierge (3-week window from first seeded post):
+## Success metrics
 
-- ≥ 25 completed requests.
-- ≥ 20% of users return with a second request or an unprompted follow-up within 3 weeks.
-- Median time-per-answer < 30 min by request #15 (corpus reuse must be kicking in).
-- ≥ 3 unprompted referrals.
+Not defined for the community phase yet. The original concierge metrics
+(WhatsApp requests, return rate) no longer apply.
 
-Site (first 6 weeks):
+## Stack
 
-- Place pages indexed; impressions visible in Search Console for
-  "[place] ouvert aujourd'hui" / "parking [place]" query patterns.
-- Measurable page → WhatsApp clicks (event per place).
+TypeScript · Next.js 16 (App Router, Cache Components) · React 19 ·
+PostgreSQL on Neon · Prisma 7 · Tailwind CSS 4 · Vercel · pnpm. Details and
+third-party services in `08-infra.md`.
 
-If most concierge thresholds are missed at end of August, the project loses the
-prioritization decision against the resale SaaS. The metrics exist to make that
-decision mechanical, not emotional.
+## Spec map
 
-## Order of build
-
-1. `01-data-model.md` (Prisma schema + migrations)
-2. `02-corpus-ops.md` (seed pipeline + validation)
-3. `03-public-site.md` + `09-design.md` (public pages)
-4. `05-landing.md` (landing + WhatsApp CTA)
-5. `04-signal-ops.md` (daily status page inside `/admin`, zone-grouped)
-6. `06-concierge-ops.md` + `07-measurement.md` (operations)
-7. `08-infra.md` (deploy — time-boxed to 45 minutes of decisions)
-8. `10-corpus-ingestion.md` (private `/admin` capture tool — purpose, access,
-   extraction philosophy, image storage) then `11-admin-ingestion-ui.md`
-   (authoritative routes, data model, server actions for `/admin/places`,
-   `/admin/ingest`, `/admin/review`). Build after the above are live; this is a
-   productivity layer on top of a working seed pipeline, not a dependency of it.
-
-## Stack (fixed)
-
-TypeScript · Next.js 16 (App Router) · PostgreSQL · Prisma · Tailwind + shadcn/ui ·
-pnpm · EEA hosting. See `08-infra.md`.
+| File | Covers |
+|---|---|
+| `01-data-model.md` | Prisma models and data rules |
+| `02-corpus-ops.md` | How places and claims enter the corpus, quality bar |
+| `03-public-site.md` | `/lieux`, `/lieux/[slug]`, About, shared chrome |
+| `04-landing-search.md` | Landing page and Jev-powered search |
+| `05-admin.md` | `/admin`: places, photos, capture, review |
+| `06-design.md` | Visual language |
+| `07-seo.md` | SEO and AI-SEO |
+| `08-infra.md` | Hosting, services, env vars, analytics |

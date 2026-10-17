@@ -1,301 +1,91 @@
 # 01 — Data Model (Prisma + PostgreSQL)
 
-## Design rules (enforced by convention + seed validation, not only by the DB)
+`prisma/schema.prisma` is the source of truth for fields and types; this file
+explains the models and the rules the schema alone doesn't enforce. Prisma 7,
+client generated to `prisma/generated` (gitignored), Neon via
+`@prisma/adapter-pg`.
 
-1. **A claim is a decision-relevant, conditional, opinionated assertion.**
-   Description text lives on `Place.description`, never in `Claim`.
-2. **A claim without conditions is invalid** unless `decayClass = PERMANENT`
-   (topography-class facts). The seed validator enforces this.
-3. **Daily-changing facts never live in `Claim`.** They live in `StatusLog`,
-   keyed to a `SignalZone` (a source's official zone — a fire massif, a
-   monitored beach), not directly to a `Place`. Places attach to zones via
-   `ZonePlace`, assigned once at place creation. A claim may describe the *rule*
-   ("`rouge` here means 8h–17h, main beach only"); the *current level* is a
-   status resolved through the place's zone **and its `zapef` flag** — a ZAPEF
-   place stays open under restrictions at `rouge` but closes at `extreme`, like
-   everywhere else. Full resolution order in `04-signal-ops.md`; do not
-   implement status display as a plain zone lookup.
-4. **Media are leads, never content.** `Source` records where a lead came from;
-   `Claim.claimText` is always authored by us. No document storage tables exist.
-5. **Enums-as-string-arrays for taxonomy fields** (`conditions`, `audience`).
-   The taxonomy will change weekly in August; zod validates values at seed time,
-   avoiding a Postgres enum migration per learning. Stable single-value fields
-   (verdict, verification, decayClass, claimType) are real Prisma enums.
+## Rules
 
-## Prisma schema
+1. **A claim is a decision-relevant, conditional, opinionated assertion** —
+   one sentence a visitor can act on. Neutral description lives on
+   `Place.description`, never in `Claim`.
+2. **A claim needs conditions** unless `decayClass = PERMANENT`
+   (topography-class facts).
+3. **Media are leads, never content.** `Source` records where a lead came
+   from; `Claim.claimText` is written by people, never copied from the source.
+4. **Taxonomy fields are string arrays** (`conditions`, `audience`) validated
+   by zod against `src/corpus/taxonomy.ts`, so adding a value needs no
+   migration. Stable single-value fields are Prisma enums.
+5. **Only `PUBLISHED` + `isPublic` claims of `ACTIVE` places are public.**
+   Every public query filters on these (`src/corpus/queries.ts`).
+6. **Nothing is hard-deleted from the corpus.** Places and claims are retired
+   via `status = RETIRED`.
 
-```prisma
-// schema.prisma
-generator client {
-  provider = "prisma-client-js"
-}
+## Corpus
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+### `Place`
 
-// ---------- Core corpus ----------
+Identity (`slug`, `name`, `commune`, `departement` "13"|"83", `lat`, `lng`),
+`type` (string; labels in `TYPE_LABELS`: CALANQUE, PLAGE, MASSIF, SENTIER,
+SOMMET, SITE, ISLAND, SCENIC_ROAD), `governingAuthority`, `officialInfoUrl`,
+`description`, `demandRank` (lower = more demand, drives ordering),
+`googlePlaceId` (photo fallback + Maps link), `status` DRAFT | ACTIVE |
+RETIRED.
 
-model Place {
-  id                 String      @id @default(cuid())
-  slug               String      @unique // "port-d-alon"
-  name               String      // "Calanque de Port d'Alon"
-  commune            String      // "Saint-Cyr-sur-Mer"
-  departement        String      // "83" | "13" — decides which préfecture governs
-  lat                Float
-  lng                Float
-  type               PlaceType
-  governingAuthority String?     // "Ville de Saint-Cyr (Espaces Naturels)", "PN Calanques"…
-  officialInfoUrl    String?     // what the status block links to
-  description        String?     // neutral, short; NOT claims
-  demandRank         Int         @default(999) // 1 = head of demand curve; drives coverage priority
-  zapef              Boolean     @default(false) // Zone d'Accueil du Public en Forêt: official
-                                 // dérogation at `rouge`, but NOT at `extreme`. See 04-signal-ops.md.
-  status             PlaceStatus @default(DRAFT)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+**Hierarchy, two levels max**: a place can have a `parent` (e.g. Anse du Sec
+under Calanque du Mugel). Spots are listed on their parent's page; the
+parent's claims also show on the spot page as « Valable pour tout {parent} ».
 
-  claims             Claim[]     @relation("PlaceClaims")
-  alternativeOf      Claim[]     @relation("AlternativePlace")
-  zones              ZonePlace[]
-  ingestionDrafts    IngestionDraft[] // see 11-admin-ingestion-ui.md
+### `PlacePhoto` and `PlaceImage`
 
-  @@index([status, demandRank])
-}
+- `PlacePhoto`: our uploaded photos (`key` in Neon Object Storage, `credit`,
+  `order`). Shown first everywhere; see `03-public-site.md`.
+- `PlaceImage`: "images pratiques" — external image URLs (maps, schedules,
+  signage) with an optional `source`, shown at the bottom of the place page.
 
-enum PlaceType {
-  CALANQUE
-  PLAGE
-  MASSIF
-  SENTIER
-  SOMMET
-  SITE
-}
+### `Claim`
 
-enum PlaceStatus {
-  DRAFT
-  ACTIVE
-  RETIRED
-}
+`claimText`, `claimType` (ACCESS, PRACTICAL, ACTIVITY, NATURE, CROWDING,
+SUITABILITY, TIP, SAFETY, AVOID, ALTERNATIVE, DECODING), `conditions[]`,
+`audience[]`, `verdict` (GO, GO_IF, AVOID, ALTERNATIVE —
+`alternativePlaceId` required for ALTERNATIVE), `sourceId`, `verification`
+(FIELD_VERIFIED, OFFICIAL, LOCAL_TESTIMONY, HEURISTIC), `decayClass`
+(PERMANENT, SEASONAL, ANNUAL_CHECK), `verifiedOn`, `isPublic`, `status`
+(DRAFT, PUBLISHED, RETIRED), `qualityScore` (0–10, from the Jev usefulness
+question, see `02-corpus-ops.md`).
 
-model Claim {
-  id                 String       @id @default(cuid())
-  placeId            String
-  place              Place        @relation("PlaceClaims", fields: [placeId], references: [id])
+### `Source`
 
-  claimText          String       // one opinionated sentence, authored by us
-  claimType          ClaimType
-  conditions         String[]     // validated by zod against taxonomy.ts (e.g. "ete", "dimanche", "mistral", "code-rouge", "11h-13h")
-  audience           String[]     // e.g. "famille-jeunes-enfants", "pmr", "chiens", "sans-voiture", "seniors", "sportifs", "tous"
-  verdict            Verdict
-  alternativePlaceId String?      // required when verdict = ALTERNATIVE
-  alternativePlace   Place?       @relation("AlternativePlace", fields: [alternativePlaceId], references: [id])
+Where a claim's knowledge came from: `type` (string, e.g. OFFICIAL,
+PERSONAL_VISIT, LOCAL_PERSON, OT_CONVERSATION, *_LEAD), `urlOrRef`,
+`dateCollected`, `reliability` 1–3, `notes`.
 
-  sourceId           String
-  source             Source       @relation(fields: [sourceId], references: [id])
-  verification       Verification
-  decayClass         DecayClass
-  verifiedOn         DateTime     // last date the claim was checked true
-  isPublic           Boolean      @default(false) // giveaway line: only hook claims render on the site
-  status             ClaimStatus  @default(DRAFT)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+## Ingestion (admin capture)
 
-  requestsUsedIn     RequestClaimUsed[]
-  requestsCreatedBy  RequestClaimCreated[]
+- `IngestionDraft`: one capture session, scoped to one `Place`; status
+  PENDING_REVIEW | ERROR | APPROVED | REJECTED, rolled up from its blocks.
+- `IngestionBlock`: one source of evidence (hint, type, pasted text, images as
+  `Bytes[]`, transcript), the model output (`draftSource`, `draftClaims` JSON
+  with stable ids and per-claim resolution), and the `Source` created at first
+  approval. Status PENDING_REVIEW | ERROR | RESOLVED.
 
-  @@index([placeId, status])
-}
+Details in `05-admin.md`.
 
-enum ClaimType {
-  ACCESS          // rules, entrances, hours
-  CROWDING        // saturation patterns
-  SUITABILITY     // audience fit (stroller, PMR, kids, dogs)
-  TIP             // micro-logistics, temporal windows
-  AVOID           // negative verdicts, failure modes
-  ALTERNATIVE     // dispersal edges
-  DECODING        // institutional decoding ("code rouge here means…")
-}
+## Search
 
-enum Verdict {
-  GO
-  GO_IF
-  AVOID
-  ALTERNATIVE
-}
+`SearchShortcut`: the landing's suggestion buttons (`label`, `intro`,
+`bgColor`, `fgColor`, `order`, `active`). Seeded, no admin UI. See
+`04-landing-search.md`.
 
-enum Verification {
-  FIELD_VERIFIED   // we were there
-  OFFICIAL         // préfecture, mairie, park — in writing
-  LOCAL_TESTIMONY  // told by a local pro/resident, not yet verified by us
-  HEURISTIC        // pattern we believe but haven't verified
-}
+## Legacy — to be removed
 
-enum DecayClass {
-  PERMANENT     // topography, exposure — never expires
-  SEASONAL      // re-verify each pre-season
-  ANNUAL_CHECK  // rules that change by arrêté — check once a year
-  // note: no DAILY. Daily facts are StatusLog rows by design.
-}
+`Request`, `RequestClaimUsed`, `RequestClaimCreated` and the `Channel` /
+`Outcome` enums were the WhatsApp concierge log. Nothing reads or writes them;
+they are dropped as part of the community contributions work.
 
-enum ClaimStatus {
-  DRAFT
-  PUBLISHED
-  RETIRED
-}
+## Taxonomy
 
-model Source {
-  id            String     @id @default(cuid())
-  type          SourceType
-  urlOrRef      String?    // URL, "conversation OT La Ciotat 24/07", email ref…
-  dateCollected DateTime
-  reliability   Int        @default(2) // 1–3, subjective
-  notes         String?
-  claims        Claim[]
-}
-
-enum SourceType {
-  OFFICIAL
-  PERSONAL_VISIT
-  LOCAL_PERSON
-  OT_CONVERSATION
-  REDDIT_LEAD
-  INSTAGRAM_LEAD
-  FACEBOOK_LEAD
-  PRESS_LEAD
-}
-
-// ---------- Real-time layer (separate lane, automatable later) ----------
-
-model SignalSource {
-  id             String     @id @default(cuid())
-  signalType     SignalType
-  provider       String     // "Préfecture du Var", "ARS baignades", "ATMO Sud"
-  url            String
-  updateSchedule String     // "daily ~18h, veille pour lendemain"
-  format         String     // "carte web", "PDF", "API"
-  active         Boolean    @default(true)
-
-  zones          SignalZone[]
-}
-
-// The unit you actually see on the official map/bulletin — a fire-risk massif
-// zone, a monitored beach, an air-quality sector. Créated rarely (setup or
-// when a new zone type appears); daily updates target zones, not places.
-model SignalZone {
-  id             String       @id @default(cuid())
-  signalSourceId String
-  signalSource   SignalSource @relation(fields: [signalSourceId], references: [id])
-
-  label          String       // matches the official naming exactly, e.g. "SAINTE BAUME"
-  externalRef    String?      // the official identifier (massif number / WFS feature id) — the
-                               // join key for automated ingestion later. See 04-signal-ops.md.
-  parseNotes     String       // decoding rule for this zone, e.g. Port d'Alon red-code detail
-                               // also used as the pre-fill template for the daily detail field
-  active         Boolean      @default(true)
-
-  places         ZonePlace[]
-  statusLogs     StatusLog[]
-}
-
-// Assigned once at setup (or when a new place is added under an existing
-// zone), never touched in the daily flow.
-model ZonePlace {
-  signalZoneId String
-  placeId      String
-  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
-  place        Place      @relation(fields: [placeId], references: [id])
-
-  @@id([signalZoneId, placeId])
-}
-
-enum SignalType {
-  FIRE_ACCESS
-  WATER_QUALITY
-  AIR_QUALITY
-  PARKING
-  RESERVATION_QUOTA
-}
-
-model StatusLog {
-  id           String     @id @default(cuid())
-  signalZoneId String
-  signalZone   SignalZone @relation(fields: [signalZoneId], references: [id])
-
-  forDate      DateTime   @db.Date // date the status applies to (tomorrow, for 18h fire checks)
-  value        String     // normalized: "vert" | "jaune" | "orange" | "rouge" | "extreme"
-                          // (fire) / "excellente" … "interdite" (water) — see 04-signal-ops.md
-  detail       String?    // "8h–17h, plage principale seulement" — pre-filled from parseNotes, editable
-  confirmedAt  DateTime   @default(now()) // set only on explicit save, not on silent carry-forward
-
-  @@unique([signalZoneId, forDate])
-  @@index([forDate])
-}
-
-// ---------- Concierge log (the validation instrument) ----------
-
-model Request {
-  id               String        @id @default(cuid())
-  date             DateTime      @default(now())
-  channel          Channel
-  userRef          String        // initials/pseudo — return detection only
-  requestText      String        // verbatim
-  requestType      String?       // tagged against OT top-10 taxonomy
-  constraintsGiven String[]      // same vocabulary as Claim.conditions/audience
-  timeSpentMin     Int?
-  outcome          Outcome       @default(ANSWERED)
-  outcomeNotes     String?
-
-  placesRecommended String[]     // place slugs (kept loose on purpose)
-  claimsUsed        RequestClaimUsed[]
-  claimsCreated     RequestClaimCreated[]
-}
-
-model RequestClaimUsed {
-  requestId String
-  claimId   String
-  request   Request @relation(fields: [requestId], references: [id])
-  claim     Claim   @relation(fields: [claimId], references: [id])
-  @@id([requestId, claimId])
-}
-
-model RequestClaimCreated {
-  requestId String
-  claimId   String
-  request   Request @relation(fields: [requestId], references: [id])
-  claim     Claim   @relation(fields: [claimId], references: [id])
-  @@id([requestId, claimId])
-}
-
-enum Channel {
-  WHATSAPP
-  FORM
-  REDDIT
-  FACEBOOK
-  CAMPING_QR
-  OTHER
-}
-
-enum Outcome {
-  ANSWERED
-  USER_WENT
-  USER_REPORTED_BACK
-  RETURNED_NEW_REQUEST
-  REFERRED_SOMEONE
-  SILENT
-}
-```
-
-## Taxonomy file (single source of truth for string arrays)
-
-`src/corpus/taxonomy.ts` exports `CONDITIONS`, `AUDIENCES`, `REQUEST_TYPES` as
-`const` arrays + zod enums. Seed validation and (later) any UI import from here.
-Adding a taxonomy value = one-line PR, no migration.
-
-## Derived metrics (implemented as SQL views or script queries, not tables)
-
-- **Corpus reuse rate**: avg `claimsUsed` per request over time (should rise).
-- **Gap rate**: requests with ≥1 `claimsCreated` (should fall).
-- **Return rate**: distinct `userRef` with ≥2 requests / distinct `userRef`.
-- **Coverage depth**: published claims per ACTIVE place vs `demandRank`.
+`src/corpus/taxonomy.ts` exports `CONDITIONS` and `AUDIENCES` (plus
+`REQUEST_TYPES`, legacy) as `const` arrays + zod enums, used by seed
+validation and the ingestion schema.

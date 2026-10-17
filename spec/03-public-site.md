@@ -1,106 +1,102 @@
-# 03 — Public Site (places index + place pages)
+# 03 — Public Site (places, place pages, About)
 
-Next.js 16, App Router, TypeScript. Visual language: see `09-design.md`.
-All user-facing copy in French.
+All copy in French. Visual language in `06-design.md`, SEO in `07-seo.md`.
+The community rework of these pages is specified in
+`docs/superpowers/specs/2026-10-17-community-contributions-design.md`; this
+file describes what is built.
 
 ## Routes
 
-```
-/                      → landing (see 05-landing.md)
-/lieux                 → places index
-/lieux/[slug]          → place detail (the SEO unit)
-/statut                → (optional, phase 2 of MVP) all-territory status board
-```
+| Route | Page |
+|---|---|
+| `/` | Landing + search (`04-landing-search.md`) |
+| `/lieux` | Places index |
+| `/lieux/[slug]` | Place page (the SEO unit) |
+| `/lieux/[slug]/photo?i=N` | Redirect to the Nth Google Places photo (key never exposed) |
+| `/a-propos` | About |
+| `/places/*` | 308 → `/lieux/*` |
 
-## Rendering strategy (the one architectural decision that matters)
+Route groups: `app/(landing)` (landing, About) and `app/(public)` (places)
+share `SiteHeader`, `SiteFooter` and `ConstructionBanner` (hidden when
+`SHOW_CONSTRUCTION_BANNER=false`).
 
-- Place pages are **statically generated** (`generateStaticParams` over ACTIVE
-  places) — the corpus part changes rarely.
-- The **status block is never stale-served**: implement as a Server Component
-  reading today's/tomorrow's `StatusLog` (resolved via the place's `SignalZone`,
-  see `04-signal-ops.md`) with `revalidate = 900` (15 min) via ISR,
-  OR static shell + small `/api/status/[slug]` fetched client-side. Choose ISR
-  first (simpler, SEO-visible); switch only if update latency hurts.
-- Saving the daily status page (`/admin/statut`, see `04-signal-ops.md`)
-  triggers `revalidatePath('/lieux/[slug]')` for every place under a
-  changed zone, via a revalidation call from that admin action (shared
-  secret / same session, no separate token needed).
+## Rendering
 
-## Place page structure (top to bottom)
+`cacheComponents` is on. Place pages are prerendered for every ACTIVE place
+(`generateStaticParams`); all corpus reads are `"use cache"` with the
+`corpus` tag (`02-corpus-ops.md`). Place pages and the index have no
+per-request data today; only the landing's search shortcuts are dynamic.
 
-1. **Status block — the signature element (see 09-design.md).**
-   - Today's (and after ~19h, tomorrow's) fire-access state with the exact
-     local meaning, not just the level: "Rouge — ouvert 8h–17h, plage principale
-     uniquement, parking réduit". Resolution runs through the place's zone **and
-     its ZAPEF status** per `04-signal-ops.md` — a `rouge` day means "closed" for
-     a normal place and "open, restricted" for a ZAPEF site like Port d'Alon,
-     while `extreme` means closed for both. Getting this wrong in either
-     direction (telling people a ZAPEF site is shut, or an ordinary massif is
-     open) is the single worst failure this page can produce.
-   - On `orange` / `rouge` / `extreme` days, always render the active-fire
-     caveat: « En cas de fumée ou de consignes des secours sur place,
-     suivez-les même si la carte indique autre chose. » The daily map is a
-     scheduled forecast, not a live fire feed.
-   - Water quality when covered.
-   - `Vérifié le {confirmedAt} · Source officielle : {provider}` + link to
-     `officialInfoUrl`.
-   - **Loud failure state is first-class**: if no StatusLog row for the relevant
-     date → render "Données non vérifiées aujourd'hui — consultez la carte
-     officielle" in a distinct visual state. Never default to green. Never
-     render a stale row without its date visible.
-2. **Identity**: name, commune, type, short neutral description, photo (ours).
-3. **Le conseil du guide** — public claims only (`isPublic = true`), rendered as
-   self-contained quotable sentences grouped by theme (Accès · Affluence ·
-   Pour qui · À éviter). 2–3 hook claims per place maximum.
-4. **Concierge CTA**: "Besoin d'un plan sur mesure (enfants, mistral, plan B) ?
-   Écrivez-moi sur WhatsApp — gratuit." → wa.me link with pre-filled message
-   including the place name. Fires analytics event `whatsapp_click {slug}`.
-5. **Alternatives teaser** (if ALTERNATIVE claims exist): "Si c'est fermé ou
-   saturé → {alternative place link}" — this is the dispersal thesis rendered,
-   and excellent internal linking.
+## Places index `/lieux`
 
-## Giveaway line (business rule, enforce in queries)
+Coverage line, H1 « Les lieux », grid of `PlaceCard`s for ACTIVE places by
+`demandRank`. Spots are hidden when their parent is ACTIVE (they're listed on
+the parent's page). JSON-LD `ItemList`.
 
-Public pages expose: full status layer + `isPublic` hook claims.
-Reserved for concierge: the conditional depth (full claim set, audience-specific
-arbitration, plan Bs). Query for pages filters `isPublic = true AND status =
-PUBLISHED`. No API endpoint exposes the full corpus.
+`PlaceCard`: cover photo (or hatch panel + type label), type, name, commune.
 
-## Web SEO
+## Place page `/lieux/[slug]`
 
-- Metadata per place targeting real query patterns:
-  title `"{Name} : ouvert aujourd'hui ? Accès, parking, affluence — {commune}"`;
-  description built from status + top hook claim.
-- French slugs, canonical URLs, `sitemap.ts` (ACTIVE places + landing + index),
-  `robots.ts`.
-- JSON-LD per page: `Place` (geo, containedInPlace commune) + `FAQPage` built
-  from hook claims phrased as Q/A ("Peut-on se garer facilement à Port d'Alon ?").
-- `lastmod` in sitemap from max(claim.updatedAt, latest StatusLog) — freshness
-  is our ranking story.
-- Internal linking: index → places; place → alternatives; place → landing.
+Top to bottom:
 
-## LLM SEO (being citable by assistants is a distribution channel)
+1. Breadcrumb (Les lieux / parent / place).
+2. Header: type · commune (département), H1 name, meta (spot count, « Géré
+   par {governingAuthority} »), « Itinéraire Google Maps » button.
+3. **Gallery** (`PlaceGallery`): one main photo + a grid of squares, with a
+   full-screen lightbox and photo credits.
+4. Main column:
+   - « À propos »: `description` with « Lire la suite ».
+   - « Conseils du guide » (`ClaimList`): public claims grouped by
+     `claimType` in a fixed order, each group with an icon and count; SAFETY
+     and AVOID get a risk accent, ALTERNATIVE a sea accent. Hidden when empty.
+   - « Valable pour tout {parent} »: the parent's public claims, on spots.
+   - Spots (`SpotCard`s), for a parent place.
+   - « À proximité »: the 4 nearest ACTIVE places within 25 km
+     (`src/corpus/nearby.ts`).
+   - « Images pratiques » (`PracticalImages`).
+5. Sidebar (sticky on desktop, first on mobile): WhatsApp « plan sur
+   mesure » card (`WhatsAppCTA`), « Carte officielle ↗ » (when
+   `officialInfoUrl`) and « Google Maps ↗ » links, `AlternativeCallout`
+   (« Si c'est fermé ou saturé → {place} » for ALTERNATIVE claims).
+6. Mobile: sticky `WhatsAppBar`.
 
-- Clean semantic HTML: one `<h1>`, status in a `<section aria-label="Statut du jour">`,
-  claims as short standalone `<p>` sentences (no mid-sentence spans/links).
-- `llms.txt` at root: mission, territory, page list, update cadence, contact.
-- Visible plain-text dateline on every page: "Statut vérifié le 21 juillet 2026 à 18h12."
-- Never gate content behind JS-only rendering; status must be in server HTML.
+The WhatsApp CTAs are removed by the community contributions work.
 
-## Index page `/lieux`
+## Photos
 
-List (not map) of ACTIVE places ordered by `demandRank`: name, commune, type,
-today's status chip, one hook claim. A single quiet line at top states territory
-coverage honestly: "Couverture actuelle : littoral Marseille–Bandol et Sainte-Baume.
-D'autres lieux arrivent." Empty/thin coverage is stated, not hidden.
+Composition (`src/corpus/place-photos.ts`):
 
-## Components (shadcn/ui base, styled per 09-design.md)
+- Uploaded `PlacePhoto`s first, by `order`, served from Neon Object Storage
+  through `next/image`.
+- Then Google Places photos (`/lieux/[slug]/photo?i=k`) only until the gallery
+  reaches 5 (`MIN_GALLERY_PHOTOS`); Google is not called when 5+ photos are
+  uploaded.
+- Cards use the first uploaded photo, else the first Google photo, else the
+  hatch placeholder (never a stock image).
+- Google details (photos + Maps link) are fetched server-side in
+  `src/corpus/google-places.ts`, cached for weeks (`cacheLife("weeks")`;
+  failures are cached for minutes only). The photo route uses
+  `skipHttpRedirect=true` and redirects to Google's keyless `photoUri`, so
+  `GOOGLE_PLACES_API_KEY` never reaches the browser. Google attributions are
+  displayed as credits.
 
-`StatusBlock`, `StatusChip`, `ClaimList`, `ClaimItem`, `WhatsAppCTA`,
-`AlternativeCallout`, `PlaceCard`, `Dateline`, `SiteFooter` (who we are, sources
-honesty note, link to méthodologie section on landing).
+## About `/a-propos`
 
-## Accessibility & perf floor
+`AboutContent`: who runs the guide (portrait placeholder), what it offers
+(place pages, WhatsApp advice, a growing guide), commitments, Tipeee support
+block, FAQ, final CTA band.
 
-Keyboard focus visible, color-independent status (icon + label, never color alone),
-reduced-motion respected, images `next/image` with dimensions, LCP < 2.5s on 4G.
+## Shared chrome
+
+- `SiteHeader`: logo + « Guide Nature de La Ciotat », « Tous les lieux »,
+  « À propos », « Soutenir » (Tipeee); `MobileMenu` on small screens.
+- `SiteFooter`: « Un guide tenu par Alexandre… », project story link, Tipeee,
+  fire-risk line linking to the official access map.
+- Placeholder links still to fill in `src/components/landing/shared.ts`:
+  `STORY_HREF`, `TIPEEE_HREF`, `ACCESS_MAP_HREF` are `#`.
+
+## Accessibility & performance floor
+
+Visible keyboard focus, color never the only signal, `prefers-reduced-motion`
+respected, images with dimensions (no layout shift), mobile-first at 375px,
+safe-area insets on notched phones, LCP < 2.5s on 4G.

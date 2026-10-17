@@ -1,48 +1,53 @@
-# 08 — Infra (time-boxed: 45 minutes of decisions, total)
+# 08 — Infra
 
-## Decisions
+## Services
 
-- **Domain**: one .fr, French name, chosen fast; the brand test is later, the
-  SEO clock starts now. Redirect www → apex.
-- **Hosting**: Vercel (EU region for functions where selectable) — accepting the
-  pragmatic trade for MVP speed. If strict EEA posture is preferred: Scaleway
-  or OVH + coolify. Do not spend more than 15 minutes on this choice; the site
-  is public content, the sensitive asset is the DB.
-- **PostgreSQL**: Neon (EU region) or Scaleway managed PG. One database,
-  `main` branch only. Connection via Prisma with pooling (Neon pooler / pgbouncer).
-- **Analytics**: Plausible EU cloud (fastest) — revisit only if cost annoys.
-- **WhatsApp**: dedicated number (dual-SIM or eSIM), WhatsApp Business app
-  (greeting message + away message configured per 06 response promise).
+| Concern | Choice |
+|---|---|
+| Domain | laciotatnature.fr |
+| Hosting | Vercel |
+| Database | Neon Postgres (EU, eu-central-1), Prisma 7 via `@prisma/adapter-pg` |
+| Object storage | Neon Object Storage (S3-compatible), bucket `place-photos` (`public_read`), via `@aws-sdk/client-s3` |
+| Claim extraction | Google Gemini (`@google/genai`), model from `GEMINI_MODEL` |
+| Search ranking + claim quality score | TypeSafe Jev (`@typesafe-ai/sdk`) |
+| Place photos fallback, Maps links, geocoding | Google Places API (New) + Geocoding API |
+| Commune autocomplete | api-adresse.data.gouv.fr (free, no key) |
+| Analytics | Vercel Web Analytics (`<Analytics />` in the root layout); no custom events |
+| Search monitoring | Google Search Console, Bing Webmaster Tools (`07-seo.md`) |
+
+Planned by the community contributions work: Better Auth (contributor
+sessions, tables in Neon) and Resend (magic-link and decision emails).
 
 ## Environments
 
-`local` and `production` share a single Neon database (EU region) — local
-dev connects via `DATABASE_URL` in `.env.local`. No staging, no per-branch
-Postgres. The MVP's blast radius is one person's reputation, protected by
-`pnpm corpus:check` in CI.
+`local` and `production` share one Neon database; local dev connects with
+`DATABASE_URL` in `.env.local` (gitignored). A Neon branch can be used for
+isolated work. No staging.
 
-## CI (GitHub Actions)
+## Environment variables
 
-On PR: typecheck, lint, `pnpm corpus:check`, build.
-On main: same + deploy + `pnpm corpus:seed` against prod (idempotent) — seed
-runs as a deploy step so corpus edits ship like code.
+Template in `.env.dist`.
 
-## Secrets
+| Variable | Used by |
+|---|---|
+| `DATABASE_URL` | Prisma |
+| `NEXT_PUBLIC_SITE_URL` | canonicals, sitemap, `llms.txt`, OG |
+| `REVALIDATE_TOKEN` | `POST /api/revalidate` (Bearer) |
+| `ADMIN_PASSWORD` | `/admin` Basic Auth (`proxy.ts`) |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | claim extraction |
+| `TYPESAFE_API_KEY` | Jev search and quality score |
+| `GOOGLE_PLACES_API_KEY` | Places photos/details and Geocoding (server-only) |
+| `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Neon Object Storage |
+| `SHOW_CONSTRUCTION_BANNER` | `false` hides the banner |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | WhatsApp links (removed by the contributions work) |
 
-`DATABASE_URL`, `GEMINI_API_KEY` (extraction calls, see `10-corpus-ingestion.md`),
-`ADMIN_PASSWORD` (or session secret, see `10-corpus-ingestion.md`), analytics
-domain key. Admin-triggered revalidation reuses the admin session — no
-separate revalidation token needed. Any additional third-party API key beyond
-Gemini is scope creep made visible; there is no scraping and no other model
-provider in the MVP.
+## Checks
+
+No CI pipeline. Before merging: `pnpm test`, `pnpm lint`, `pnpm build`
+(type-checks). Production is deployed on Vercel. Migrations are applied with
+`pnpm exec prisma migrate deploy`.
 
 ## Backups
 
-Provider's automated PG backups + weekly `pg_dump` artifact to object storage.
-The corpus itself is already in git; the irreplaceable data is **StatusLog +
-Request** — verify those two tables restore correctly, once.
-
-## Cost ceiling
-
-< €25/month all-in at MVP scale. Anything above that number requires deleting
-something, not budgeting more.
+Neon's automated backups and point-in-time restore. Uploaded photos live only
+in the bucket; there is no separate copy.
