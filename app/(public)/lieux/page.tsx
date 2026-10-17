@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { ContributionBanner } from "@/src/components/contribute/ContributionBanner";
 import { getActivePlaces } from "@/src/corpus/queries";
 import { resolveCoverPhoto } from "@/src/corpus/place-photos";
 import { PlaceCard } from "@/src/components/PlaceCard";
@@ -41,6 +43,9 @@ export default async function PlacesIndexPage() {
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
+      <Suspense fallback={null}>
+        <ContributionBanner />
+      </Suspense>
       <p className="text-sm text-encre/70">
         Couverture actuelle : littoral Marseille–Bandol et Sainte-Baume.
         D&apos;autres lieux arrivent.

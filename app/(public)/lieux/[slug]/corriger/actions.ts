@@ -3,6 +3,7 @@
 import { prisma } from "@/src/corpus/db";
 import { getPlaceBySlug } from "@/src/corpus/queries";
 import { CorrectionInputSchema } from "@/src/contributions/schema";
+import { readFormValues } from "@/src/contributions/form-values";
 import { submitContribution, type FormState } from "@/src/contributions/submit";
 
 export async function submitCorrection(
@@ -11,13 +12,7 @@ export async function submitCorrection(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const field = (key: string) => {
-    const v = formData.get(key);
-    return typeof v === "string" ? v : "";
-  };
-  const values = Object.fromEntries(
-    ["correctionKind", "text", "name", "commune", "email", "consent"].map((k) => [k, field(k)]),
-  );
+  const values = readFormValues(formData, ["correctionKind", "text", "name", "commune", "email", "consent"]);
   const rawKind = formData.get("correctionKind");
   const parsed = CorrectionInputSchema.safeParse({
     correctionKind: typeof rawKind === "string" && rawKind ? rawKind : undefined,

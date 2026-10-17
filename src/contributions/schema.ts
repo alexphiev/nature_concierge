@@ -36,6 +36,17 @@ export const CorrectionInputSchema = z.object({
   text: z.string().trim().min(10).max(1000),
 });
 
+export const PlaceProposalSchema = z.object({
+  placeName: z.string().trim().min(2).max(120),
+  placeCommune: z.string().trim().min(2).max(80),
+  locationHint: z
+    .string()
+    .trim()
+    .transform((v) => v || null)
+    .pipe(z.string().max(500).nullable()),
+  text: z.string().trim().min(10).max(1000),
+});
+
 export const DisplayNameSchema = z.string().trim().min(2).max(40);
 
 export const CommuneSchema = z

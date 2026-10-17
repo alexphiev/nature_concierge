@@ -2,6 +2,7 @@
 
 import { getPlaceBySlug } from "@/src/corpus/queries";
 import { TipInputSchema } from "@/src/contributions/schema";
+import { readFormValues } from "@/src/contributions/form-values";
 import { submitContribution, type FormState } from "@/src/contributions/submit";
 
 export async function submitTip(
@@ -9,13 +10,7 @@ export async function submitTip(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const field = (key: string) => {
-    const v = formData.get(key);
-    return typeof v === "string" ? v : "";
-  };
-  const values = Object.fromEntries(
-    ["claimType", "text", "name", "commune", "email", "consent"].map((k) => [k, field(k)]),
-  );
+  const values = readFormValues(formData, ["claimType", "text", "name", "commune", "email", "consent"]);
   const rawTheme = formData.get("claimType");
   const parsed = TipInputSchema.safeParse({
     claimType: typeof rawTheme === "string" && rawTheme ? rawTheme : undefined,
