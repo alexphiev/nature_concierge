@@ -48,6 +48,22 @@ export function tipPublishedEmail(input: {
   };
 }
 
+export function photosPublishedEmail(input: {
+  placeName: string;
+  placeUrl: string;
+  count: number;
+  note: string | null;
+}): EmailContent {
+  const single = input.count === 1;
+  const note = input.note ? `\n\nMon commentaire :\n${input.note}` : "";
+  return {
+    subject: single
+      ? `Votre photo sur ${input.placeName} est en ligne, merci !`
+      : `Vos photos sur ${input.placeName} sont en ligne, merci !`,
+    text: `Bonjour,\n\n${single ? "Votre photo est maintenant visible" : "Vos photos sont maintenant visibles"} sur la page du lieu :\n${input.placeUrl}${note}\n\nMerci de partager ce que vous avez vu sur le terrain.\n\n${SIGNATURE}`,
+  };
+}
+
 export function contributionRejectedEmail(input: { note: string | null }): EmailContent {
   const reason = input.note
     ? `« ${input.note} »`

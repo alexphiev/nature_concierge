@@ -10,6 +10,7 @@ import {
   contributionRejectedEmail,
   correctionAcceptedEmail,
   placeAcceptedEmail,
+  photosPublishedEmail,
   tipPublishedEmail,
 } from "@/src/email/templates";
 import { uniquePlaceSlug } from "@/src/corpus/slug";
@@ -228,6 +229,75 @@ export async function createPlaceDraft(contributionId: string, formData: FormDat
   }
   revalidatePath("/admin/contributions");
   redirect(`/admin/places/${placeId}`);
+}
+
+export async function publishPhotos(contributionId: string, formData: FormData): Promise<void> {
+  await assertAdmin();
+  const contribution = await prisma.contribution.findUnique({
+    where: { id: contributionId },
+    include: { user: true, place: true, photos: true },
+  });
+  if (
+    !contribution ||
+    contribution.type !== "PHOTOS" ||
+    contribution.status !== "PENDING" ||
+    !contribution.place
+  ) {
+    return;
+  }
+
+  const keepIds = new Set(formData.getAll("keep").map(String));
+  const kept = contribution.photos
+    .filter((p) => keepIds.has(p.id))
+    .sort((a, b) => a.order - b.order);
+  if (kept.length === 0) return;
+  const dropped = contribution.photos.filter((p) => !keepIds.has(p.id));
+  const note = readNote(formData);
+  const placeId = contribution.place.id;
+
+  const published = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.contribution.updateMany({
+      where: { id: contribution.id, status: "PENDING", type: "PHOTOS" },
+      data: { status: "APPROVED", reviewedAt: new Date(), reviewNote: note },
+    });
+    if (claimed.count === 0) return false;
+    const last = await tx.placePhoto.aggregate({ where: { placeId }, _max: { order: true } });
+    const start = (last._max.order ?? -1) + 1;
+    await tx.placePhoto.createMany({
+      data: kept.map((p, i) => ({
+        placeId,
+        key: p.key,
+        credit: contribution.user?.name ?? null,
+        order: start + i,
+      })),
+    });
+    await tx.contributionPhoto.deleteMany({
+      where: { id: { in: dropped.map((p) => p.id) } },
+    });
+    return true;
+  });
+  if (!published) return;
+
+  updateTag("corpus");
+  if (dropped.length > 0) {
+    try {
+      await deletePlacePhotos(dropped.map((p) => p.key));
+    } catch (e) {
+      console.error("Failed to delete unkept contribution photo objects", e);
+    }
+  }
+  if (contribution.user) {
+    await notify(
+      contribution.user.email,
+      photosPublishedEmail({
+        placeName: contribution.place.name,
+        placeUrl: `${SITE_URL}/lieux/${contribution.place.slug}`,
+        count: kept.length,
+        note,
+      }),
+    );
+  }
+  revalidatePath("/admin/contributions");
 }
 
 export async function rejectContribution(

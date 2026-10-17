@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { prisma } from "@/src/corpus/db";
 import { CorrectionReview } from "./CorrectionReview";
+import { PhotosReview } from "./PhotosReview";
 import { PlaceReview } from "./PlaceReview";
 import { RejectForm, ReviewHeader, cardClass } from "./ReviewParts";
 import { TipReview } from "./TipReview";
@@ -16,7 +17,7 @@ export default async function AdminContributionsPage() {
   const contributions = await prisma.contribution.findMany({
     where: { status: "PENDING" },
     orderBy: { createdAt: "asc" },
-    include: { user: true, place: true, claim: true },
+    include: { user: true, place: true, claim: true, photos: { orderBy: { order: "asc" } } },
   });
 
   if (contributions.length === 0) {
@@ -33,12 +34,13 @@ export default async function AdminContributionsPage() {
             return <CorrectionReview key={c.id} c={c} />;
           case "PLACE":
             return <PlaceReview key={c.id} c={c} />;
+          case "PHOTOS":
+            return <PhotosReview key={c.id} c={c} />;
           default:
             return (
               <li key={c.id} className={cardClass}>
                 <ReviewHeader c={c} />
                 {c.text && <p className="whitespace-pre-wrap text-sm">{c.text}</p>}
-                <p className="text-sm text-encre/60">Bientôt</p>
                 <RejectForm id={c.id} />
               </li>
             );
