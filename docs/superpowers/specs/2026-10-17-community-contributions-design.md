@@ -24,8 +24,9 @@ Scope: all public pages, contributor accounts, the contribution data model and
 flows, decision emails, and a **minimal** admin queue to approve/reject. No
 other admin page changes.
 
-This reverses the `spec/00-scope.md` non-goal "No user accounts, auth, or
-profiles" (see "Spec documents to update").
+`spec/00-scope.md` already reflects this direction (accounts only for
+contributors); the `spec/` files describe the site as built and are updated
+when this ships (see "Spec documents to update").
 
 ## Decisions
 
@@ -327,7 +328,7 @@ Auth's built-in rate limiting covers magic-link sends.
   Official-source and freshness wording for fire access stays as is.
 - « sans compte à créer » → « Un compte seulement pour contribuer ».
 - No WhatsApp mention anywhere.
-- Existing copy rules from `spec/05` still apply: sentence case, plain verbs,
+- Existing copy rules from `spec/04-landing-search.md` still apply: sentence case, plain verbs,
   no « IA », no « plateforme ».
 
 ### Honest counts
@@ -388,7 +389,11 @@ All counts come from the DB and are never padded.
    Contribuez → » (`/contribuer`).
 2. **Search empty/error state**: « Le guide n'a pas encore de conseil fiable
    pour cette demande. Vous connaissez un lieu qui irait ? Proposez-le → ».
-   (Replaces the « Je n'ai pas encore… » intro in `search-service.ts`.)
+   (Replaces the « Je n'ai pas encore… » intro in `search-service.ts`.) The
+   non-functional « Me prévenir » email form in the empty state is removed.
+   Under results, « Précisez votre demande » focuses the search input and
+   « dites-moi ce qui manque » becomes « Un lieu manque ? Proposez-le » →
+   `/contribuer/nouveau-lieu` (both are `#` today).
 3. **« Tous les lieux du guide »**: cards show tip count; sub « Chaque fiche
    rassemble les conseils des gens d'ici : accès, parking, horaires, vent,
    avec qui y aller. »
@@ -523,8 +528,12 @@ Behind existing Basic Auth. `AdminNav` gets « Contributions ({n}) » with the
   `BETTER_AUTH_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_EMAIL`.
 - **Removed**: `src/components/WhatsAppCTA.tsx` (`WhatsAppCTA`,
   `WhatsAppBar`), `ASK_HREF` / `PROPOSE_PLACE_HREF` / `SHARE_TIP_HREF` in
-  `src/components/landing/shared.ts`, and `NEXT_PUBLIC_WHATSAPP_NUMBER` usage.
-  The `Request` model and `Channel.WHATSAPP` stay (historical data).
+  `src/components/landing/shared.ts`, and `NEXT_PUBLIC_WHATSAPP_NUMBER`
+  (code and `.env.dist`).
+- **Dropped tables**: the unused concierge log — `Request`,
+  `RequestClaimUsed`, `RequestClaimCreated` and the `Channel` / `Outcome`
+  enums — in one migration, plus `REQUEST_TYPES` in
+  `src/corpus/taxonomy.ts` if nothing else uses it.
 - **Testing**: no new automated tests. Existing tests stay green (update any
   that assert WhatsApp or old copy, e.g. `llms-txt.test.ts`). The plan ends
   with written manual test steps for each flow: tip signed-in, tip signed-out
@@ -532,15 +541,20 @@ Behind existing Basic Auth. `AdminNav` gets « Contributions ({n}) » with the
   photos incl. HEIC, new place, approve/reject each type, decision emails,
   account edit and deletion, empty states and honest-count thresholds.
 
-## Spec documents to update
+## Spec documents to update (last task of the implementation)
 
-- `spec/00-scope.md`: replace the non-goal « No user accounts, auth, or
-  profiles » with « Accounts only for contributors (email magic link); no
-  profiles, no social features »; replace the WhatsApp concierge framing of
-  the MVP job with the community-guide framing; point to this spec.
-- `spec/03-public-site.md` §4 (Concierge CTA) and `spec/05-landing.md`
-  (WhatsApp CTA, « Pas de compte » trust line): mark as superseded by this
-  spec.
+- `spec/00-scope.md`: « Current state » and « Next » sections.
+- `spec/01-data-model.md`: auth tables, `Contribution`, attribution fields;
+  remove the « Legacy » section.
+- `spec/02-corpus-ops.md`: contributions as an entry path (no longer
+  "planned").
+- `spec/03-public-site.md`, `spec/04-landing-search.md`: pages as reworked
+  (new routes, CTAs, attribution, no WhatsApp).
+- `spec/05-admin.md`: `/admin/contributions`.
+- `spec/07-seo.md`: new indexed pages, root description and `llms.txt` caveat
+  resolved.
+- `spec/08-infra.md`: Better Auth, Resend, new env vars, WhatsApp var
+  removed.
 
 ## Out of scope
 
