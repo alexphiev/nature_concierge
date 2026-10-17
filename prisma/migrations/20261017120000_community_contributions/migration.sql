@@ -1,4 +1,3 @@
-◇ injected env (0) from .env.local // tip: ⌘ enable debugging { debug: true }
 -- CreateEnum
 CREATE TYPE "ContributionType" AS ENUM ('TIP', 'CORRECTION', 'PLACE', 'PHOTOS');
 
