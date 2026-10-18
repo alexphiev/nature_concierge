@@ -8,7 +8,8 @@ import { MIN_GALLERY_PHOTOS, buildGallerySlides, resolveCoverPhoto } from "@/src
 import { ContributionBanner } from "@/src/components/contribute/ContributionBanner";
 import { PendingContributions } from "@/src/components/contribute/PendingContributions";
 import { ClaimList } from "@/src/components/ClaimList";
-import { WhatsAppBar, WhatsAppCTA } from "@/src/components/WhatsAppCTA";
+import { ContributeCard } from "@/src/components/contribute/ContributeCard";
+import { ContributeBar } from "@/src/components/contribute/ContributeBar";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
 import { TYPE_LABELS } from "@/src/components/PlaceCard";
 import { PlaceGallery } from "@/src/components/PlaceGallery";
@@ -18,6 +19,8 @@ import { PracticalImages } from "@/src/components/PracticalImages";
 import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
 import { placeTitle, placeDescription, buildPlaceJsonLd } from "@/src/seo/place-jsonld";
 import { nearbyPlaces } from "@/src/corpus/nearby";
+import { placeContributorCount } from "@/src/corpus/community";
+import { countLabel } from "@/src/corpus/count-label";
 
 const kmFormatter = new Intl.NumberFormat("fr-FR", {
   minimumFractionDigits: 1,
@@ -85,7 +88,10 @@ export default async function PlaceDetailPage({
     uploaded: place.photos,
     googleAttributions: googleDetails?.photo ? googleDetails.photoAttributions : [],
   });
+  const contributorCount = placeContributorCount(place.claims);
   const metaItems = [
+    countLabel(place.claims.length, "conseil", "conseils"),
+    contributorCount >= 2 && `${contributorCount} contributeurs`,
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
     place.proposedBy && `Lieu proposé par ${place.proposedBy.name}`,
@@ -246,7 +252,7 @@ export default async function PlaceDetailPage({
         <aside className="order-first flex flex-col gap-5 md:sticky md:top-6 md:order-none">
           <div className="flex flex-col gap-5 rounded-[18px] border border-sable/55 bg-[#FFFCF6] p-6 shadow-[0_8px_28px_rgba(28,43,51,0.08)]">
             <div className="hidden md:block">
-              <WhatsAppCTA placeName={place.name} />
+              <ContributeCard slug={slug} />
             </div>
             <div className="flex justify-center gap-5 text-sm">
               {place.officialInfoUrl && (
@@ -257,16 +263,13 @@ export default async function PlaceDetailPage({
               <a href={mapsUrl} className="text-mediterranee underline underline-offset-2">
                 Google Maps ↗
               </a>
-              <Link href={`/lieux/${slug}/corriger`} className="text-mediterranee underline underline-offset-2">
-                Signaler une erreur
-              </Link>
             </div>
           </div>
           <AlternativeCallout claims={[...place.claims, ...(parent?.claims ?? [])]} />
         </aside>
       </div>
 
-      <WhatsAppBar placeName={place.name} />
+      <ContributeBar slug={slug} />
     </main>
   );
 }
