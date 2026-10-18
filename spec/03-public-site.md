@@ -213,8 +213,9 @@ rights) and `/mentions-legales` (`LegalPage`), contact `contact@laciotatnature.f
   once k ≥ 2), a Tipeee button, links Contribuer · À propos · Confidentialité
   · Mentions légales, and the fire-risk line linking to the official access
   map.
-- Placeholder links still to fill in `src/components/landing/shared.ts`:
-  `TIPEEE_HREF` and `ACCESS_MAP_HREF` are `#` (`STORY_HREF` points to
+- Links in `src/components/landing/shared.ts`: `ACCESS_MAP_HREF` is the
+  préfecture's daily massif access map (`risque-prevention-incendie.fr/13`);
+  `TIPEEE_HREF` is still a `#` placeholder (`STORY_HREF` points to
   `/a-propos`).
 - No WhatsApp anywhere on the site.
 

@@ -36,10 +36,9 @@ Live at https://laciotatnature.fr ("Site en cours de construction" banner).
 
 ## Next: polish
 
-No new feature is committed. Follow-ups: replace the `#` placeholders in
-`src/components/landing/shared.ts` (`TIPEEE_HREF`, `ACCESS_MAP_HREF`), the
-About page portrait placeholder, and decide on success metrics for the
-community phase.
+No new feature is committed. Small fixes and owner inputs (Tipeee link,
+About portrait, success metrics for the community phase) are tracked in
+`docs/follow-ups.md`.
 
 ## Non-goals
 
