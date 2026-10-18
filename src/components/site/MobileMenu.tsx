@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CloseIcon, HeartIcon, MenuIcon } from "../landing/icons";
 import { ContributeLink } from "./ContributeLink";
-import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, GUIDE_HREF, TIPEEE_HREF } from "../landing/shared";
+import { GuideLink } from "./GuideLink";
+import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, TIPEEE_HREF } from "../landing/shared";
 
 const PANEL_ROW = `flex min-h-13 items-center ${FOCUS_RING}`;
 
@@ -20,7 +21,7 @@ function CloseOnRouteChange({ onChange }: { onChange: () => void }) {
   return null;
 }
 
-export function MobileMenu({ guideActive }: { guideActive: boolean }) {
+export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -65,14 +66,7 @@ export function MobileMenu({ guideActive }: { guideActive: boolean }) {
         <div className={`${CONTAINER} flex flex-col gap-4 pt-2 pb-5`}>
           <ul className="flex flex-col divide-y divide-[#E4DACA] text-[17px] font-medium">
             <li>
-              <Link
-                href={GUIDE_HREF}
-                onClick={close}
-                aria-current={guideActive ? "page" : undefined}
-                className={`${PANEL_ROW} ${guideActive ? ACTIVE_LINK : "text-[#1D2A2E]"}`}
-              >
-                Tous les lieux
-              </Link>
+              <GuideLink onClick={close} className={PANEL_ROW} activeClassName={ACTIVE_LINK} />
             </li>
             <li>
               <ContributeLink

@@ -44,7 +44,7 @@ export async function submitPlaceProposal(
     data: { type: "PLACE", placeId: null, ...parsed.data },
     formData,
     formPath: "/contribuer/nouveau-lieu",
-    next: "/lieux",
+    next: "/contribuer",
   });
   return { ...result, values };
 }

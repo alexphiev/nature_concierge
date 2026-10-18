@@ -11,7 +11,7 @@ export default function PublicLayout({
   return (
     <div className={`${fraunces.variable} ${figtree.variable} flex flex-1 flex-col`}>
       <ConstructionBanner />
-      <SiteHeader guideActive />
+      <SiteHeader />
       {children}
       <SiteFooter />
     </div>

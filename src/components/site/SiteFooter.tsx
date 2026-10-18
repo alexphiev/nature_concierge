@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HeartIcon, Monogram } from "../landing/icons";
 import { getCommunityStats } from "@/src/corpus/community";
 import { countLabel } from "@/src/corpus/count-label";
@@ -56,9 +57,9 @@ export async function SiteFooter() {
           className="flex flex-wrap gap-x-6 gap-y-1 border-t border-[#D5CAB6] pt-2 md:pt-4"
         >
           {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className={`flex h-11 items-center ${LINK}`}>
+            <Link key={link.href} href={link.href} className={`flex h-11 items-center ${LINK}`}>
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
         <p className="text-[13px] leading-normal text-[#5B6663] md:text-[14px]">
