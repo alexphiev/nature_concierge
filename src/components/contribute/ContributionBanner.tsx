@@ -12,7 +12,7 @@ export function ContributionBanner() {
   return (
     <div
       role="status"
-      className="flex items-start justify-between gap-4 rounded-[14px] border border-mediterranee/40 bg-mediterranee/10 p-4"
+      className="flex items-start justify-between gap-4 mt-6 rounded-[14px] border border-mediterranee/40 bg-mediterranee/10 p-4"
     >
       <p>Merci ! Votre contribution est en relecture. Vous recevrez un email dès qu&apos;elle est en ligne.</p>
       <button
