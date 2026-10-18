@@ -58,6 +58,11 @@ function TipFields({ state, user }: { state: FormState; user: SessionUser | null
             </label>
           ))}
         </div>
+        {state.fieldErrors?.claimType && (
+          <p role="alert" className="mt-2 text-sm text-pin">
+            {state.fieldErrors.claimType}
+          </p>
+        )}
       </fieldset>
 
       <div>

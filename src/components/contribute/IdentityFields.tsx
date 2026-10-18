@@ -26,7 +26,7 @@ export function IdentityFields({
 
   return (
     <div className="space-y-5">
-      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+      <div aria-hidden="true" className="absolute h-px w-px overflow-hidden whitespace-nowrap [clip:rect(0,0,0,0)]">
         <input type="text" name="website" tabIndex={-1} autoComplete="off" />
       </div>
 

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { safeNextPath } from "@/src/contributions/paths";
+import { getSessionUser } from "@/src/auth/session";
+import { findLatestUnconfirmed } from "@/src/contributions/service";
 import { readPendingCookie } from "@/src/contributions/pending-cookie";
 import { CONTAINER, FOCUS_RING } from "@/src/components/landing/shared";
 import { ResendForm } from "./ResendForm";
@@ -17,7 +19,28 @@ function maskEmail(email: string): string {
 }
 
 async function VerifyContent({ searchParams }: { searchParams: Promise<{ erreur?: string }> }) {
-  const [{ erreur }, cookie] = await Promise.all([searchParams, readPendingCookie()]);
+  const [{ erreur }, cookie, user] = await Promise.all([
+    searchParams,
+    readPendingCookie(),
+    getSessionUser(),
+  ]);
+  const alreadyInReview =
+    erreur !== "envoi" && Boolean(user) && !(cookie && (await findLatestUnconfirmed(cookie.email)));
+
+  if (alreadyInReview) {
+    return (
+      <>
+        <p className="mt-4 text-lg">
+          Votre contribution est déjà en relecture. Vous recevrez un email dès qu’elle est en ligne.
+        </p>
+        <div className="mt-8">
+          <Link href="/lieux" className={`font-semibold underline ${FOCUS_RING}`}>
+            Retour au guide
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   const message =
     erreur === "lien"

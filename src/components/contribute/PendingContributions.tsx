@@ -7,6 +7,7 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "long",
   year: "numeric",
+  timeZone: "Europe/Paris",
 });
 
 export async function PendingContributions({ placeIds }: { placeIds: string[] }) {

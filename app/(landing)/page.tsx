@@ -46,6 +46,8 @@ async function withCover(place: PlaceWithCover): Promise<GuideCard> {
 
 export default async function LandingPage() {
   const places = await getActivePlaces();
+  const activeIds = new Set(places.map((p) => p.id));
+  const topLevelCount = places.filter((p) => !p.parentId || !activeIds.has(p.parentId)).length;
   const cards = await Promise.all(places.slice(0, CARD_COUNT).map(withCover));
 
   return (
@@ -57,7 +59,7 @@ export default async function LandingPage() {
         }}
       />
       <SearchHero shortcuts={getShortcutsForNow()} />
-      <GuideSection cards={cards} placeCount={places.length} />
+      <GuideSection cards={cards} placeCount={topLevelCount} />
       <RecentTipsSection />
       <HowItWorksSection />
       <HelpSection />

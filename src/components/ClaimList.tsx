@@ -3,13 +3,19 @@ import type { Claim } from "../../prisma/generated/client";
 import type { PublicClaim } from "@/src/corpus/queries";
 import { GUIDE_AUTHOR } from "@/src/site";
 
-const monthYear = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" });
+const monthYear = new Intl.DateTimeFormat("fr-FR", {
+  month: "long",
+  year: "numeric",
+  timeZone: "Europe/Paris",
+});
 
 function claimMeta(claim: PublicClaim): string {
   const author = claim.authorDeleted ? null : (claim.author ?? GUIDE_AUTHOR);
   const parts = claim.authorDeleted
     ? ["Un ancien contributeur"]
-    : [author?.name, author?.commune].filter((part): part is string => Boolean(part));
+    : [author?.name, author?.commune].filter((part): part is string =>
+        Boolean(part),
+      );
   return [...parts, monthYear.format(claim.verifiedOn)].join(" · ");
 }
 
@@ -119,71 +125,78 @@ export function ClaimList({
       </h2>
       {claims.length === 0 && (
         <p className="leading-relaxed">
-          Aucun conseil pour l&apos;instant. Vous connaissez ce lieu ? Partagez la première astuce.
+          Aucun conseil pour l&apos;instant. Vous connaissez ce lieu ? Partagez
+          la première astuce.
         </p>
       )}
-      <ul className="columns-1 gap-3 sm:columns-2">
-        {groups.map(({ type, claims: groupClaims }) => {
-          const accent = THEME_ACCENTS[type];
-          return (
-            <li
-              key={type}
-              className="mb-3 break-inside-avoid rounded-[14px] border border-sable/40 p-4"
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-full ${accent.badge}`}
-                >
-                  <svg
-                    aria-hidden
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+      {groups.length > 0 && (
+        <ul className="columns-1 gap-3 sm:columns-2">
+          {groups.map(({ type, claims: groupClaims }) => {
+            const accent = THEME_ACCENTS[type];
+            return (
+              <li
+                key={type}
+                className="mb-3 break-inside-avoid rounded-[14px] border border-sable/40 p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-full ${accent.badge}`}
                   >
-                    <path d={THEME_ICONS[type]} />
-                  </svg>
-                </span>
-                <h3
-                  className={`font-mono text-[0.6875rem] tracking-wider uppercase ${accent.label}`}
-                >
-                  {THEME_LABELS[type]}
-                  <span className="ml-1.5 text-sable">
-                    {groupClaims.length}
+                    <svg
+                      aria-hidden
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d={THEME_ICONS[type]} />
+                    </svg>
                   </span>
-                </h3>
-              </div>
-              <ul className="mt-3 flex flex-col gap-2">
-                {groupClaims.map((claim) => (
-                  <li
-                    key={claim.id}
-                    className="relative pl-4 leading-relaxed before:absolute before:top-[0.7em] before:left-0 before:size-1.5 before:rounded-full before:bg-sable"
+                  <h3
+                    className={`font-mono text-[0.6875rem] tracking-wider uppercase ${accent.label}`}
                   >
-                    {claim.claimText}
-                    <span className="mt-0.5 block text-xs text-encre/60">{claimMeta(claim)}</span>
-                    {correctHref && (
-                      <Link
-                        href={correctHref(claim.id)}
-                        className="mt-0.5 inline-block text-xs text-mediterranee hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
-                      >
-                        Corriger
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          );
-        })}
-      </ul>
+                    {THEME_LABELS[type]}
+                    <span className="ml-1.5 text-sable">
+                      {groupClaims.length}
+                    </span>
+                  </h3>
+                </div>
+                <ul className="mt-3 flex flex-col gap-2">
+                  {groupClaims.map((claim) => (
+                    <li
+                      key={claim.id}
+                      className="relative pl-4 leading-relaxed before:absolute before:top-[0.7em] before:left-0 before:size-1.5 before:rounded-full before:bg-sable"
+                    >
+                      {claim.claimText}
+                      <span className="mt-0.5 block text-xs text-encre/60">
+                        {claimMeta(claim)}
+                      </span>
+                      {correctHref && (
+                        <Link
+                          href={correctHref(claim.id)}
+                          className="mt-0.5 inline-block text-xs text-mediterranee hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                        >
+                          Corriger
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       {addTipHref && (
         <Link
           href={addTipHref}
-          className={claims.length === 0 ? ADD_TIP_LINK_PROMINENT : ADD_TIP_LINK}
+          className={
+            claims.length === 0 ? ADD_TIP_LINK_PROMINENT : ADD_TIP_LINK
+          }
         >
           Ajouter une astuce
         </Link>
