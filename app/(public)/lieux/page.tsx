@@ -22,9 +22,10 @@ export default async function PlacesIndexPage() {
   const activePlaces = await getActivePlaces();
   const activeIds = new Set(activePlaces.map((p) => p.id));
   // Spots are listed on their parent's page, unless the parent isn't public.
-  const { placeCount, tipCount, contributorCount } = await getCommunityStats();
+  const places = activePlaces.filter((p) => !p.parentId || !activeIds.has(p.parentId));
+  const { tipCount, contributorCount } = await getCommunityStats();
   const intro = [
-    countLabel(placeCount, "lieu", "lieux"),
+    countLabel(places.length, "lieu", "lieux"),
     tipCount > 0 &&
       (contributorCount >= 2
         ? `${countLabel(tipCount, "conseil partagé", "conseils partagés")} par ${contributorCount} contributeurs`
@@ -32,7 +33,6 @@ export default async function PlacesIndexPage() {
   ]
     .filter(Boolean)
     .join(" · ");
-  const places = activePlaces.filter((p) => !p.parentId || !activeIds.has(p.parentId));
 
   const cards = await Promise.all(
     places.map(async (place) => ({ place, cover: await resolveCoverPhoto(place) })),
