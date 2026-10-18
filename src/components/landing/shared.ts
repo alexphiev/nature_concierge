@@ -15,5 +15,8 @@ export const CONTAINER =
 export const FOCUS_RING =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0E4B5A]";
 
+export const ACCOUNT_HREF = "/compte";
 export const GUIDE_HREF = "/lieux";
 export const ACTIVE_LINK = "text-[#0E4B5A] underline decoration-2 underline-offset-8";
+export const NAV_LINK_INACTIVE = "text-[#1D2A2E] hover:text-[#0E4B5A]";
+export const NAV_ACCOUNT_SLOT = "hidden min-w-24 justify-end md:flex";

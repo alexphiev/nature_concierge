@@ -1,14 +1,29 @@
 "use client";
 
 import { Suspense, useEffect, useEffectEvent, useId, useRef, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CloseIcon, HeartIcon, MenuIcon } from "../landing/icons";
-import { ContributeLink } from "./ContributeLink";
-import { GuideLink } from "./GuideLink";
-import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, TIPEEE_HREF } from "../landing/shared";
+import { NavLink } from "./NavLink";
+import {
+  ABOUT_HREF,
+  ACCOUNT_HREF,
+  CONTAINER,
+  CONTRIBUTE_HREF,
+  FOCUS_RING,
+  GUIDE_HREF,
+  TIPEEE_HREF,
+} from "../landing/shared";
 
-const PANEL_ROW = `flex min-h-13 items-center ${FOCUS_RING}`;
+const PANEL_ROW = "flex min-h-13 items-center border-l-4 pl-3";
+const PANEL_INACTIVE = "border-transparent text-[#1D2A2E]";
+const PANEL_ACTIVE = "border-[#0E4B5A] bg-[#E8F0F1] font-bold text-[#0E4B5A]";
+
+const ROWS = [
+  { href: GUIDE_HREF, label: "Tous les lieux", match: [GUIDE_HREF] },
+  { href: CONTRIBUTE_HREF, label: "Contribuer", match: [CONTRIBUTE_HREF] },
+  { href: ABOUT_HREF, label: "À propos", match: [ABOUT_HREF] },
+  { href: ACCOUNT_HREF, label: "Mon compte", match: [ACCOUNT_HREF, "/connexion"] },
+];
 
 // usePathname suspends while prerendering: isolating it behind its own Suspense
 // keeps the menu button and panel in the static shell, rendered once.
@@ -65,26 +80,17 @@ export function MobileMenu() {
       >
         <div className={`${CONTAINER} flex flex-col gap-4 pt-2 pb-5`}>
           <ul className="flex flex-col divide-y divide-[#E4DACA] text-[17px] font-medium">
-            <li>
-              <GuideLink onClick={close} className={PANEL_ROW} activeClassName={ACTIVE_LINK} />
-            </li>
-            <li>
-              <ContributeLink
-                onClick={close}
-                className={`${PANEL_ROW} font-semibold text-[#0E4B5A]`}
-                activeClassName="underline decoration-2 underline-offset-8"
-              />
-            </li>
-            <li>
-              <Link href={ABOUT_HREF} onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>
-                À propos
-              </Link>
-            </li>
-            <li>
-              <Link href="/compte" onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>
-                Mon compte
-              </Link>
-            </li>
+            {ROWS.map((row) => (
+              <li key={row.href}>
+                <NavLink
+                  {...row}
+                  onClick={close}
+                  className={PANEL_ROW}
+                  inactiveClassName={PANEL_INACTIVE}
+                  activeClassName={PANEL_ACTIVE}
+                />
+              </li>
+            ))}
           </ul>
           <a
             href={TIPEEE_HREF}
