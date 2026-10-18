@@ -19,6 +19,12 @@ function claimMeta(claim: PublicClaim): string {
   return [...parts, monthYear.format(claim.verifiedOn)].join(" · ");
 }
 
+function authorInitial(claim: PublicClaim): string {
+  if (claim.authorDeleted) return "·";
+  const name = (claim.author ?? GUIDE_AUTHOR)?.name?.trim();
+  return name ? name.charAt(0).toUpperCase() : "A";
+}
+
 const ADD_TIP_LINK =
   "inline-flex self-start rounded-[10px] border border-sable/70 px-4 py-2.5 text-sm font-medium text-encre transition-colors hover:border-mediterranee hover:text-mediterranee";
 const ADD_TIP_LINK_PROMINENT =
@@ -55,16 +61,18 @@ const THEME_LABELS: Record<Claim["claimType"], string> = {
 const NEUTRAL_ACCENT = {
   badge: "bg-calcaire-deep text-pin",
   label: "text-pin",
+  card: "border-l-4 border-l-pin/30 bg-[#FFFCF6]",
 };
 const RISK_ACCENT = {
   badge: "bg-statut-rouge/10 text-statut-rouge",
   label: "text-statut-rouge",
+  card: "border-l-4 border-l-statut-rouge/60 bg-[#FFF8F5]",
 };
 
 // Most themes stay neutral; risk and redirect themes get an accent so they stand out.
 const THEME_ACCENTS: Record<
   Claim["claimType"],
-  { badge: string; label: string }
+  { badge: string; label: string; card: string }
 > = {
   ACCESS: NEUTRAL_ACCENT,
   PRACTICAL: NEUTRAL_ACCENT,
@@ -78,6 +86,7 @@ const THEME_ACCENTS: Record<
   ALTERNATIVE: {
     badge: "bg-mediterranee/10 text-mediterranee",
     label: "text-mediterranee",
+    card: "border-l-4 border-l-mediterranee/60 bg-[#FAFCFB]",
   },
   DECODING: NEUTRAL_ACCENT,
 };
@@ -130,13 +139,14 @@ export function ClaimList({
         </p>
       )}
       {groups.length > 0 && (
-        <ul className="columns-1 gap-3 sm:columns-2">
+        <div className="@container flex flex-col gap-8">
           {groups.map(({ type, claims: groupClaims }) => {
             const accent = THEME_ACCENTS[type];
             return (
-              <li
+              <section
                 key={type}
-                className="mb-3 break-inside-avoid rounded-[14px] border border-sable/40 p-4"
+                aria-label={THEME_LABELS[type]}
+                className="flex flex-col gap-4"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -160,36 +170,47 @@ export function ClaimList({
                     className={`font-mono text-[0.6875rem] tracking-wider uppercase ${accent.label}`}
                   >
                     {THEME_LABELS[type]}
-                    <span className="ml-1.5 text-sable">
+                    <span className="ml-1.5 text-encre/60">
                       {groupClaims.length}
                     </span>
                   </h3>
+                  <span aria-hidden className="h-px flex-1 bg-sable/40" />
                 </div>
-                <ul className="mt-3 flex flex-col gap-2">
+                <ul className="grid grid-cols-1 items-start gap-3 @xl:grid-cols-2">
                   {groupClaims.map((claim) => (
                     <li
                       key={claim.id}
-                      className="relative pl-4 leading-relaxed before:absolute before:top-[0.7em] before:left-0 before:size-1.5 before:rounded-full before:bg-sable"
+                      className={`flex flex-col gap-4 rounded-[14px] border border-sable/40 p-4 sm:p-5 ${accent.card}`}
                     >
-                      {claim.claimText}
-                      <span className="mt-0.5 block text-xs text-encre/60">
-                        {claimMeta(claim)}
-                      </span>
-                      {correctHref && (
-                        <Link
-                          href={correctHref(claim.id)}
-                          className="mt-0.5 inline-block text-xs text-mediterranee hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                      <p className="max-w-[65ch] text-base leading-relaxed text-pretty">
+                        {claim.claimText}
+                      </p>
+                      <div className="flex items-center gap-2.5 border-t border-sable/30 pt-3">
+                        <span
+                          aria-hidden
+                          className="flex size-7 shrink-0 items-center justify-center rounded-full bg-calcaire-deep font-display text-xs font-semibold text-pin"
                         >
-                          Corriger
-                        </Link>
-                      )}
+                          {authorInitial(claim)}
+                        </span>
+                        <span className="min-w-0 flex-1 text-xs leading-snug text-encre/70">
+                          {claimMeta(claim)}
+                        </span>
+                        {correctHref && (
+                          <Link
+                            href={correctHref(claim.id)}
+                            className="-my-2 -mr-2 inline-flex min-h-8 shrink-0 items-center rounded-md px-2 text-xs text-mediterranee hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
+                          >
+                            Corriger
+                          </Link>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
-              </li>
+              </section>
             );
           })}
-        </ul>
+        </div>
       )}
       {addTipHref && (
         <Link
