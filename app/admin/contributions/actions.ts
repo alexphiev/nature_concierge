@@ -4,7 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { assertAdmin } from "@/src/admin/assert-admin";
 import { prisma } from "@/src/corpus/db";
-import { TipInputSchema } from "@/src/contributions/schema";
+import { NOTE_MAX_LENGTH, TipInputSchema } from "@/src/contributions/schema";
 import { sendEmail } from "@/src/email/send";
 import {
   contributionRejectedEmail,
@@ -20,7 +20,11 @@ import { deletePlacePhotos } from "@/src/storage/place-photos";
 import { SITE_URL } from "@/src/site";
 
 function readNote(formData: FormData): string | null {
-  return String(formData.get("note") ?? "").trim() || null;
+  return String(formData.get("note") ?? "").trim().slice(0, NOTE_MAX_LENGTH) || null;
+}
+
+function failWith(code: string, contributionId: string): never {
+  redirect(`/admin/contributions?erreur=${code}#c-${contributionId}`);
 }
 
 async function notify(to: string, content: { subject: string; text: string }): Promise<void> {
@@ -50,7 +54,9 @@ export async function publishTip(contributionId: string, formData: FormData): Pr
     text: formData.get("text"),
     claimType: formData.get("claimType"),
   });
-  if (!parsed.success) return;
+  if (!parsed.success) {
+    failWith(parsed.error.issues[0]?.path[0] === "claimType" ? "theme" : "texte", contribution.id);
+  }
   const note = readNote(formData);
   const now = new Date();
 
@@ -124,12 +130,14 @@ async function resolveCorrection(
   await assertAdmin();
   const contribution = await loadPending(contributionId, "CORRECTION");
   if (!contribution || !contribution.place) return;
-  if (mode !== "acknowledge" && contribution.claim?.status !== "PUBLISHED") return;
+  if (mode !== "acknowledge" && contribution.claim?.status !== "PUBLISHED") {
+    failWith("conseil", contribution.id);
+  }
 
   let newText: string | null = null;
   if (mode === "apply") {
     const parsed = z.string().trim().min(10).max(500).safeParse(formData.get("text"));
-    if (!parsed.success) return;
+    if (!parsed.success) failWith("texte", contribution.id);
     newText = parsed.data;
   }
   const note = readNote(formData);
@@ -265,7 +273,7 @@ export async function publishPhotos(contributionId: string, formData: FormData):
   const kept = contribution.photos
     .filter((p) => keepIds.has(p.id))
     .sort((a, b) => a.order - b.order);
-  if (kept.length === 0) return;
+  if (kept.length === 0) failWith("photos", contribution.id);
   const dropped = contribution.photos.filter((p) => !keepIds.has(p.id));
   const note = readNote(formData);
   const placeId = contribution.place.id;

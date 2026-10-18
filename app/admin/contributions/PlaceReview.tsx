@@ -11,7 +11,7 @@ import {
 
 export function PlaceReview({ c }: { c: ReviewContribution }) {
   return (
-    <li className={cardClass}>
+    <li id={`c-${c.id}`} className={cardClass}>
       <ReviewHeader c={c} />
       <div className="flex flex-col gap-1 text-sm">
         <p className="font-medium">

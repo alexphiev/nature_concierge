@@ -15,6 +15,8 @@ export const TIP_THEMES: { value: ClaimType; label: string }[] = [
 
 const themeValues = TIP_THEMES.map((t) => t.value) as [ClaimType, ...ClaimType[]];
 
+export const NOTE_MAX_LENGTH = 1000;
+
 export const TipInputSchema = z.object({
   claimType: z.enum(themeValues).default("TIP"),
   text: z.string().trim().min(10).max(500),

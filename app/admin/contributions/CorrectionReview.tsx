@@ -17,7 +17,7 @@ import {
 export function CorrectionReview({ c }: { c: ReviewContribution & { claim: Claim | null } }) {
   const kind = CORRECTION_KINDS.find((k) => k.value === c.correctionKind)?.label;
   return (
-    <li className={cardClass}>
+    <li id={`c-${c.id}`} className={cardClass}>
       <ReviewHeader c={c} />
       {kind && <p className="text-sm font-medium">{kind}</p>}
       <p className="text-sm whitespace-pre-wrap">{c.text}</p>

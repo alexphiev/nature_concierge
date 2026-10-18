@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SubmitButton } from "@/src/components/SubmitButton";
-import { CONTRIBUTION_TYPE_LABELS } from "@/src/contributions/schema";
+import { CONTRIBUTION_TYPE_LABELS, NOTE_MAX_LENGTH } from "@/src/contributions/schema";
 import type { Contribution, Place, User } from "../../../prisma/generated/client";
 import { rejectContribution } from "./actions";
 
@@ -39,13 +39,17 @@ export function ReviewHeader({ c }: { c: ReviewContribution }) {
   );
 }
 
-export function NoteField({ placeholder = "Commentaire pour l'auteur (optionnel)" }) {
+export function NoteField({
+  placeholder = "Commentaire pour l’auteur (optionnel)",
+  label = "Commentaire de publication",
+}) {
   return (
     <textarea
       name="note"
       rows={2}
       placeholder={placeholder}
-      aria-label={placeholder}
+      aria-label={label}
+      maxLength={NOTE_MAX_LENGTH}
       className={inputClass}
     />
   );
@@ -57,7 +61,7 @@ export function RejectForm({ id }: { id: string }) {
       action={rejectContribution.bind(null, id)}
       className="flex flex-col gap-3 border-t border-sable/40 pt-4"
     >
-      <NoteField placeholder="Motif du refus (optionnel)" />
+      <NoteField placeholder="Motif du refus (optionnel)" label="Motif du refus" />
       <SubmitButton className={secondaryButtonClass}>Refuser</SubmitButton>
     </form>
   );

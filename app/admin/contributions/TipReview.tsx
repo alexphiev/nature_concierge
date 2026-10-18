@@ -13,7 +13,7 @@ import {
 
 export function TipReview({ c }: { c: ReviewContribution }) {
   return (
-    <li className={cardClass}>
+    <li id={`c-${c.id}`} className={cardClass}>
       <ReviewHeader c={c} />
       <form action={publishTip.bind(null, c.id)} className="flex flex-col gap-3">
         <textarea
@@ -23,7 +23,7 @@ export function TipReview({ c }: { c: ReviewContribution }) {
           minLength={10}
           maxLength={500}
           rows={4}
-          aria-label="Texte de l'astuce"
+          aria-label="Texte du conseil"
           className={inputClass}
         />
         <select
