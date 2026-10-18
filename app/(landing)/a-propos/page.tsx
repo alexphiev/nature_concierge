@@ -3,7 +3,7 @@ import { AboutContent } from "@/src/components/landing/AboutContent";
 import { BASE_OPEN_GRAPH } from "@/src/site";
 
 const DESCRIPTION =
-  "Qui tient le Guide Nature de La Ciotat, ce qu’il propose, et comment le soutenir.";
+  "Qui fait le Guide Nature de La Ciotat, comment il est relu, et comment y contribuer.";
 
 export const metadata: Metadata = {
   title: "À propos",

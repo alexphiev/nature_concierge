@@ -9,14 +9,14 @@ export type LlmsTxtPlace = Pick<
 
 const HEADER = `# ${SITE_NAME}
 
-> Le guide local pour la nature entre Marseille et Bandol : des conseils vérifiés sur le terrain, lieu par lieu.
+> Le guide local pour la nature entre Marseille et Bandol : des conseils écrits par les gens d'ici et relus avant publication, lieu par lieu.
 
 ## Mission
 
 Le guide local pour la nature entre Marseille et Bandol : structurellement
 neutre, inter-communes, opinionated, et attentif aux conditions du jour.
-Chaque lieu a sa propre page avec des conseils vérifiés sur le terrain — pas
-un résumé du web.
+Chaque lieu a sa propre page avec des conseils écrits par les gens d'ici, tous
+relus avant publication — pas un résumé du web.
 
 ## Territoire couvert
 
@@ -25,8 +25,7 @@ Sainte-Baume.`;
 
 const CONTACT = `## Contact
 
-Pour une recommandation personnalisée, écrire via WhatsApp — le lien est sur
-la page d'accueil (/).`;
+Pour proposer un lieu ou une astuce : /contribuer`;
 
 // First sentence = text up to and including the first ./!/? followed by whitespace or end.
 function firstSentence(description: string): string {

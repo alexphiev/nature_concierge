@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s · Guide Nature de La Ciotat",
   },
   description:
-    "Le guide local qui vous dit où aller en nature entre Marseille et Bandol — et où ne pas aller.",
+    "Le guide nature de La Ciotat écrit par les gens d’ici : calanques, criques et sentiers, avec des conseils relus avant publication.",
   openGraph: BASE_OPEN_GRAPH,
   twitter: {
     card: "summary_large_image",

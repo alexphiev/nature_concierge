@@ -2,21 +2,20 @@ import Link from "next/link";
 import { ArrowIcon, ChatIcon, CoffeeIcon, PinIcon, PlusIcon } from "./icons";
 import {
   ACCESS_MAP_HREF,
-  ASK_HREF,
   CONTAINER,
+  CONTRIBUTE_HREF,
   FOCUS_RING,
   GUIDE_HREF,
-  PROPOSE_PLACE_HREF,
-  SHARE_TIP_HREF,
   TIPEEE_HREF,
 } from "./shared";
 
 const COMMITMENTS = [
-  "Gratuit, sans publicité, sans compte à créer.",
+  "Gratuit, sans publicité. Un compte seulement pour contribuer.",
   "Aucun lieu ne paie pour apparaître.",
-  "Chaque fiche affiche sa date de mise à jour.",
-  "Quand je ne sais pas, je le dis.",
-  "Pour les fermetures de massifs, je renvoie toujours vers la source officielle.",
+  "Chaque contribution est relue avant publication.",
+  "Chaque conseil affiche son auteur et sa date.",
+  "Quand on ne sait pas, on le dit.",
+  "Pour les fermetures de massifs, on renvoie toujours vers la source officielle.",
 ];
 
 const FAQS = [
@@ -24,7 +23,7 @@ const FAQS = [
     q: "Le guide est-il vraiment gratuit ?",
     a: (
       <>
-        Oui, les fiches comme les réponses sur WhatsApp. Ceux qui le souhaitent peuvent{" "}
+        Oui, entièrement. Ceux qui le souhaitent peuvent{" "}
         <a href="#soutenir" className="font-semibold">
           soutenir le projet sur Tipeee
         </a>
@@ -40,8 +39,8 @@ const FAQS = [
     q: "Comment savoir si les massifs sont ouverts en été ?",
     a: (
       <>
-        L’accès dépend du risque incendie. La préfecture publie la carte chaque veille au soir. Je
-        la signale dans mes réponses, mais c’est elle qui fait foi :{" "}
+        L’accès dépend du risque incendie. La préfecture publie la carte chaque veille au soir. Le
+        guide la rappelle, mais c’est elle qui fait foi :{" "}
         <a href={ACCESS_MAP_HREF} className="font-semibold">
           carte des accès
         </a>
@@ -50,12 +49,16 @@ const FAQS = [
     ),
   },
   {
-    q: "En combien de temps répondez-vous ?",
-    a: "En général dans la journée. Un peu plus si je suis moi-même en balade, sans réseau.",
-  },
-  {
     q: "Comment proposer un lieu ou corriger une info ?",
-    a: "Envoyez-moi un message sur WhatsApp avec le nom du lieu et votre astuce. Je vais voir sur place, puis je mets la fiche à jour.",
+    a: (
+      <>
+        Depuis la fiche du lieu, ou depuis la page{" "}
+        <Link href={CONTRIBUTE_HREF} className="font-semibold">
+          Contribuer
+        </Link>
+        . Chaque contribution est relue avant publication.
+      </>
+    ),
   },
   {
     q: "Êtes-vous guide professionnel ?",
@@ -80,7 +83,7 @@ export function AboutContent() {
           </h1>
           <p className="text-[17px] leading-[1.5] text-[#3E4A4B] md:text-[21px] md:leading-[1.5]">
             Un guide gratuit des calanques, criques et sentiers de La Ciotat et de ses environs,
-            écrit par un habitant, avec l’aide des gens d’ici.
+            écrit par les gens d’ici, relu par Alexandre.
           </p>
           <figure className="mt-2 flex flex-col gap-2 lg:hidden">
             <div className="flex h-[300px] items-center justify-center rounded-[20px] bg-[#D8CDBA] text-[13px] font-semibold text-[#5B6663]">
@@ -91,7 +94,7 @@ export function AboutContent() {
             </figcaption>
           </figure>
           <h2 className="mt-2 font-landing-display text-[26px] font-semibold md:mt-6 md:text-[30px]">
-            Qui tient ce guide ?
+            Qui fait ce guide ?
           </h2>
           <div className="flex max-w-[640px] flex-col gap-3.5 text-[17px] leading-[1.6] text-[#2E3A3C] md:gap-4 md:text-[18px] md:leading-[1.65]">
             <p>Je m’appelle Alexandre et j’habite La Ciotat depuis 2025.</p>
@@ -102,6 +105,7 @@ export function AboutContent() {
               habitués.
             </p>
             <p>J’ai tout noté. Ce guide, c’est ce carnet, partagé avec vous.</p>
+            <p>Aujourd’hui, tout le monde peut y contribuer. Je relis chaque contribution avant de la publier.</p>
           </div>
         </div>
         <figure className="hidden flex-col gap-3 lg:flex">
@@ -139,11 +143,11 @@ export function AboutContent() {
             </div>
             <div className="flex flex-col gap-1.5">
               <h3 className="font-landing-display text-[19px] font-semibold md:text-[22px]">
-                Des conseils sur WhatsApp
+                Une recherche par envie
               </h3>
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px] md:leading-[1.55]">
-                Dites-moi qui vient, quand, et vos contraintes. Je vous réponds avec un lieu
-                adapté et un plan B, gratuitement.
+                Décrivez votre sortie, le guide vous propose les lieux et les conseils qui
+                collent.
               </p>
             </div>
           </div>
@@ -153,11 +157,13 @@ export function AboutContent() {
             </div>
             <div className="flex flex-col gap-1.5">
               <h3 className="font-landing-display text-[19px] font-semibold md:text-[22px]">
-                Un guide qui grandit
+                Un guide écrit à plusieurs
               </h3>
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px] md:leading-[1.55]">
-                Vos lieux et vos astuces enrichissent le guide. Je vais vérifier sur place avant
-                de les ajouter.
+                Vos lieux et vos astuces enrichissent le guide.{" "}
+                <Link href={CONTRIBUTE_HREF} className="font-semibold text-[#0E4B5A]">
+                  Contribuer
+                </Link>
               </p>
             </div>
           </div>
@@ -167,7 +173,7 @@ export function AboutContent() {
       <section className={`${CONTAINER} flex flex-col gap-6 pb-10 md:grid md:grid-cols-2 md:items-stretch md:gap-6 md:pb-24`}>
         <div className="flex flex-col gap-4 md:gap-6 md:pr-6">
           <h2 className="font-landing-display text-[28px] font-semibold md:text-[40px]">
-            Mes engagements
+            Nos engagements
           </h2>
           <ul className="flex flex-col gap-3 text-[16px] leading-[1.5] md:gap-4 md:text-[18px]">
             {COMMITMENTS.map((item) => (
@@ -222,13 +228,9 @@ export function AboutContent() {
           </div>
           <div className="mt-1 border-t border-[#EBCDB8] pt-4 text-[14px] leading-[1.6] text-[#4A3A31] md:pt-4.5 md:text-[15px]">
             Autres façons d’aider :{" "}
-            <a href={PROPOSE_PLACE_HREF} className="font-semibold text-[#A34A25]">
-              proposer un lieu
-            </a>
-            ,{" "}
-            <a href={SHARE_TIP_HREF} className="font-semibold text-[#A34A25]">
-              partager une astuce
-            </a>
+            <Link href={CONTRIBUTE_HREF} className="font-semibold text-[#A34A25]">
+              proposer un lieu, partager une astuce
+            </Link>
             , ou parler du guide autour de vous.
           </div>
         </div>
@@ -257,20 +259,20 @@ export function AboutContent() {
         <div className="flex flex-col gap-4 rounded-3xl bg-[#0E4B5A] p-6 text-white md:flex-row md:items-center md:justify-between md:gap-12 md:rounded-[28px] md:p-14">
           <div className="flex flex-col gap-2">
             <h2 className="font-landing-display text-[28px] font-semibold md:text-[40px]">
-              Une sortie en tête ?
+              Vous connaissez un coin ?
             </h2>
             <p className="text-[16px] text-[#D6E6E8] md:text-[18px]">
-              Écrivez-moi, je vous aide à l’organiser.
+              Le guide s’écrit avec les gens d’ici.
             </p>
           </div>
           <div className="flex flex-col gap-2.5 md:flex-row md:shrink-0 md:gap-3">
-            <a
-              href={ASK_HREF}
+            <Link
+              href={CONTRIBUTE_HREF}
               className={`flex h-13.5 items-center justify-center gap-2.5 rounded-full bg-[#FFFDF8] text-[17px] font-bold text-[#0E4B5A] md:h-14 md:px-6.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white`}
             >
-              <ChatIcon className="size-5" />
-              Écrire sur WhatsApp
-            </a>
+              <PlusIcon className="size-5" />
+              Contribuer
+            </Link>
             <Link
               href={GUIDE_HREF}
               className="flex h-13.5 items-center justify-center gap-2 rounded-full border-[1.5px] border-[#7FA9B2] text-[17px] font-semibold text-white md:h-14 md:px-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
