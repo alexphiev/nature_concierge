@@ -31,7 +31,8 @@ Identity (`slug`, `name`, `commune`, `departement` "13"|"83", `lat`, `lng`),
 SOMMET, SITE, ISLAND, SCENIC_ROAD), `governingAuthority`, `officialInfoUrl`,
 `description`, `demandRank` (lower = more demand, drives ordering),
 `googlePlaceId` (photo fallback + Maps link), `status` DRAFT | ACTIVE |
-RETIRED.
+RETIRED, `proposedById` (→ `User`, `SetNull`; set when the place came from a
+contribution, shown as « Lieu proposé par {name} »).
 
 **Hierarchy, two levels max**: a place can have a `parent` (e.g. Anse du Sec
 under Calanque du Mugel). Spots are listed on their parent's page; the
@@ -54,6 +55,13 @@ SUITABILITY, TIP, SAFETY, AVOID, ALTERNATIVE, DECODING), `conditions[]`,
 (PERMANENT, SEASONAL, ANNUAL_CHECK), `verifiedOn`, `isPublic`, `status`
 (DRAFT, PUBLISHED, RETIRED), `qualityScore` (0–10, from the Jev usefulness
 question, see `02-corpus-ops.md`).
+
+**Attribution**: `authorId` (→ `User`, `SetNull`) and `authorDeleted`.
+`authorId = null && !authorDeleted` is Alexandre's own tip, credited
+« Alexandre · La Ciotat » from `GUIDE_AUTHOR` in `src/site.ts` (existing claims
+are not backfilled). `authorDeleted = true` is credited « Un ancien
+contributeur ». Name and commune edits on `/compte` show on tips through the
+live join.
 
 ### `Source`
 
@@ -78,14 +86,60 @@ Details in `05-admin.md`.
 `bgColor`, `fgColor`, `order`, `active`). Seeded, no admin UI. See
 `04-landing-search.md`.
 
-## Legacy — to be removed
+## Accounts (Better Auth)
 
-`Request`, `RequestClaimUsed`, `RequestClaimCreated` and the `Channel` /
-`Outcome` enums were the WhatsApp concierge log. Nothing reads or writes them;
-they are dropped as part of the community contributions work.
+Tables managed by Better Auth through its Prisma adapter, in our Neon DB:
+`User` (table `user`: `name` = public display name, `email` unique and never
+shown, `emailVerified`, `commune String?`), `Session`, `Account` (required by
+Better Auth even with only magic links) and `AuthVerification` (table
+`verification`, holds the magic-link tokens; named differently because the
+`Verification` enum exists). `/admin` keeps its Basic Auth: contributor
+accounts never grant admin access.
+
+## Contributions
+
+`Contribution` is one table for all four types, with typed nullable columns:
+
+- `type` TIP | CORRECTION | PLACE | PHOTOS; `status` UNCONFIRMED | PENDING |
+  APPROVED | REJECTED.
+- `userId` (→ `User`, cascade; null while UNCONFIRMED).
+- `pendingEmail`, `pendingName`, `pendingCommune`: identity held for a
+  signed-out submit until the magic link is clicked.
+- `placeId` (TIP, CORRECTION, PHOTOS), `claimId` (CORRECTION of a tip; null =
+  correction of the place itself).
+- `text`, `claimType` (TIP theme), `correctionKind` (OUTDATED | WRONG |
+  MISSING_DETAIL), `placeName`, `placeCommune`, `locationHint` (PLACE),
+  `photosConsentAt` (PHOTOS).
+- `reviewNote` (quoted in the decision email), `reviewedAt`, `createdAt`.
+
+`ContributionPhoto` (`contributionId` cascade, `key`, `order`): photo objects
+in the `place-photos` bucket under `contributions/{contributionId}/{uuid}.{ext}`.
+
+Rules:
+
+- Zod limits (`src/contributions/schema.ts`): tip 10–500 chars, correction
+  10–1000, place name 2–120, commune 2–80, location hint ≤ 500, why-this-place
+  10–1000, display name 2–40; 1–6 photos.
+- At most 10 PENDING per user (and 10 UNCONFIRMED per pending email).
+- UNCONFIRMED rows (and their photo objects) older than 7 days are purged at
+  the start of each signed-out submit; there is no cron.
+- Attaching: on any sign-in, every UNCONFIRMED row whose `pendingEmail` equals
+  the verified email gets `userId`, loses its `pending*` fields and becomes
+  PENDING (one atomic update per row); the user's name and commune are filled
+  from the pending values when empty.
+- Approval effects are listed in `05-admin.md`. A published tip creates a
+  `Source` of type `contribution` (`urlOrRef` = contribution id).
+- Account deletion (`/compte`): the user's claims get `authorDeleted = true`,
+  the user is deleted (cascading sessions, accounts and all their
+  contributions; `Claim.authorId` and `Place.proposedById` are set to null),
+  and the storage objects of their non-approved photo contributions are
+  deleted. Approved photos stay (the `PlacePhoto` rows are independent).
 
 ## Taxonomy
 
-`src/corpus/taxonomy.ts` exports `CONDITIONS` and `AUDIENCES` (plus
-`REQUEST_TYPES`, legacy) as `const` arrays + zod enums, used by seed
-validation and the ingestion schema.
+`src/corpus/taxonomy.ts` exports `CONDITIONS` and `AUDIENCES` as `const`
+arrays + zod enums, used by seed validation and the ingestion schema.
+
+The WhatsApp concierge log (`Request`, `RequestClaimUsed`, `RequestClaimCreated`,
+the `Channel` / `Outcome` enums) no longer exists: the `community_contributions`
+migration dropped it.

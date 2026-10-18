@@ -1,8 +1,9 @@
 # 05 — Admin (`/admin`)
 
-A private tool for Alexandre: manage places and photos, and turn raw field
+A private tool for Alexandre: manage places and photos, turn raw field
 material (an email, a signpost photo, an arrêté, a screenshot) into reviewed
-claims. Human approval is mandatory and final; nothing is auto-published.
+claims, and review contributions from the community. Human approval is
+mandatory and final; nothing is auto-published.
 
 ## Access
 
@@ -10,14 +11,20 @@ claims. Human approval is mandatory and final; nothing is auto-published.
 HTTP Basic Auth against `ADMIN_PASSWORD` (timing-safe compare) and adds
 `X-Robots-Tag: noindex`. Single user, not linked from the public site.
 
-Caveat: `/api/geo/*` (used by the place form) is outside that matcher, and
-`/api/geo/geocode` calls the billed Google Geocoding API.
+Every admin server action also calls `assertAdmin()`
+(`src/admin/assert-admin.ts`) first, which re-checks the Basic Auth header
+itself, so an action stays protected even if the proxy matcher changes.
+Contributor accounts never grant admin access.
+
+Caveat (still true): `/api/geo/*` (used by the place form) is outside the
+`proxy.ts` matcher and has no other check, and `/api/geo/geocode` calls the
+billed Google Geocoding API.
 
 ## Navigation
 
-`AdminNav`: Corpus (`/admin`) · Lieux (`/admin/places`) · Nouvelle capture
-(`/admin/ingest`). The planned contributions queue adds
-`/admin/contributions`.
+`AdminNav`: Corpus (`/admin`) · Lieux (`/admin/places`) · Contributions ({n})
+(`/admin/contributions`, n = PENDING count) · Nouvelle capture
+(`/admin/ingest`).
 
 ## `/admin` — dashboard
 
@@ -92,6 +99,36 @@ Actions are keyed on stable draft-claim ids, never array positions:
   when all blocks are resolved with ≥ 1 approval, REJECTED otherwise.
 
 Every mutation calls `updateTag("corpus")`.
+
+## `/admin/contributions` — review queue
+
+Lists PENDING contributions, oldest first (UNCONFIRMED ones are invisible).
+Each card shows type, place (or proposed name, commune and location hint),
+contributor (name, commune, email), date, text and photo thumbnails;
+corrections quote the current tip. Empty: « Aucune contribution à relire. »
+Each card has an optional note field (quoted in the decision email) and a
+« Refuser » button with an optional reason.
+
+| Type | Approve action | Effect |
+|---|---|---|
+| TIP | Editable text and theme, « Publier » | Creates a `Source` (type `contribution`) and a PUBLISHED public `Claim` (LOCAL_TESTIMONY, GO, SEASONAL, `verifiedOn` = now, `authorId` = contributor) |
+| CORRECTION of a tip | « Modifier le conseil » (editable « Nouveau texte du conseil ») / « Retirer le conseil » / « Noter sans changement » | Updates the claim text and `verifiedOn`, retires the claim, or only records the decision. The first two need the claim to be still PUBLISHED, otherwise nothing changes (card shows « Ce conseil n'est plus en ligne. ») |
+| CORRECTION of the place | « Noter », with a link « À appliquer dans la fiche du lieu » | Records the decision; Alexandre edits the place by hand |
+| PLACE | « Créer le brouillon » | Creates a DRAFT `Place` (unique slug from the name, `description` = text + « Comment le trouver : … », `proposedById`, placeholder département 13, La Ciotat coordinates and type SITE to fix) and redirects to `/admin/places/{id}` |
+| PHOTOS | « Garder » checkbox per photo, « Publier la sélection » | Creates one `PlacePhoto` per kept photo (same object key, `credit` = contributor name, appended to the order) and deletes the other objects. Nothing kept: no change |
+
+Rejecting sets REJECTED with the note and deletes a PHOTOS contribution's
+objects.
+
+**Atomic gate**: every decision first runs an `updateMany` on
+`id + status PENDING (+ type)` (in the same transaction as its effects, except
+for a refusal), and does nothing if no row was updated, so a double click or two tabs cannot
+publish twice. Tip and photo publication and claim edits call
+`updateTag("corpus")`; the decision email is sent after commit and a send
+failure is only logged (it never rolls the decision back). Decision emails
+and subjects are listed in `08-infra.md`.
+
+No search, filters, pagination or history view.
 
 ## Out of scope
 

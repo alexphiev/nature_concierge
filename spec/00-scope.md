@@ -18,24 +18,28 @@ contribution is reviewed before publication.
 Live at https://laciotatnature.fr ("Site en cours de construction" banner).
 
 - **Public site**: landing with AI-ranked search (`04-landing-search.md`),
-  places index and place pages (`03-public-site.md`), About page.
+  places index and place pages with attributed tips, `/contribuer`, About,
+  account, privacy and legal pages (`03-public-site.md`).
+- **Contributor accounts**: Better Auth email magic link, no password
+  (`01-data-model.md`, `08-infra.md`). Contributors add tips, corrections,
+  photos and new places through forms; tips are credited by display name and
+  commune.
 - **Admin** (`/admin`, Alexandre only): places with photos, AI-assisted claim
-  capture and review (`05-admin.md`).
-- **Corpus**: places and claims live in Postgres, entered through the admin
-  (`02-corpus-ops.md`).
-- Contributions currently go through WhatsApp links; there are no user
-  accounts yet.
+  capture and review, and the `/admin/contributions` review queue
+  (`05-admin.md`).
+- **Corpus**: places and claims live in Postgres, entered through the admin or
+  approved from contributions (`02-corpus-ops.md`).
+- Community contributions (accounts, forms, queue, attribution, reworked
+  public pages) shipped in October 2026; design record in
+  `docs/superpowers/specs/2026-10-17-community-contributions-design.md`.
+  WhatsApp and the concierge `Request` tables are gone.
 
-## Next: community contributions
+## Next: polish
 
-Specified in
-`docs/superpowers/specs/2026-10-17-community-contributions-design.md`:
-contributor accounts (email magic link), tip / correction / photo / new-place
-forms, review queue at `/admin/contributions`, attribution on published tips,
-rework of every public page around « un guide écrit par les gens d'ici », and
-removal of WhatsApp and of the unused concierge `Request` tables. The spec
-files below describe the product **as built**; update them when that work
-ships.
+No new feature is committed. Follow-ups: replace the `#` placeholders in
+`src/components/landing/shared.ts` (`TIPEEE_HREF`, `ACCESS_MAP_HREF`), the
+About page portrait placeholder, and decide on success metrics for the
+community phase.
 
 ## Non-goals
 
@@ -69,11 +73,11 @@ third-party services in `08-infra.md`.
 
 | File | Covers |
 |---|---|
-| `01-data-model.md` | Prisma models and data rules |
+| `01-data-model.md` | Prisma models (corpus, auth, contributions) and data rules |
 | `02-corpus-ops.md` | How places and claims enter the corpus, quality bar |
-| `03-public-site.md` | `/lieux`, `/lieux/[slug]`, About, shared chrome |
+| `03-public-site.md` | `/lieux`, `/lieux/[slug]`, `/contribuer`, contribution forms, account, About, shared chrome |
 | `04-landing-search.md` | Landing page and Jev-powered search |
-| `05-admin.md` | `/admin`: places, photos, capture, review |
+| `05-admin.md` | `/admin`: places, photos, capture, review, contributions queue |
 | `06-design.md` | Visual language |
 | `07-seo.md` | SEO and AI-SEO |
-| `08-infra.md` | Hosting, services, env vars, analytics |
+| `08-infra.md` | Hosting, services (auth, email), env vars, analytics |

@@ -1,21 +1,32 @@
 # 04 — Landing Page and Search
 
 One page, one job: a visitor describes their outing and gets the places and
-tips that fit. French only. The community rework of this page is specified in
+tips that fit. French only. Design record of the community rework:
 `docs/superpowers/specs/2026-10-17-community-contributions-design.md`.
 
 ## Structure (`app/(landing)/page.tsx`)
 
-1. **`SearchHero`** — H1 « Où aller en nature autour de La Ciotat ? », sub
-   « Décrivez votre sortie, je vous dis où aller. Avec les conseils vérifiés
-   des gens d'ici. », a free-text input, and 4 shortcut buttons under a moment
-   label (« Idées pour ce samedi soir »). Results render below the hero.
+1. **`SearchHero`** — eyebrow « Écrit par les gens d'ici », H1 « Où aller en
+   nature autour de La Ciotat ? », sub « Décrivez votre sortie, le guide vous
+   répond avec les conseils de ceux qui y vont. », a free-text input, a quiet
+   « Vous connaissez un coin ? Contribuez → » link (`/contribuer`), and 4
+   shortcut buttons under a moment label (« Idées pour ce samedi soir »).
+   Results render below the hero.
 2. **`GuideSection`** — « Tous les lieux du guide »: the first 8 ACTIVE places
-   by `demandRank` (3 on mobile) with cover and commune, link to `/lieux`.
-3. **`HelpSection`** — « Un coin ou une astuce qui manque ? », CTAs « Proposer
-   un lieu » / « Partager une astuce » (WhatsApp links today).
+   by `demandRank` (3 on mobile) with cover, commune and tip count, link to
+   `/lieux`.
+3. **`RecentTipsSection`** — « Derniers conseils partagés »: the 4 most recent
+   tips by contributors (text, « {name} · {commune} », place link). Rendered
+   only once there are ≥ 3 contributor tips; Alexandre's own tips don't count.
+4. **`HowItWorksSection`** — « Comment ça marche »: Vous partagez / Alexandre
+   relit / C'est en ligne, and a « Contribuer » button.
+5. **`HelpSection`** — « Un coin ou une astuce qui manque ? », CTAs « Proposer
+   un lieu » (`/contribuer/nouveau-lieu`) and « Partager une astuce »
+   (`/contribuer#astuce`).
 
-JSON-LD `WebSite` + `Organization`.
+JSON-LD `WebSite` + `Organization`. Metadata description: « Décrivez votre
+sortie, le guide vous dit où aller. Avec les conseils des gens d'ici, relus
+avant publication. »
 
 ## Search
 
@@ -27,11 +38,12 @@ JSON-LD `WebSite` + `Organization`.
 - Results: up to 3 places (cover, name, commune, description excerpt, up to 2
   relevant tips, « Voir la fiche »), with a title (selected labels + text) and
   an intro (the shortcut's own `intro` when exactly one shortcut and no text).
-- Empty: « Je n'ai pas encore de conseil fiable pour cette demande. » plus a
-  non-functional email field. Error: « La recherche est indisponible pour le
-  moment. » with a link to `/lieux`.
-- Known leftovers: the empty-state email form does nothing, and the « Précisez
-  votre demande » / « dites-moi ce qui manque » links under results are `#`.
+- Under results: « Pas tout à fait ça ? » with « Précisez votre demande »
+  (focuses the input) or « Un lieu manque ? Proposez-le » (→
+  `/contribuer/nouveau-lieu`).
+- Empty: « Le guide n'a pas encore de conseil fiable pour cette demande. » and
+  « Vous connaissez un lieu qui irait ? Proposez-le → ». Error: « La recherche
+  est indisponible pour le moment. » with a link to `/lieux`.
 
 ### Architecture
 

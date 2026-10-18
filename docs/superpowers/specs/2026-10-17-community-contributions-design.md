@@ -1,5 +1,8 @@
 # Community Contributions — "un guide écrit par les gens d'ici"
 
+**Status: Implemented (parts 1–3, October 2026).** The `spec/` files describe the
+product as built; this document is the design record.
+
 ## Purpose
 
 Today the Guide Nature de La Ciotat reads as one person's notebook: the

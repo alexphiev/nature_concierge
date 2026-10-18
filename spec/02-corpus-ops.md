@@ -13,9 +13,14 @@ system of record for it.
    file per place (`definePlace`, place + sources + claims), validated by zod
    and upserted by `pnpm corpus:seed`. Only `port-d-alon.ts` exists today.
    Seeding is idempotent by slug, never deletes, and sets places ACTIVE.
-3. **Contributions** (planned): tips, corrections, photos and new places from
-   contributors, reviewed in `/admin/contributions`. See
-   `docs/superpowers/specs/2026-10-17-community-contributions-design.md`.
+3. **Contributions**: tips, corrections, photos and new places from
+   contributors (accounts by email magic link), reviewed one by one in
+   `/admin/contributions`. An approved tip becomes a PUBLISHED public `Claim`
+   (`verification` LOCAL_TESTIMONY, `verdict` GO, `decayClass` SEASONAL, no
+   conditions) with a `Source` of type `contribution` and the contributor as
+   `authorId`; an approved new place becomes a DRAFT `Place` to complete in
+   `/admin/places`. Nothing is published without Alexandre's review. See
+   `05-admin.md`.
 
 ## Quality bar
 

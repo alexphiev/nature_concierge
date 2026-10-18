@@ -20,12 +20,22 @@ What's in the code, what's left to do outside it, and known caveats.
 - **Structured data**: place pages `TouristAttraction` + `BreadcrumbList` +
   `FAQPage` (from claims grouped by type, fixed question templates); `/lieux`
   `ItemList`; `/` `WebSite` + `Organization`.
-- **Crawling**: `sitemap.xml` (landing, `/lieux`, ACTIVE places with
-  `lastmod` = latest public claim update, else place update); `robots.txt`
-  disallows `/admin` and `/api`, AI crawlers allowed.
+- **Indexed community pages**: `/contribuer`, `/confidentialite` and
+  `/mentions-legales` (static, canonical, in the sitemap). `/a-propos` has
+  metadata but is not in the sitemap. Everything account- or form-related is
+  `noindex`: `/contribuer/nouveau-lieu`, `/lieux/[slug]/astuce`, `/corriger`,
+  `/corriger/[claimId]`, `/photos`, `/compte`, `/connexion/verifier`, and
+  `/admin/*` (also `X-Robots-Tag: noindex` from `proxy.ts`).
+- **Crawling**: `sitemap.xml` (landing, `/lieux`, `/contribuer`,
+  `/mentions-legales`, `/confidentialite`, ACTIVE places with `lastmod` =
+  latest public claim update, else place update); `robots.txt` disallows
+  `/admin` and `/api`, AI crawlers allowed.
 - **AI-SEO**: `/llms.txt` generated from ACTIVE places (spots nested under
-  their parent); « À proximité » internal links (4 nearest within 25 km);
-  clean semantic HTML (one `<h1>`, claims as standalone sentences).
+  their parent), with the community framing (« conseils écrits par les gens
+  d'ici et relus avant publication ») and a contact line pointing to
+  `/contribuer`; « À proximité » internal links (4 nearest within 25 km); clean
+  semantic HTML (one `<h1>`, claims as standalone sentences). Tip attribution
+  is visible text on the page, not in JSON-LD.
 
 ## To do outside the code
 
@@ -53,9 +63,9 @@ What's in the code, what's left to do outside it, and known caveats.
 - **Out-of-band writes** (seed script, local admin against the shared DB)
   reach prod within an hour (`corpus` cacheLife) or immediately via
   `POST /api/revalidate`.
-- The root `description` (« …où aller en nature entre Marseille et Bandol —
-  et où ne pas aller ») and `llms.txt` mission text still use the original
-  concierge framing; both are rewritten by the community contributions work.
+- Resolved: the root `description` and the `llms.txt` mission text use the
+  community framing (« écrit par les gens d'ici… relus avant publication »),
+  no longer the concierge one.
 
 ## Ideas for later (not committed to)
 
