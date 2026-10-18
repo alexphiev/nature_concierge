@@ -193,7 +193,11 @@ only) as a fallback if the hook failed. Matching on a verified email is the
 security boundary.
 
 **`/compte`**: signed out, an email field (« Recevoir le lien »); signed in,
-display name and commune (« Enregistrer »), « Se déconnecter », and « Supprimer
+display name and commune (« Enregistrer »), « Mes contributions » (private
+list, newest first: type, place, short excerpt or photo thumbnails, date, and a
+status badge « En relecture » / « Publiée » (« Retenue » for a proposed place,
+« Prise en compte » for a correction) / « Non retenue » with Alexandre's
+message; empty state with a « Contribuer » button), « Se déconnecter », and « Supprimer
 mon compte » (confirmation checkbox, « Supprimer définitivement »; published
 tips stay as « Un ancien contributeur »). The Better Auth `/update-user`
 endpoint is disabled so names always go through the 2–40 character
@@ -207,7 +211,8 @@ rights) and `/mentions-legales` (`LegalPage`), contact `contact@laciotatnature.f
 - `SiteHeader`: logo + « Guide Nature de La Ciotat », « Tous les lieux »,
   « Contribuer » (filled pill on desktop, highlighted when on `/contribuer*`),
   « À propos », « Soutenir » (Tipeee), an initial avatar linking to `/compte`
-  when signed in; `MobileMenu` on small screens (same items).
+  when signed in, or a « Se connecter » link (desktop only) when signed out;
+  `MobileMenu` on small screens (same items plus « Mon compte »).
 - `SiteFooter`: « Un guide écrit par les gens d'ici, relu par Alexandre. »
   with live counts (« {n} conseils · {k} contributeurs »; contributors only
   once k ≥ 2), a Tipeee button, links Contribuer · À propos · Confidentialité

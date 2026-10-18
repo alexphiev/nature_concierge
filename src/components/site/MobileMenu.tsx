@@ -80,6 +80,11 @@ export function MobileMenu() {
                 À propos
               </Link>
             </li>
+            <li>
+              <Link href="/compte" onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>
+                Mon compte
+              </Link>
+            </li>
           </ul>
           <a
             href={TIPEEE_HREF}
