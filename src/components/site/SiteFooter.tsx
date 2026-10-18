@@ -1,10 +1,25 @@
 import { HeartIcon, Monogram } from "../landing/icons";
-import { ACCESS_MAP_HREF, CONTAINER, FOCUS_RING, STORY_HREF, TIPEEE_HREF } from "../landing/shared";
+import { getCommunityStats } from "@/src/corpus/community";
+import { countLabel } from "@/src/corpus/count-label";
+import { ABOUT_HREF, ACCESS_MAP_HREF, CONTAINER, CONTRIBUTE_HREF, FOCUS_RING, TIPEEE_HREF } from "../landing/shared";
 
 const LINK = `text-[15px] font-semibold text-[#0E4B5A] hover:text-[#0A3843] ${FOCUS_RING}`;
 const TIPEEE_LINK = `text-[15px] font-semibold text-[#A34A25] hover:text-[#8A3D1E] ${FOCUS_RING}`;
 
-export function SiteFooter() {
+const NAV_LINKS = [
+  { href: CONTRIBUTE_HREF, label: "Contribuer" },
+  { href: ABOUT_HREF, label: "À propos" },
+  { href: "/confidentialite", label: "Confidentialité" },
+  { href: "/mentions-legales", label: "Mentions légales" },
+];
+
+export async function SiteFooter() {
+  const { tipCount, contributorCount } = await getCommunityStats();
+  const counts = [
+    countLabel(tipCount, "conseil", "conseils"),
+    ...(contributorCount >= 2 ? [countLabel(contributorCount, "contributeur", "contributeurs")] : []),
+  ].join(" · ");
+
   return (
     <footer className="grow bg-[#EAE2D3] font-landing-body leading-[normal] text-[#1D2A2E]">
       <div className={`${CONTAINER} flex flex-col gap-5 py-8 md:gap-8 md:py-12`}>
@@ -13,18 +28,13 @@ export function SiteFooter() {
             <Monogram className="size-16 border-2 border-[#FFFDF8] text-[26px] md:size-19 md:text-[30px]" />
             <div className="flex flex-col gap-1.5">
               <p className="text-[15px] leading-[1.45] text-[#3E4A4B] md:text-[16px] md:leading-normal">
-                <strong className="text-[#1D2A2E]">Un guide tenu par Alexandre</strong>, habitant
-                de La Ciotat depuis 2025. Gratuit, sans pub, sans compte.
+                <strong className="text-[#1D2A2E]">Un guide écrit par les gens d’ici</strong>,
+                relu par Alexandre.
               </p>
-              <a href={STORY_HREF} className={`hidden self-start md:block ${LINK}`}>
-                L’histoire du projet
-              </a>
+              <p className="text-[14px] text-[#5B6663]">{counts}</p>
             </div>
           </div>
           <div className="flex flex-col gap-1 md:hidden">
-            <a href={STORY_HREF} className={`flex h-11 items-center self-start ${LINK}`}>
-              L’histoire du projet
-            </a>
             <a href={TIPEEE_HREF} className={`flex h-11 items-center gap-2 self-start ${TIPEEE_LINK}`}>
               <HeartIcon className="size-4.5" />
               Le guide vous a servi ? Soutenir sur Tipeee
@@ -41,7 +51,17 @@ export function SiteFooter() {
             </a>
           </div>
         </div>
-        <p className="border-t border-[#D5CAB6] pt-4 text-[13px] leading-normal text-[#5B6663] md:pt-5 md:text-[14px]">
+        <nav
+          aria-label="Liens du pied de page"
+          className="flex flex-wrap gap-x-6 gap-y-1 border-t border-[#D5CAB6] pt-2 md:pt-4"
+        >
+          {NAV_LINKS.map((link) => (
+            <a key={link.href} href={link.href} className={`flex h-11 items-center ${LINK}`}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
+        <p className="text-[13px] leading-normal text-[#5B6663] md:text-[14px]">
           En été, l’accès aux massifs dépend du risque incendie, décidé chaque veille par la
           préfecture. Vérifiez avant de partir :{" "}
           <a

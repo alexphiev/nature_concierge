@@ -17,9 +17,12 @@ export const PROPOSE_PLACE_HREF = whatsAppHref("Bonjour ! Je voudrais proposer u
 export const SHARE_TIP_HREF = whatsAppHref("Bonjour ! J’ai une astuce à partager : ");
 
 export const ABOUT_HREF = "/a-propos";
+export const STORY_HREF = ABOUT_HREF;
+export const CONTRIBUTE_HREF = "/contribuer";
+export const PROPOSE_PLACE_FORM_HREF = "/contribuer/nouveau-lieu";
+export const SHARE_TIP_PICKER_HREF = "/contribuer#astuce";
 
 // Placeholders until the owner supplies the targets.
-export const STORY_HREF = "#";
 export const TIPEEE_HREF = "#";
 export const ACCESS_MAP_HREF = "#";
 

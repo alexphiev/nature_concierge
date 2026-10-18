@@ -4,6 +4,7 @@ import { Suspense, useEffect, useEffectEvent, useId, useRef, useState } from "re
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CloseIcon, HeartIcon, MenuIcon } from "../landing/icons";
+import { ContributeLink } from "./ContributeLink";
 import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, GUIDE_HREF, TIPEEE_HREF } from "../landing/shared";
 
 const PANEL_ROW = `flex min-h-13 items-center ${FOCUS_RING}`;
@@ -72,6 +73,13 @@ export function MobileMenu({ guideActive }: { guideActive: boolean }) {
               >
                 Tous les lieux
               </Link>
+            </li>
+            <li>
+              <ContributeLink
+                onClick={close}
+                className={`${PANEL_ROW} font-semibold text-[#0E4B5A]`}
+                activeClassName="underline decoration-2 underline-offset-8"
+              />
             </li>
             <li>
               <Link href={ABOUT_HREF} onClick={close} className={`${PANEL_ROW} text-[#1D2A2E]`}>

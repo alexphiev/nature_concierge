@@ -4,6 +4,7 @@ import { SITE_NAME } from "../../site";
 import { HeartIcon, LogoIcon } from "../landing/icons";
 import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, GUIDE_HREF, TIPEEE_HREF } from "../landing/shared";
 import { AccountLink } from "./AccountLink";
+import { ContributeLink } from "./ContributeLink";
 import { MobileMenu } from "./MobileMenu";
 
 export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
@@ -32,6 +33,10 @@ export function SiteHeader({ guideActive = false }: { guideActive?: boolean }) {
           >
             Tous les lieux
           </Link>
+          <ContributeLink
+            className="hidden rounded-full bg-[#0E4B5A] px-4 py-2 text-white hover:bg-[#0A3843] md:block"
+            activeClassName="bg-[#0A3843] ring-2 ring-[#0E4B5A] ring-offset-2 ring-offset-[#F5EFE4]"
+          />
           <Link href={ABOUT_HREF} className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
             À propos
           </Link>
