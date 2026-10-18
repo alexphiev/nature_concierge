@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Place } from "../../prisma/generated/client";
+import { countLabel } from "../corpus/count-label";
+import type { PlaceWithCover } from "../corpus/queries";
 import type { DisplayPhoto } from "../corpus/place-photos";
 import { PhotoImage } from "./PhotoImage";
 
@@ -14,29 +16,13 @@ export const TYPE_LABELS: Record<Place["type"], string> = {
   SCENIC_ROAD: "Route touristique",
 };
 
-const CLAIM_TYPE_LABELS: Record<string, string> = {
-  ACCESS: "Accès",
-  CROWDING: "Affluence",
-  SUITABILITY: "Pour qui",
-  TIP: "Astuce",
-  AVOID: "À éviter",
-  ALTERNATIVE: "Alternative",
-  DECODING: "Décryptage",
-  ACTIVITY: "Activités",
-  PRACTICAL: "Infos pratiques",
-  SAFETY: "Sécurité",
-  NATURE: "Faune & flore",
-};
-
 export function PlaceCard({
   place,
   cover,
 }: {
-  place: Place;
+  place: PlaceWithCover;
   cover: DisplayPhoto | null;
 }) {
-  const hookClaim = null as { claimType: string; claimText: string } | null; // see note below — Task 5 does not add a hook-claim query; left null for now.
-
   return (
     <Link
       href={`/lieux/${place.slug}`}
@@ -72,12 +58,15 @@ export function PlaceCard({
         <p className="mt-1 text-sm text-encre/70">
           {place.commune} · {place.departement}
         </p>
-        {hookClaim && (
-          <p className="mt-3 flex gap-2 border-t border-sable/35 pt-3 text-sm text-encre/80">
-            <span className="shrink-0 pt-0.5 font-mono text-[0.65rem] uppercase tracking-wide text-pin">
-              {CLAIM_TYPE_LABELS[hookClaim.claimType]}
+        {place._count.claims > 0 ? (
+          <p className="mt-3 border-t border-sable/35 pt-3 font-mono text-[0.7rem] uppercase tracking-wide text-pin">
+            {countLabel(place._count.claims, "conseil", "conseils")}
+          </p>
+        ) : (
+          <p className="mt-3 border-t border-sable/35 pt-3">
+            <span className="rounded-full border border-sable/50 px-2.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-wide text-encre/70">
+              À compléter
             </span>
-            {hookClaim.claimText}
           </p>
         )}
       </div>

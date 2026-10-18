@@ -90,7 +90,7 @@ export default async function PlaceDetailPage({
   });
   const contributorCount = placeContributorCount(place.claims);
   const metaItems = [
-    countLabel(place.claims.length, "conseil", "conseils"),
+    place.claims.length > 0 && countLabel(place.claims.length, "conseil", "conseils"),
     contributorCount >= 2 && `${contributorCount} contributeurs`,
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
     place.governingAuthority && `Géré par ${place.governingAuthority}`,

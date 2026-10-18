@@ -17,7 +17,7 @@ const NAV_LINKS = [
 export async function SiteFooter() {
   const { tipCount, contributorCount } = await getCommunityStats();
   const counts = [
-    countLabel(tipCount, "conseil", "conseils"),
+    ...(tipCount > 0 ? [countLabel(tipCount, "conseil", "conseils")] : []),
     ...(contributorCount >= 2 ? [countLabel(contributorCount, "contributeur", "contributeurs")] : []),
   ].join(" · ");
 
@@ -32,7 +32,7 @@ export async function SiteFooter() {
                 <strong className="text-[#1D2A2E]">Un guide écrit par les gens d’ici</strong>,
                 relu par Alexandre.
               </p>
-              <p className="text-[14px] text-[#5B6663]">{counts}</p>
+              {counts && <p className="text-[14px] text-[#5B6663]">{counts}</p>}
             </div>
           </div>
           <div className="flex flex-col gap-1 md:hidden">
