@@ -84,7 +84,7 @@ export default async function PlaceDetailPage({
 
   const nearby = nearbyPlaces(place, activePlaces);
 
-  const mapsUrl = googleMapsUrl(`${place.name}, ${place.commune}`, place.googlePlaceId);
+  const mapsUrl = googleMapsUrl(place);
   const slides = buildGallerySlides({
     slug: place.slug,
     uploaded: place.photos,
@@ -157,6 +157,8 @@ export default async function PlaceDetailPage({
         </div>
         <a
           href={mapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 self-start rounded-[10px] border border-sable/70 px-4 py-2.5 text-sm font-medium whitespace-nowrap text-encre transition-colors hover:border-mediterranee hover:text-mediterranee md:self-auto"
         >
           <svg
@@ -258,11 +260,21 @@ export default async function PlaceDetailPage({
             </div>
             <div className="flex justify-center gap-5 text-sm">
               {place.officialInfoUrl && (
-                <a href={place.officialInfoUrl} className="text-mediterranee underline underline-offset-2">
-                  Carte officielle ↗
+                <a
+                  href={place.officialInfoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-mediterranee underline underline-offset-2"
+                >
+                  Site ↗
                 </a>
               )}
-              <a href={mapsUrl} className="text-mediterranee underline underline-offset-2">
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-mediterranee underline underline-offset-2"
+              >
                 Google Maps ↗
               </a>
               <Link

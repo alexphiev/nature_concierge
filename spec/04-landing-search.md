@@ -12,8 +12,8 @@ tips that fit. French only. Design record of the community rework:
    « Vous connaissez un coin ? Contribuez → » link (`/contribuer`), and 4
    shortcut buttons under a moment label (« Idées pour ce samedi soir »).
    Results render below the hero.
-2. **`GuideSection`** — « Tous les lieux du guide »: the first 8 ACTIVE places
-   by `demandRank` (3 on mobile) with cover, commune and tip count, link to
+2. **`GuideSection`** — « Tous les lieux du guide »: the first 8 ACTIVE leaf places
+   (no ACTIVE spot) by `demandRank` (3 on mobile) with cover, commune and tip count, link to
    `/lieux`.
 3. **`RecentTipsSection`** — « Derniers conseils partagés »: the 4 most recent
    tips by contributors (text, « {name} · {commune} », place link). Rendered

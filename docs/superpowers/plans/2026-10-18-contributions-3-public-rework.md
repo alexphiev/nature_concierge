@@ -97,7 +97,7 @@ Note: `/contribuer/nouveau-lieu` lives in the `(public)` group; the new `/contri
 - Consumes: `placeContributorCount`, `countLabel`.
 
 - [ ] **Step 1: Header meta** per spec §5 "Place page" → header meta: add « {n} conseils » and, when ≥ 2, « {k} contributeurs » (counts over the place's own public claims), keeping « Lieu proposé par … », spot count and governing authority.
-- [ ] **Step 2: Sidebar card** (`ContributeCard({ slug })`) replaces `WhatsAppCTA`: title « Vous connaissez ce lieu ? », text « Ajoutez une astuce, corrigez une info ou partagez vos photos. Tout est relu avant publication. », primary « Ajouter une astuce » (`/lieux/{slug}/astuce`), secondary « Ajouter des photos » (`/photos`) and « Signaler une erreur » (`/corriger`). The « Carte officielle ↗ » / « Google Maps ↗ » links stay below; remove the temporary standalone « Signaler une erreur » link from part 2.
+- [ ] **Step 2: Sidebar card** (`ContributeCard({ slug })`) replaces `WhatsAppCTA`: title « Vous connaissez ce lieu ? », text « Ajoutez une astuce, corrigez une info ou partagez vos photos. Tout est relu avant publication. », primary « Ajouter une astuce » (`/lieux/{slug}/astuce`), secondary « Ajouter des photos » (`/photos`) and « Signaler une erreur » (`/corriger`). The « Site ↗ » / « Google Maps ↗ » links stay below; remove the temporary standalone « Signaler une erreur » link from part 2.
 - [ ] **Step 3: Mobile sticky bar** (`ContributeBar({ slug })`) replaces `WhatsAppBar`: « Vous connaissez ce lieu ? » + « Contribuer » → `/lieux/{slug}/astuce`; same sticky/safe-area behaviour as the old bar.
 - [ ] **Step 4:** delete `src/components/WhatsAppCTA.tsx`.
 - [ ] **Step 5: Verify** — lint, test, build (`/lieux/[slug]` ◐).

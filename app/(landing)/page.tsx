@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getActivePlaces } from "@/src/corpus/queries";
 import { resolveCoverPhoto } from "@/src/corpus/place-photos";
+import { leafPlaces } from "@/src/corpus/leaf-places";
 import type { PlaceWithCover } from "@/src/corpus/queries";
 import { getShortcutsForNow } from "@/src/search/search-service";
 import { SearchHero } from "@/src/components/landing/SearchHero";
@@ -46,9 +47,9 @@ async function withCover(place: PlaceWithCover): Promise<GuideCard> {
 
 export default async function LandingPage() {
   const places = await getActivePlaces();
-  const activeIds = new Set(places.map((p) => p.id));
-  const topLevelCount = places.filter((p) => !p.parentId || !activeIds.has(p.parentId)).length;
-  const cards = await Promise.all(places.slice(0, CARD_COUNT).map(withCover));
+  // Only the lowest-level places are listed; a parent shows up through its spots.
+  const leaves = leafPlaces(places);
+  const cards = await Promise.all(leaves.slice(0, CARD_COUNT).map(withCover));
 
   return (
     <main>
@@ -59,7 +60,7 @@ export default async function LandingPage() {
         }}
       />
       <SearchHero shortcuts={getShortcutsForNow()} />
-      <GuideSection cards={cards} placeCount={topLevelCount} />
+      <GuideSection cards={cards} placeCount={leaves.length} />
       <RecentTipsSection />
       <HowItWorksSection />
       <HelpSection />

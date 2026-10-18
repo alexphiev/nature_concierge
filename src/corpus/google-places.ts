@@ -84,7 +84,23 @@ export async function getGooglePlaceDetails(
 
 // Built from a Maps URL (https://developers.google.com/maps/documentation/urls/get-started)
 // instead of requesting googleMapsUri from the API, which costs a Pro call.
-export function googleMapsUrl(query: string, googlePlaceId: string | null): string {
+// Without a place id, a name search can land on the wrong place, so exact
+// coordinates win.
+export function googleMapsUrl({
+  name,
+  commune,
+  lat,
+  lng,
+  googlePlaceId,
+}: {
+  name: string;
+  commune: string;
+  lat: number;
+  lng: number;
+  googlePlaceId: string | null;
+}): string {
+  const hasCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
+  const query = googlePlaceId || !hasCoordinates ? `${name}, ${commune}` : `${lat},${lng}`;
   const params = new URLSearchParams({ api: "1", query });
   if (googlePlaceId) params.set("query_place_id", googlePlaceId);
   return `https://www.google.com/maps/search/?${params}`;
