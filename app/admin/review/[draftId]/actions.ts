@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath, updateTag } from "next/cache";
+import { assertAdmin } from "@/src/admin/assert-admin";
 import { prisma } from "@/src/corpus/db";
 import { runBlockExtraction } from "@/src/corpus/run-block-extraction";
 import {
@@ -205,17 +206,20 @@ export async function approveClaim(
   editedClaim: Record<string, unknown>,
   editedSource?: Record<string, unknown>,
 ): Promise<void> {
+  await assertAdmin();
   await approveClaimNoRollup(blockId, claimId, editedClaim, editedSource);
   updateTag("corpus");
   await rollupBlockAndDraft(blockId);
 }
 
 export async function rejectClaim(blockId: string, claimId: string): Promise<void> {
+  await assertAdmin();
   await rejectClaimNoRollup(blockId, claimId);
   await rollupBlockAndDraft(blockId);
 }
 
 export async function retryExtraction(blockId: string): Promise<void> {
+  await assertAdmin();
   const block = await prisma.ingestionBlock.findUniqueOrThrow({
     where: { id: blockId },
     include: { draft: { include: { place: true } } },
@@ -259,6 +263,7 @@ export async function approveAllInBlock(
   blockId: string,
   editedClaims: Record<string, unknown>[],
 ): Promise<void> {
+  await assertAdmin();
   try {
     for (const editedClaim of editedClaims) {
       const claimId = editedClaim.id as string;
@@ -277,6 +282,7 @@ export async function approveAllInBlock(
 }
 
 export async function acknowledgeEmptyBlock(blockId: string): Promise<void> {
+  await assertAdmin();
   const block = await prisma.ingestionBlock.findUniqueOrThrow({ where: { id: blockId } });
   const claims = block.draftClaims as unknown as DraftClaim[];
   if (claims.length > 0) {
@@ -286,6 +292,7 @@ export async function acknowledgeEmptyBlock(blockId: string): Promise<void> {
 }
 
 export async function rejectAllInBlock(blockId: string): Promise<void> {
+  await assertAdmin();
   const block = await prisma.ingestionBlock.findUniqueOrThrow({ where: { id: blockId } });
   const claims = block.draftClaims as unknown as DraftClaim[];
   const pendingIds = claims.filter((c) => c.resolution === "pending").map((c) => c.id);

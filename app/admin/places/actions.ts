@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { assertAdmin } from "@/src/admin/assert-admin";
 import { prisma } from "@/src/corpus/db";
 import { slugify } from "@/src/corpus/slug";
 import { Prisma } from "../../../prisma/generated/client";
@@ -103,6 +104,7 @@ function slugConflictError(error: unknown): string | null {
 export async function createPlace(
   formData: FormData,
 ): Promise<{ id: string } | { error: string }> {
+  await assertAdmin();
   const fields = readPlaceFields(formData);
   const parentError = await assertValidParent(fields.parentId);
   if (parentError) return { error: parentError };
@@ -148,6 +150,7 @@ export async function updatePlace(
   placeId: string,
   formData: FormData,
 ): Promise<{ id: string } | { error: string }> {
+  await assertAdmin();
   const fields = readPlaceFields(formData);
   const parentError = await assertValidParent(fields.parentId, placeId);
   if (parentError) return { error: parentError };
@@ -196,6 +199,7 @@ export async function uploadPlacePhoto(
   placeId: string,
   formData: FormData,
 ): Promise<{ id: string; src: string } | { error: string }> {
+  await assertAdmin();
   const file = formData.get("file");
   if (!(file instanceof Blob) || !isPlacePhotoType(file.type)) {
     return { error: "La photo doit être un JPEG, PNG ou WebP" };

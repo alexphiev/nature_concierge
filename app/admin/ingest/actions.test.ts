@@ -18,6 +18,10 @@ const {
   redirectMock: vi.fn(),
 }));
 
+vi.mock("@/src/admin/assert-admin", () => ({
+  assertAdmin: vi.fn(async () => {}),
+}));
+
 vi.mock("@/src/corpus/db", () => ({
   prisma: {
     place: {

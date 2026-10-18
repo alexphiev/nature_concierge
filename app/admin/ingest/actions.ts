@@ -1,10 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { assertAdmin } from "@/src/admin/assert-admin";
 import { prisma } from "@/src/corpus/db";
 import { runBlockExtraction } from "@/src/corpus/run-block-extraction";
 
 export async function createCapture(formData: FormData): Promise<void> {
+  await assertAdmin();
   const placeId = String(formData.get("placeId") ?? "");
   const place = await prisma.place.findUniqueOrThrow({ where: { id: placeId } });
 
@@ -66,6 +68,7 @@ export async function createCapture(formData: FormData): Promise<void> {
 }
 
 export async function addBlock(draftId: string, formData: FormData): Promise<void> {
+  await assertAdmin();
   const draft = await prisma.ingestionDraft.findUniqueOrThrow({
     where: { id: draftId },
     include: { place: true, blocks: { select: { order: true } } },
