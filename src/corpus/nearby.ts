@@ -15,9 +15,13 @@ export function distanceKm(
   return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-export function nearbyPlaces<
-  T extends { id: string; parentId: string | null; lat: number; lng: number },
->(place: T, candidates: T[], { limit = 4, maxKm = 25 } = {}): { place: T; km: number }[] {
+type Geo = { id: string; parentId: string | null; lat: number; lng: number };
+
+export function nearbyPlaces<C extends Geo>(
+  place: Geo,
+  candidates: C[],
+  { limit = 4, maxKm = 25 } = {},
+): { place: C; km: number }[] {
   return candidates
     .filter((candidate) => candidate.id !== place.id)
     .filter((candidate) => candidate.id !== place.parentId)

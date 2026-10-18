@@ -52,7 +52,10 @@ describe("getActivePlaces", () => {
     expect(findManyPlaceMock).toHaveBeenCalledWith({
       where: { status: "ACTIVE" },
       orderBy: { demandRank: "asc" },
-      include: { photos: { orderBy: { order: "asc" }, take: 1 } },
+      include: {
+        photos: { orderBy: { order: "asc" }, take: 1 },
+        _count: { select: { claims: { where: { isPublic: true, status: "PUBLISHED" } } } },
+      },
     });
     expect(result).toEqual([{ slug: "port-d-alon" }]);
   });

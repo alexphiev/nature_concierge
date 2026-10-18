@@ -3,9 +3,10 @@ import { prisma } from "./db";
 import type { Place, Claim, PlaceImage, PlacePhoto } from "../../prisma/generated/client";
 
 // `photos` only holds the cover (first photo), enough for cards.
-export type PlaceWithCover = Place & { photos: PlacePhoto[] };
+export type PlaceWithCover = Place & { photos: PlacePhoto[]; _count: { claims: number } };
 
 const coverPhotoInclude = { orderBy: { order: "asc" }, take: 1 } as const;
+const publicClaimsWhere = { isPublic: true, status: "PUBLISHED" } as const;
 
 export async function getActivePlaces(): Promise<PlaceWithCover[]> {
   "use cache";
@@ -14,11 +15,11 @@ export async function getActivePlaces(): Promise<PlaceWithCover[]> {
   return prisma.place.findMany({
     where: { status: "ACTIVE" },
     orderBy: { demandRank: "asc" },
-    include: { photos: coverPhotoInclude },
+    include: { photos: coverPhotoInclude, _count: { select: { claims: { where: publicClaimsWhere } } } },
   });
 }
 
-export type SearchCorpusPlace = PlaceWithCover & { claims: Pick<Claim, "id" | "claimText">[] };
+export type SearchCorpusPlace = Place & { photos: PlacePhoto[]; claims: Pick<Claim, "id" | "claimText">[] };
 
 export async function getSearchCorpus(): Promise<SearchCorpusPlace[]> {
   "use cache";

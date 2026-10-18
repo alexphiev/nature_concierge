@@ -31,11 +31,12 @@ export async function updateAccount(_prev: FormState, formData: FormData): Promi
     where: { id: user.id },
     data: { name: name.data, commune: commune.data },
   });
-  const [claims, places] = await Promise.all([
+  const [claims, places, approved] = await Promise.all([
     prisma.claim.count({ where: { authorId: user.id } }),
     prisma.place.count({ where: { proposedById: user.id } }),
+    prisma.contribution.count({ where: { userId: user.id, status: "APPROVED" } }),
   ]);
-  if (claims > 0 || places > 0) updateTag("corpus");
+  if (claims > 0 || places > 0 || approved > 0) updateTag("corpus");
   else refresh();
   return { values: { ...values, saved: "1" } };
 }
