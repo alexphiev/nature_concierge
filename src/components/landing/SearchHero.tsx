@@ -6,7 +6,7 @@ import { searchPlaces } from "@/app/(landing)/actions";
 import type { SearchResult, SearchResultPlace, ShortcutSuggestions } from "@/src/search/types";
 import { PhotoImage } from "../PhotoImage";
 import { ArrowIcon, BulbIcon, SearchIcon } from "./icons";
-import { GUIDE_HREF } from "./shared";
+import { CONTRIBUTE_HREF, GUIDE_HREF, PROPOSE_PLACE_FORM_HREF } from "./shared";
 
 const BADGE_GRID = "grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:flex-nowrap md:justify-center md:gap-2.5";
 const BADGE_SHAPE =
@@ -134,7 +134,17 @@ function ResultCard({ place }: { place: SearchResultPlace }) {
   );
 }
 
-function Results({ result, pending, onClear }: { result: SearchResult; pending: boolean; onClear: () => void }) {
+function Results({
+  result,
+  pending,
+  onClear,
+  onRefine,
+}: {
+  result: SearchResult;
+  pending: boolean;
+  onClear: () => void;
+  onRefine: () => void;
+}) {
   return (
     <section
       aria-live="polite"
@@ -166,7 +176,7 @@ function Results({ result, pending, onClear }: { result: SearchResult; pending: 
                 Effacer
               </button>
             </div>
-            <span className="text-[13px] leading-[1.4] text-[#6A7472]">Conseils d’Alexandre et des gens d’ici</span>
+            <span className="text-[13px] leading-[1.4] text-[#6A7472]">Conseils des gens d’ici, relus avant publication</span>
             <p className="mt-1 max-w-[820px] text-[17px] leading-[1.5] text-[#1D2A2E] md:text-[19px]">
               {result.intro}
             </p>
@@ -181,13 +191,17 @@ function Results({ result, pending, onClear }: { result: SearchResult; pending: 
               </div>
               <p className="text-[14px] text-[#4A5557] md:text-[15px]">
                 Pas tout à fait ça ?{" "}
-                <a href="#" className="font-semibold text-[#0E4B5A]">
+                <button
+                  type="button"
+                  onClick={onRefine}
+                  className="border-0 bg-transparent p-0 text-[inherit] font-semibold text-[#0E4B5A] underline"
+                >
                   Précisez votre demande
-                </a>{" "}
+                </button>{" "}
                 ou{" "}
-                <a href="#" className="font-semibold text-[#0E4B5A]">
-                  dites-moi ce qui manque
-                </a>
+                <Link href={PROPOSE_PLACE_FORM_HREF} className="font-semibold text-[#0E4B5A]">
+                  Un lieu manque ? Proposez-le
+                </Link>
                 .
               </p>
             </div>
@@ -196,25 +210,11 @@ function Results({ result, pending, onClear }: { result: SearchResult; pending: 
           {result.status === "empty" && (
             <div className="flex flex-col gap-3.5 rounded-[20px] border border-[#E4DACA] bg-[#FFFDF8] p-5 md:w-[760px] md:p-7">
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px]">
-                Je suis prévenu et j’irai vérifier. Laissez votre email si vous voulez la réponse.
+                Vous connaissez un lieu qui irait ?{" "}
+                <Link href={PROPOSE_PLACE_FORM_HREF} className="font-semibold text-[#0E4B5A]">
+                  Proposez-le →
+                </Link>
               </p>
-              <form className="flex flex-col gap-2.5 md:flex-row">
-                <label htmlFor="mail" className="sr-only">
-                  Votre email
-                </label>
-                <input
-                  id="mail"
-                  type="email"
-                  placeholder="votre@email.fr (facultatif)"
-                  className="h-12.5 grow rounded-full border border-[#D5CAB6] bg-white px-4.5 text-[16px]"
-                />
-                <button
-                  type="button"
-                  className="h-12.5 rounded-full border-0 bg-[#0E4B5A] px-5.5 text-[16px] font-semibold text-white"
-                >
-                  Me prévenir
-                </button>
-              </form>
             </div>
           )}
         </>
@@ -228,6 +228,7 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
   const [selected, setSelected] = useState<string[]>([]);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [pending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
   // Only the latest search may update the results (older, slower ones are dropped).
   const latestRequest = useRef(0);
 
@@ -260,6 +261,11 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
     runSearch(text, selected);
   }
 
+  function refine() {
+    inputRef.current?.focus();
+    inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
   function clear() {
     latestRequest.current++;
     setText("");
@@ -271,11 +277,14 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
     <>
       <div style={{ background: "#0E4B5A" }} className="text-white">
         <section className="mx-auto flex max-w-[800px] flex-col items-center gap-4 px-4 pt-10 pb-7 md:gap-5 md:px-0 md:pt-24 md:pb-14">
+          <p className="text-[13px] font-semibold tracking-[0.08em] text-[#BFD8D6] uppercase md:text-[14px]">
+            Écrit par les gens d’ici
+          </p>
           <h1 className="text-center font-landing-display text-[36px] leading-[1.08] font-semibold tracking-[-0.015em] md:text-[64px] md:leading-[1.06]">
             Où aller en nature autour de La Ciotat ?
           </h1>
           <p className="max-w-[640px] text-center text-[17px] leading-[1.5] text-[#CFE3E1] md:text-[20px]">
-            Décrivez votre sortie, je vous dis où aller. Avec les conseils vérifiés des gens d’ici.
+            Décrivez votre sortie, le guide vous répond avec les conseils de ceux qui y vont.
           </p>
 
           <form onSubmit={submit} className="relative mt-3.5 flex w-full max-w-[760px] items-center">
@@ -284,6 +293,7 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
             </label>
             <input
               id="q"
+              ref={inputRef}
               type="text"
               value={text}
               onChange={(event) => setText(event.target.value)}
@@ -301,6 +311,13 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
             </button>
           </form>
 
+          <Link
+            href={CONTRIBUTE_HREF}
+            className="text-[14px] text-[#CFE3E1] underline underline-offset-4 md:text-[15px]"
+          >
+            Vous connaissez un coin ? Contribuez →
+          </Link>
+
           <Suspense fallback={<ShortcutPlaceholders />}>
             <ShortcutBadges suggestions={shortcuts} selected={selected} onToggle={toggleShortcut} />
           </Suspense>
@@ -308,7 +325,7 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
       </div>
       <WaveDivider />
 
-      {result && <Results result={result} pending={pending} onClear={clear} />}
+      {result && <Results result={result} pending={pending} onClear={clear} onRefine={refine} />}
     </>
   );
 }

@@ -5,11 +5,13 @@ import type { PlaceWithCover } from "@/src/corpus/queries";
 import { getShortcutsForNow } from "@/src/search/search-service";
 import { SearchHero } from "@/src/components/landing/SearchHero";
 import { GuideSection, type GuideCard } from "@/src/components/landing/GuideSection";
+import { RecentTipsSection } from "@/src/components/landing/RecentTipsSection";
+import { HowItWorksSection } from "@/src/components/landing/HowItWorksSection";
 import { HelpSection } from "@/src/components/landing/HelpSection";
 import { SITE_URL, SITE_NAME, BASE_OPEN_GRAPH } from "@/src/site";
 
 const DESCRIPTION =
-  "Décrivez votre sortie, je vous dis où aller. Avec les conseils vérifiés des gens d’ici.";
+  "Décrivez votre sortie, le guide vous dit où aller. Avec les conseils des gens d’ici, relus avant publication.";
 
 export const metadata: Metadata = {
   title: { absolute: "Guide Nature de La Ciotat — calanques, criques et sentiers" },
@@ -56,6 +58,8 @@ export default async function LandingPage() {
       />
       <SearchHero shortcuts={getShortcutsForNow()} />
       <GuideSection cards={cards} placeCount={places.length} />
+      <RecentTipsSection />
+      <HowItWorksSection />
       <HelpSection />
     </main>
   );

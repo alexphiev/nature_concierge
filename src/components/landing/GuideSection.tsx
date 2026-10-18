@@ -1,11 +1,12 @@
 import Link from "next/link";
-import type { Place } from "../../../prisma/generated/client";
+import type { PlaceWithCover } from "../../corpus/queries";
+import { countLabel } from "../../corpus/count-label";
 import type { DisplayPhoto } from "../../corpus/place-photos";
 import { PhotoImage } from "../PhotoImage";
 import { ArrowIcon, ChevronIcon } from "./icons";
 import { CONTAINER, FOCUS_RING, GUIDE_HREF } from "./shared";
 
-export type GuideCard = { place: Place; cover: DisplayPhoto | null };
+export type GuideCard = { place: PlaceWithCover; cover: DisplayPhoto | null };
 
 const MOBILE_CARD_COUNT = 3;
 
@@ -22,8 +23,8 @@ export function GuideSection({ cards, placeCount }: { cards: GuideCard[]; placeC
             Tous les lieux du guide
           </h2>
           <p className="hidden text-[14px] leading-[1.45] text-[#5B6663] md:block md:max-w-[640px] md:text-[16px]">
-            Chaque fiche rassemble les conseils recueillis sur place : accès, parking, horaires,
-            vent, avec qui y aller.
+            Chaque fiche rassemble les conseils des gens d’ici : accès, parking, horaires, vent,
+            avec qui y aller.
           </p>
           <span className="text-[14px] text-[#5B6663] md:hidden">
             {placesLabel(placeCount)}
@@ -58,6 +59,11 @@ export function GuideSection({ cards, placeCount }: { cards: GuideCard[]; placeC
                   {place.name}
                 </h3>
                 <p className="text-[13px] text-[#5B6663] md:text-[14px]">{place.commune}</p>
+                {place._count.claims > 0 && (
+                  <p className="text-[13px] text-[#5B6663] md:text-[14px]">
+                    {countLabel(place._count.claims, "conseil", "conseils")}
+                  </p>
+                )}
               </div>
               <ChevronIcon className="size-4.5 text-[#8A948F] md:hidden" />
             </Link>

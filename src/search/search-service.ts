@@ -16,7 +16,7 @@ const MIN_TIP_RELEVANCE = 0.5;
 const EXCERPT_MAX = 160;
 
 const OK_INTRO = "Voici les lieux qui correspondent le mieux à votre demande.";
-const EMPTY_INTRO = "Je n’ai pas encore de conseil fiable pour cette demande.";
+const EMPTY_INTRO = "Le guide n’a pas encore de conseil fiable pour cette demande.";
 
 async function getActiveShortcuts(): Promise<ShortcutView[]> {
   "use cache";
