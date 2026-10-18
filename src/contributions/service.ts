@@ -250,3 +250,23 @@ export async function getPendingContributions(
   });
   return rows.map(({ photos, ...rest }) => ({ ...rest, photoKeys: photos.map((p) => p.key) }));
 }
+
+export async function getUserContributions(userId: string) {
+  const rows = await prisma.contribution.findMany({
+    where: { userId, status: { in: ["PENDING", "APPROVED", "REJECTED"] } },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      text: true,
+      correctionKind: true,
+      placeName: true,
+      reviewNote: true,
+      createdAt: true,
+      place: { select: { name: true, slug: true, status: true } },
+      photos: { orderBy: { order: "asc" }, select: { key: true } },
+    },
+  });
+  return rows.map(({ photos, ...rest }) => ({ ...rest, photoKeys: photos.map((p) => p.key) }));
+}

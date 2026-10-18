@@ -43,7 +43,9 @@ About portrait, success metrics for the community phase) are tracked in
 ## Non-goals
 
 - ❌ No accounts for readers. Accounts exist only for contributors (email
-  magic link), with no profiles, followers, likes or comments.
+  magic link), with no public profiles, followers, likes or comments. A
+  contributor sees only a private list of their own contributions and their
+  status on `/compte`.
 - ❌ No publication without review. Every contribution is read by Alexandre
   first; there is no trusted-contributor bypass.
 - ❌ No generated text shown to visitors. AI ranks and drafts (search

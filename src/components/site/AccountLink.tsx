@@ -4,7 +4,13 @@ import { FOCUS_RING } from "../landing/shared";
 
 export async function AccountLink() {
   const user = await getSessionUser();
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Link href="/compte" className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
+        Se connecter
+      </Link>
+    );
+  }
 
   const initial = user.name.trim().charAt(0).toUpperCase() || "?";
 
