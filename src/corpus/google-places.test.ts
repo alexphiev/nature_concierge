@@ -278,14 +278,22 @@ describe("cache lifetimes", () => {
 });
 
 describe("googleMapsUrl", () => {
+  const place = { name: "Port d'Alon", commune: "Saint-Cyr-sur-Mer", lat: 43.1651, lng: 5.7123 };
+
   it("targets the exact place when a googlePlaceId is known", () => {
-    expect(googleMapsUrl("Calanque du Mugel, La Ciotat", "ChIJabc")).toBe(
-      "https://www.google.com/maps/search/?api=1&query=Calanque+du+Mugel%2C+La+Ciotat&query_place_id=ChIJabc",
+    expect(googleMapsUrl({ ...place, googlePlaceId: "ChIJabc" })).toBe(
+      "https://www.google.com/maps/search/?api=1&query=Port+d%27Alon%2C+Saint-Cyr-sur-Mer&query_place_id=ChIJabc",
     );
   });
 
-  it("falls back to a text search without a googlePlaceId", () => {
-    expect(googleMapsUrl("Port d'Alon, Saint-Cyr-sur-Mer", null)).toBe(
+  it("uses the coordinates without a googlePlaceId", () => {
+    expect(googleMapsUrl({ ...place, googlePlaceId: null })).toBe(
+      "https://www.google.com/maps/search/?api=1&query=43.1651%2C5.7123",
+    );
+  });
+
+  it("falls back to a text search without a googlePlaceId or usable coordinates", () => {
+    expect(googleMapsUrl({ ...place, lat: NaN, googlePlaceId: null })).toBe(
       "https://www.google.com/maps/search/?api=1&query=Port+d%27Alon%2C+Saint-Cyr-sur-Mer",
     );
   });

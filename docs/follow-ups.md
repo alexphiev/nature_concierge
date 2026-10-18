@@ -62,9 +62,6 @@ items off or delete them as they're done.
       away, switch to a confirm-page step before verifying.
 
 ### Code hygiene
-- [ ] The top-level places filter (`!p.parentId || !activeIds.has(p.parentId)`)
-      is duplicated in `app/(landing)/page.tsx` and `app/(public)/lieux/page.tsx`;
-      extract a helper so the two counts can't drift.
 - [ ] Formatting churn and long lines: `src/components/ClaimList.tsx`
       (re-wrapped), `IdentityFields.tsx` and `PlaceLocationFields.tsx` lines
       over 100 characters, `ContributeLink.tsx` props on one line. Consider a

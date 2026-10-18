@@ -48,8 +48,8 @@ partagés par {k} contributeurs »; the contributor part only once k ≥ 2, the
 tip part only when m > 0), the coverage line, « Un lieu manque ?
 Proposez-le → », then a grid of `PlaceCard`s for ACTIVE places by
 `demandRank`, ending with a dashed « Proposer un lieu » card
-(`/contribuer/nouveau-lieu`). Spots are hidden when their parent is ACTIVE
-(they're listed on the parent's page). JSON-LD `ItemList`.
+(`/contribuer/nouveau-lieu`). Only leaf places are listed: a place with an ACTIVE
+spot is hidden (it's reachable through its spots). JSON-LD `ItemList`.
 
 `PlaceCard`: cover photo (or hatch panel + type label), type, name, commune,
 tip count, or an « À compléter » pill when the place has no public tip.

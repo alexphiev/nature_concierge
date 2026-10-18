@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ContributionBanner } from "@/src/components/contribute/ContributionBanner";
 import { getActivePlaces } from "@/src/corpus/queries";
+import { leafPlaces } from "@/src/corpus/leaf-places";
 import { resolveCoverPhoto } from "@/src/corpus/place-photos";
 import { PlaceCard } from "@/src/components/PlaceCard";
 import { getCommunityStats } from "@/src/corpus/community";
@@ -20,9 +21,8 @@ export const metadata: Metadata = {
 
 export default async function PlacesIndexPage() {
   const activePlaces = await getActivePlaces();
-  const activeIds = new Set(activePlaces.map((p) => p.id));
-  // Spots are listed on their parent's page, unless the parent isn't public.
-  const places = activePlaces.filter((p) => !p.parentId || !activeIds.has(p.parentId));
+  // Only the lowest-level places are listed; a parent shows up through its spots.
+  const places = leafPlaces(activePlaces);
   const { tipCount, contributorCount } = await getCommunityStats();
   const intro = [
     countLabel(places.length, "lieu", "lieux"),
