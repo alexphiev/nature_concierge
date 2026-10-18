@@ -9,10 +9,10 @@ import {
   type ReviewContribution,
 } from "./ReviewParts";
 
-export function PlaceReview({ c }: { c: ReviewContribution }) {
+export function PlaceReview({ c, error }: { c: ReviewContribution; error?: string }) {
   return (
     <li id={`c-${c.id}`} className={cardClass}>
-      <ReviewHeader c={c} />
+      <ReviewHeader c={c} error={error} />
       <div className="flex flex-col gap-1 text-sm">
         <p className="font-medium">
           {c.placeName} · {c.placeCommune}

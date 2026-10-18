@@ -102,8 +102,21 @@ Lists PENDING contributions, oldest first (UNCONFIRMED ones are invisible).
 Each card shows type, place (or proposed name, commune and location hint),
 contributor (name, commune, email), date, text and photo thumbnails;
 corrections quote the current tip. Empty: « Aucune contribution à relire. »
-Each card has an optional note field (quoted in the decision email) and a
-« Refuser » button with an optional reason.
+Each card has an optional note field (quoted in the decision email, capped at
+1000 characters) and a « Refuser » button with an optional reason.
+
+A refused validation redirects to `/admin/contributions?erreur={code}&c={id}#c-{id}`
+and shows the message in a `role="alert"` line at the top of that card (only
+if the card is gone, e.g. already decided, a banner at the top of the page
+shows it instead). Codes: `texte` (« Le texte doit faire entre 10 et 500
+caractères. »), `theme` (« Thème inconnu. »), `photos` (« Cochez au moins une
+photo, ou utilisez « Refuser ». »), `conseil` (« Ce conseil n’est plus en ligne. »).
+Unknown codes render nothing. Every successful decision redirects back to
+`/admin/contributions` so a previous error never lingers.
+
+The geo endpoints used by the place forms live under `/admin/api/geo/*`
+(`communes`, `geocode`): behind the admin Basic-auth middleware and
+re-checked with `assertAdmin()` (401 JSON otherwise).
 
 | Type | Approve action | Effect |
 |---|---|---|

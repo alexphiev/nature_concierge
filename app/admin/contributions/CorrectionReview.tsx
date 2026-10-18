@@ -14,11 +14,17 @@ import {
   type ReviewContribution,
 } from "./ReviewParts";
 
-export function CorrectionReview({ c }: { c: ReviewContribution & { claim: Claim | null } }) {
+export function CorrectionReview({
+  c,
+  error,
+}: {
+  c: ReviewContribution & { claim: Claim | null };
+  error?: string;
+}) {
   const kind = CORRECTION_KINDS.find((k) => k.value === c.correctionKind)?.label;
   return (
     <li id={`c-${c.id}`} className={cardClass}>
-      <ReviewHeader c={c} />
+      <ReviewHeader c={c} error={error} />
       {kind && <p className="text-sm font-medium">{kind}</p>}
       <p className="text-sm whitespace-pre-wrap">{c.text}</p>
 

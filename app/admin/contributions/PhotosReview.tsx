@@ -11,10 +11,16 @@ import {
   type ReviewContribution,
 } from "./ReviewParts";
 
-export function PhotosReview({ c }: { c: ReviewContribution & { photos: ContributionPhoto[] } }) {
+export function PhotosReview({
+  c,
+  error,
+}: {
+  c: ReviewContribution & { photos: ContributionPhoto[] };
+  error?: string;
+}) {
   return (
     <li id={`c-${c.id}`} className={cardClass}>
-      <ReviewHeader c={c} />
+      <ReviewHeader c={c} error={error} />
       {c.text && <p className="text-sm whitespace-pre-wrap">{c.text}</p>}
       <form action={publishPhotos.bind(null, c.id)} className="flex flex-col gap-3">
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">

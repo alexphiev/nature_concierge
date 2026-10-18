@@ -24,7 +24,7 @@ function readNote(formData: FormData): string | null {
 }
 
 function failWith(code: string, contributionId: string): never {
-  redirect(`/admin/contributions?erreur=${code}#c-${contributionId}`);
+  redirect(`/admin/contributions?erreur=${code}&c=${contributionId}#c-${contributionId}`);
 }
 
 async function notify(to: string, content: { subject: string; text: string }): Promise<void> {
@@ -107,6 +107,7 @@ export async function publishTip(contributionId: string, formData: FormData): Pr
     );
   }
   revalidatePath("/admin/contributions");
+  redirect("/admin/contributions");
 }
 
 async function loadPending(contributionId: string, type: "CORRECTION" | "PLACE") {
@@ -176,6 +177,7 @@ async function resolveCorrection(
     );
   }
   revalidatePath("/admin/contributions");
+  redirect("/admin/contributions");
 }
 
 export async function applyCorrection(contributionId: string, formData: FormData): Promise<void> {
@@ -321,6 +323,7 @@ export async function publishPhotos(contributionId: string, formData: FormData):
     );
   }
   revalidatePath("/admin/contributions");
+  redirect("/admin/contributions");
 }
 
 export async function rejectContribution(
@@ -354,4 +357,5 @@ export async function rejectContribution(
     await notify(contribution.user.email, contributionRejectedEmail({ note }));
   }
   revalidatePath("/admin/contributions");
+  redirect("/admin/contributions");
 }

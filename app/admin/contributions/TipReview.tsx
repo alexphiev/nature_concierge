@@ -11,10 +11,10 @@ import {
   type ReviewContribution,
 } from "./ReviewParts";
 
-export function TipReview({ c }: { c: ReviewContribution }) {
+export function TipReview({ c, error }: { c: ReviewContribution; error?: string }) {
   return (
     <li id={`c-${c.id}`} className={cardClass}>
-      <ReviewHeader c={c} />
+      <ReviewHeader c={c} error={error} />
       <form action={publishTip.bind(null, c.id)} className="flex flex-col gap-3">
         <textarea
           name="text"

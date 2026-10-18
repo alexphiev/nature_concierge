@@ -175,6 +175,11 @@ stored UNCONFIRMED with `pendingEmail`/`pendingName`/`pendingCommune`
 (photos uploaded at this point), a magic link is sent, and the visitor lands
 on `/connexion/verifier` (« Dernière étape : cliquez sur le lien envoyé à
 m•••@gmail.com… », « Renvoyer le lien », « Mauvaise adresse ? Recommencer »).
+If the visitor has nothing left to confirm (no UNCONFIRMED contribution for
+the pending-cookie email, or, without that cookie, a signed-in user with a
+contribution submitted in the last 15 minutes), the page shows « Votre
+contribution est déjà en relecture. Vous recevrez un email dès qu’elle est en
+ligne. » with a link back to the guide, unless `?erreur=envoi`.
 The draft survives the link opening in another browser. A pending cookie
 (`nc_pending`, httpOnly, 24 h) remembers email, target and form path for the
 resend page. Throttles: one link per minute per address (a second submit

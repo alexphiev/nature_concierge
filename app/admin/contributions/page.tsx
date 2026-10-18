@@ -22,18 +22,23 @@ const ERRORS: Record<string, string> = {
 export default async function AdminContributionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erreur?: string | string[] }>;
+  searchParams: Promise<{ erreur?: string | string[]; c?: string | string[] }>;
 }) {
   await connection();
-  const { erreur } = await searchParams;
-  const errorMessage = typeof erreur === "string" ? ERRORS[erreur] : undefined;
+  const { erreur, c: errorCardId } = await searchParams;
+  const errorMessage =
+    typeof erreur === "string" && Object.hasOwn(ERRORS, erreur) ? ERRORS[erreur] : undefined;
   const contributions = await prisma.contribution.findMany({
     where: { status: "PENDING" },
     orderBy: { createdAt: "asc" },
     include: { user: true, place: true, claim: true, photos: { orderBy: { order: "asc" } } },
   });
 
-  const banner = errorMessage && (
+  const errorOnCard =
+    errorMessage !== undefined && contributions.some((c) => c.id === errorCardId);
+  const cardError = (id: string) => (errorOnCard && id === errorCardId ? errorMessage : undefined);
+
+  const banner = errorMessage && !errorOnCard && (
     <p
       role="alert"
       className="rounded-[10px] border border-sable/40 bg-calcaire-deep p-3 text-sm"
@@ -58,13 +63,13 @@ export default async function AdminContributionsPage({
         {contributions.map((c) => {
           switch (c.type) {
             case "TIP":
-              return <TipReview key={c.id} c={c} />;
+              return <TipReview key={c.id} c={c} error={cardError(c.id)} />;
             case "CORRECTION":
-              return <CorrectionReview key={c.id} c={c} />;
+              return <CorrectionReview key={c.id} c={c} error={cardError(c.id)} />;
             case "PLACE":
-              return <PlaceReview key={c.id} c={c} />;
+              return <PlaceReview key={c.id} c={c} error={cardError(c.id)} />;
             case "PHOTOS":
-              return <PhotosReview key={c.id} c={c} />;
+              return <PhotosReview key={c.id} c={c} error={cardError(c.id)} />;
             default:
               return (
                 <li key={c.id} id={`c-${c.id}`} className={cardClass}>

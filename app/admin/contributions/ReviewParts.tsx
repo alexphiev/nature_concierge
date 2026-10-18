@@ -13,9 +13,14 @@ export const secondaryButtonClass =
 
 export type ReviewContribution = Contribution & { user: User | null; place: Place | null };
 
-export function ReviewHeader({ c }: { c: ReviewContribution }) {
+export function ReviewHeader({ c, error }: { c: ReviewContribution; error?: string }) {
   return (
     <div className="flex flex-col gap-1 text-sm">
+      {error && (
+        <p role="alert" className="rounded-[10px] border border-sable/40 bg-calcaire-deep p-3">
+          {error}
+        </p>
+      )}
       <p className="font-mono text-xs tracking-wide text-encre/60 uppercase">
         {CONTRIBUTION_TYPE_LABELS[c.type]} · {c.createdAt.toLocaleDateString("fr-FR")}
       </p>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { safeNextPath } from "@/src/contributions/paths";
 import { getSessionUser } from "@/src/auth/session";
-import { findLatestUnconfirmed } from "@/src/contributions/service";
+import { findLatestUnconfirmed, hasRecentPendingContribution } from "@/src/contributions/service";
 import { readPendingCookie } from "@/src/contributions/pending-cookie";
 import { CONTAINER, FOCUS_RING } from "@/src/components/landing/shared";
 import { ResendForm } from "./ResendForm";
@@ -25,7 +25,10 @@ async function VerifyContent({ searchParams }: { searchParams: Promise<{ erreur?
     getSessionUser(),
   ]);
   const alreadyInReview =
-    erreur !== "envoi" && Boolean(user) && !(cookie && (await findLatestUnconfirmed(cookie.email)));
+    erreur !== "envoi" &&
+    (cookie
+      ? !(await findLatestUnconfirmed(cookie.email))
+      : Boolean(user) && (await hasRecentPendingContribution(user!.id)));
 
   if (alreadyInReview) {
     return (
