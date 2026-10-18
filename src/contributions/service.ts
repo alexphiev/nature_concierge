@@ -61,7 +61,11 @@ async function storeContributionPhotos(
     } catch (cleanupError) {
       console.error("[contributions] photo cleanup failed", cleanupError);
     }
-    await prisma.contribution.delete({ where: { id: contributionId } });
+    try {
+      await prisma.contribution.delete({ where: { id: contributionId } });
+    } catch (deleteError) {
+      console.error("[contributions] contribution cleanup failed", deleteError);
+    }
     return false;
   }
 }

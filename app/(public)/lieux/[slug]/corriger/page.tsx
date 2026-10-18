@@ -11,7 +11,9 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
   const places = await getActivePlaces();
-  return places.map((place) => ({ slug: place.slug }));
+  const params = places.map((place) => ({ slug: place.slug }));
+  // cacheComponents rejects an empty list; the placeholder resolves to notFound().
+  return params.length > 0 ? params : [{ slug: "_" }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

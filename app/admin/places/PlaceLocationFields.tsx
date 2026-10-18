@@ -38,7 +38,7 @@ export function PlaceLocationFields({
     if (!canSuggest) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => {
-      fetch(`/api/geo/communes?q=${encodeURIComponent(commune)}`, { signal: controller.signal })
+      fetch(`/admin/api/geo/communes?q=${encodeURIComponent(commune)}`, { signal: controller.signal })
         .then((r) => r.json())
         .then((data) => setSuggestions(data.communes ?? []))
         .catch(() => {});
@@ -61,7 +61,7 @@ export function PlaceLocationFields({
     setGeocodeError(false);
     try {
       const res = await fetch(
-        `/api/geo/geocode?name=${encodeURIComponent(name)}&commune=${encodeURIComponent(commune)}`,
+        `/admin/api/geo/geocode?name=${encodeURIComponent(name)}&commune=${encodeURIComponent(commune)}`,
       );
       const data = await res.json();
       if (data.result) {

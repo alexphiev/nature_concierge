@@ -52,10 +52,16 @@ export async function putPlacePhoto(
 
 export async function deletePlacePhotos(keys: string[]): Promise<void> {
   if (keys.length === 0) return;
-  await s3().send(
+  const result = await s3().send(
     new DeleteObjectsCommand({
       Bucket: PLACE_PHOTOS_BUCKET,
       Delete: { Objects: keys.map((Key) => ({ Key })) },
     }),
   );
+  if (result.Errors?.length) {
+    console.error(
+      "[place-photos] some objects were not deleted",
+      result.Errors.map((e) => `${e.Key}: ${e.Code}`),
+    );
+  }
 }

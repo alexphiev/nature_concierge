@@ -16,10 +16,6 @@ Every admin server action also calls `assertAdmin()`
 itself, so an action stays protected even if the proxy matcher changes.
 Contributor accounts never grant admin access.
 
-Caveat (still true): `/api/geo/*` (used by the place form) is outside the
-`proxy.ts` matcher and has no other check, and `/api/geo/geocode` calls the
-billed Google Geocoding API.
-
 ## Navigation
 
 `AdminNav`: Corpus (`/admin`) · Lieux (`/admin/places`) · Contributions ({n})
@@ -36,9 +32,9 @@ REJECTED), each linking to its review page.
 - **List**: all places with name, commune, département, status, rank and
   published-claim count.
 - **Create / edit** (`PlaceForm`): name, slug (auto from name, editable),
-  commune (autocomplete via `/api/geo/communes`, the free api-adresse.data.gouv.fr
+  commune (autocomplete via `/admin/api/geo/communes`, the free api-adresse.data.gouv.fr
   API), département, lat/lng (filled automatically from name + commune via
-  `/api/geo/geocode`, Google Geocoding, editable), type, parent place, governing authority, official info URL,
+  `/admin/api/geo/geocode`, Google Geocoding, editable), type, parent place, governing authority, official info URL,
   description, `demandRank`, Google Place id, status.
 - **Photos** (`PlacePhotoFields`): JPEG/PNG/WebP/HEIC. HEIC is converted to
   JPEG in the browser (`heic-to`); files over 1.5 MB are compressed in the

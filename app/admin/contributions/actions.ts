@@ -15,6 +15,7 @@ import {
 } from "@/src/email/templates";
 import { uniquePlaceSlug } from "@/src/corpus/slug";
 import { z } from "zod";
+import { Prisma } from "../../../prisma/generated/client";
 import { deletePlacePhotos } from "@/src/storage/place-photos";
 import { SITE_URL } from "@/src/site";
 
@@ -193,33 +194,45 @@ export async function createPlaceDraft(contributionId: string, formData: FormDat
   if (!contribution || !contribution.placeName || !contribution.placeCommune) return;
 
   const note = readNote(formData);
-  const slug = await uniquePlaceSlug(contribution.placeName);
   const description =
     (contribution.text ?? "") +
     (contribution.locationHint ? `\n\nComment le trouver : ${contribution.locationHint}` : "");
 
-  const placeId = await prisma.$transaction(async (tx) => {
-    const claimed = await tx.contribution.updateMany({
-      where: { id: contribution.id, status: "PENDING", type: "PLACE" },
-      data: { status: "APPROVED", reviewedAt: new Date(), reviewNote: note },
+  const attempt = async () => {
+    const slug = await uniquePlaceSlug(contribution.placeName!);
+    return prisma.$transaction(async (tx) => {
+      const claimed = await tx.contribution.updateMany({
+        where: { id: contribution.id, status: "PENDING", type: "PLACE" },
+        data: { status: "APPROVED", reviewedAt: new Date(), reviewNote: note },
+      });
+      if (claimed.count === 0) return null;
+      const place = await tx.place.create({
+        data: {
+          slug,
+          name: contribution.placeName!,
+          commune: contribution.placeCommune!,
+          departement: "13",
+          lat: 43.1748,
+          lng: 5.6047,
+          type: "SITE",
+          status: "DRAFT",
+          description,
+          proposedById: contribution.userId,
+        },
+      });
+      return place.id;
     });
-    if (claimed.count === 0) return null;
-    const place = await tx.place.create({
-      data: {
-        slug,
-        name: contribution.placeName!,
-        commune: contribution.placeCommune!,
-        departement: "13",
-        lat: 43.1748,
-        lng: 5.6047,
-        type: "SITE",
-        status: "DRAFT",
-        description,
-        proposedById: contribution.userId,
-      },
-    });
-    return place.id;
-  });
+  };
+
+  let placeId: string | null;
+  try {
+    placeId = await attempt();
+  } catch (error) {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
+      throw error;
+    }
+    placeId = await attempt();
+  }
   if (!placeId) return;
 
   updateTag("corpus");

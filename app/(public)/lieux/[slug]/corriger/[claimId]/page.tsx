@@ -12,7 +12,7 @@ type Props = { params: Promise<{ slug: string; claimId: string }> };
 export async function generateStaticParams() {
   const places = await getActivePlaces();
   const full = await Promise.all(places.map((place) => getPlaceBySlug(place.slug)));
-  return full.flatMap((place) =>
+  const params = full.flatMap((place) =>
     place
       ? [...place.claims, ...(place.parent?.claims ?? [])].map((claim) => ({
           slug: place.slug,
@@ -20,6 +20,7 @@ export async function generateStaticParams() {
         }))
       : [],
   );
+  return params.length > 0 ? params : [{ slug: "_", claimId: "_" }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
