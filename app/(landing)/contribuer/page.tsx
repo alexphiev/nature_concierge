@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function ContributeRoute() {
   return (
     <main>
-      <div className={`${CONTAINER} pt-6 empty:hidden`}>
+      <div className={`${CONTAINER} empty:hidden`}>
         <Suspense fallback={null}>
           <ContributionBanner />
         </Suspense>

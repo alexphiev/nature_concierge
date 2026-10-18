@@ -9,21 +9,25 @@ function isContributePath(pathname: string): boolean {
   return pathname === CONTRIBUTE_HREF || pathname.startsWith(`${CONTRIBUTE_HREF}/`);
 }
 
-function ContributeLinkInner({ className, activeClassName, onClick }: Props) {
+function ContributeLinkInner({ className, activeClassName, inactiveClassName = "", onClick }: Props) {
   const active = isContributePath(usePathname());
   return (
     <Link
       href={CONTRIBUTE_HREF}
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={`${className} ${active ? activeClassName : ""} ${FOCUS_RING}`}
+      className={`${className} ${active ? activeClassName : inactiveClassName} ${FOCUS_RING}`}
     >
       Contribuer
     </Link>
   );
 }
 
-type Props = { className: string; activeClassName: string; onClick?: () => void };
+type Props = {
+  className: string;
+  activeClassName: string;
+  inactiveClassName?: string; onClick?: () => void;
+};
 
 // usePathname suspends while prerendering: the inactive link is the static fallback.
 export function ContributeLink(props: Props) {
@@ -33,7 +37,7 @@ export function ContributeLink(props: Props) {
         <Link
           href={CONTRIBUTE_HREF}
           onClick={props.onClick}
-          className={`${props.className} ${FOCUS_RING}`}
+          className={`${props.className} ${props.inactiveClassName ?? ""} ${FOCUS_RING}`}
         >
           Contribuer
         </Link>

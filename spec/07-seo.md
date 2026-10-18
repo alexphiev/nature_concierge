@@ -21,13 +21,13 @@ What's in the code, what's left to do outside it, and known caveats.
   `FAQPage` (from claims grouped by type, fixed question templates); `/lieux`
   `ItemList`; `/` `WebSite` + `Organization`.
 - **Indexed community pages**: `/contribuer`, `/confidentialite` and
-  `/mentions-legales` (static, canonical, in the sitemap). `/a-propos` has
-  metadata but is not in the sitemap. Everything account- or form-related is
+  `/mentions-legales` (static, canonical, in the sitemap), plus `/a-propos`
+  (canonical, in the sitemap). Everything account- or form-related is
   `noindex`: `/contribuer/nouveau-lieu`, `/lieux/[slug]/astuce`, `/corriger`,
   `/corriger/[claimId]`, `/photos`, `/compte`, `/connexion/verifier`, and
   `/admin/*` (also `X-Robots-Tag: noindex` from `proxy.ts`).
 - **Crawling**: `sitemap.xml` (landing, `/lieux`, `/contribuer`,
-  `/mentions-legales`, `/confidentialite`, ACTIVE places with `lastmod` =
+  `/a-propos`, `/mentions-legales`, `/confidentialite`, ACTIVE places with `lastmod` =
   latest public claim update, else place update); `robots.txt` disallows
   `/admin` and `/api`, AI crawlers allowed.
 - **AI-SEO**: `/llms.txt` generated from ACTIVE places (spots nested under

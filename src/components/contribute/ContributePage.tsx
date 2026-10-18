@@ -12,7 +12,7 @@ const CARD_LINK = `mt-auto inline-flex h-11 items-center self-start font-semibol
 const REVIEW_STEPS = [
   "Vous envoyez une astuce, une correction, un lieu ou des photos.",
   "Alexandre relit, en général sous quelques jours.",
-  "Vous recevez un email quand c’est en ligne, avec votre nom.",
+  "C’est en ligne, avec votre nom. Vous recevez un email.",
 ];
 
 const FAQS = [
@@ -30,7 +30,15 @@ const FAQS = [
   },
   {
     q: "Comment supprimer mon compte ?",
-    a: "Depuis la page Mon compte. Vos astuces déjà publiées restent en ligne, créditées « Un ancien contributeur ».",
+    a: (
+      <>
+        Depuis la page{" "}
+        <Link href="/compte" className="font-semibold text-[#0E4B5A] underline underline-offset-2">
+          Mon compte
+        </Link>
+        . Vos astuces déjà publiées restent en ligne, créditées « Un ancien contributeur ».
+      </>
+    ),
   },
   {
     q: "Que devient ma contribution si elle n’est pas retenue ?",
@@ -132,9 +140,9 @@ export async function ContributePage() {
           <h2 id="merci-titre" className={H2}>
             Merci à
           </h2>
-          <ul className="mt-6 flex flex-wrap gap-x-3 gap-y-2 text-[17px]">
+          <ul className="mt-6 flex flex-wrap gap-2 text-[16px]">
             {contributors.map((c, i) => (
-              <li key={`${c.name}-${c.commune ?? ""}-${i}`} className="wrap-break-word">
+              <li key={`${c.name}-${c.commune ?? ""}-${i}`} className="rounded-full border border-[#E4DACA] bg-[#FFFDF8] px-3.5 py-1.5 wrap-break-word">
                 {c.commune ? `${c.name} · ${c.commune}` : c.name}
               </li>
             ))}

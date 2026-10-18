@@ -208,7 +208,7 @@ export function AboutContent() {
           </h2>
           <p className="text-[16px] leading-[1.55] text-[#4A3A31] md:text-[17px] md:leading-[1.6]">
             Le guide restera gratuit. Ce qu’il coûte, c’est du temps : aller voir les lieux,
-            vérifier les accès, répondre aux messages.
+            vérifier les accès, relire les contributions.
           </p>
           <p className="text-[16px] leading-[1.55] text-[#4A3A31] md:text-[17px] md:leading-[1.6]">
             Si un conseil vous a fait passer une belle journée, vous pouvez me soutenir sur

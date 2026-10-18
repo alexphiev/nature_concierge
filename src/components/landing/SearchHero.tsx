@@ -194,13 +194,16 @@ function Results({
                 <button
                   type="button"
                   onClick={onRefine}
-                  className="border-0 bg-transparent p-0 text-[inherit] font-semibold text-[#0E4B5A] underline"
+                  className="border-0 bg-transparent p-0 text-[inherit] font-semibold text-[#0E4B5A] underline underline-offset-2"
                 >
                   Précisez votre demande
                 </button>{" "}
                 ou{" "}
-                <Link href={PROPOSE_PLACE_FORM_HREF} className="font-semibold text-[#0E4B5A]">
-                  Un lieu manque ? Proposez-le
+                <Link
+                  href={PROPOSE_PLACE_FORM_HREF}
+                  className="font-semibold text-[#0E4B5A] underline underline-offset-2"
+                >
+                  proposez un lieu qui manque
                 </Link>
                 .
               </p>

@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITE_URL, lastModified: new Date() },
     { url: `${SITE_URL}/lieux`, lastModified: new Date() },
     { url: `${SITE_URL}/contribuer`, lastModified: new Date() },
+    { url: `${SITE_URL}/a-propos`, lastModified: new Date() },
     { url: `${SITE_URL}/mentions-legales`, lastModified: new Date() },
     { url: `${SITE_URL}/confidentialite`, lastModified: new Date() },
     ...placeEntries,

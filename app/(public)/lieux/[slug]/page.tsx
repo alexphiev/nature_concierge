@@ -263,6 +263,12 @@ export default async function PlaceDetailPage({
               <a href={mapsUrl} className="text-mediterranee underline underline-offset-2">
                 Google Maps ↗
               </a>
+              <Link
+                href={`/lieux/${slug}/corriger`}
+                className="text-mediterranee underline underline-offset-2 md:hidden"
+              >
+                Signaler une erreur
+              </Link>
             </div>
           </div>
           <AlternativeCallout claims={[...place.claims, ...(parent?.claims ?? [])]} />

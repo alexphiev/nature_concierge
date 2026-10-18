@@ -154,7 +154,7 @@ async function resolveCorrection(
   });
   if (!resolved) return;
 
-  if (mode !== "acknowledge") updateTag("corpus");
+  updateTag("corpus");
   if (contribution.user) {
     await notify(
       contribution.user.email,
@@ -222,6 +222,7 @@ export async function createPlaceDraft(contributionId: string, formData: FormDat
   });
   if (!placeId) return;
 
+  updateTag("corpus");
   if (contribution.user) {
     await notify(
       contribution.user.email,

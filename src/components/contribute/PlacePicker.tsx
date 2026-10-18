@@ -24,8 +24,12 @@ export function PlacePicker({ places }: { places: PlaceWithCover[] }) {
               <p className="font-semibold wrap-break-word">{place.name}</p>
               <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-[#5B6663]">
                 <span>{place.commune}</span>
-                <span aria-hidden>·</span>
-                <span>{countLabel(place._count.claims, "conseil", "conseils")}</span>
+                {place._count.claims > 0 && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>{countLabel(place._count.claims, "conseil", "conseils")}</span>
+                  </>
+                )}
                 {place._count.claims === 0 && (
                   <span className="rounded-full bg-[#F3DCCB] px-2.5 py-0.5 text-[13px] font-semibold text-[#8A3D1E]">
                     À compléter

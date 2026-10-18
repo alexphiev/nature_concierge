@@ -8,26 +8,26 @@ const contributorClaimWhere = {
   place: { status: "ACTIVE" },
 } as const;
 
-export function placeContributorCount(claims: { authorId: string | null }[]): number {
-  return new Set(claims.map((c) => c.authorId)).size;
+export function placeContributorCount(
+  claims: { authorId: string | null; authorDeleted: boolean }[],
+): number {
+  return new Set(claims.map((c) => (c.authorDeleted ? "deleted" : c.authorId))).size;
 }
 
 export async function getCommunityStats(): Promise<{
-  placeCount: number;
   tipCount: number;
   contributorCount: number;
 }> {
   "use cache";
   cacheTag("corpus");
   cacheLife("corpus");
-  const [placeCount, tipCount, approvedUsers] = await Promise.all([
-    prisma.place.count({ where: { status: "ACTIVE" } }),
+  const [tipCount, approvedUsers] = await Promise.all([
     prisma.claim.count({
       where: { isPublic: true, status: "PUBLISHED", place: { status: "ACTIVE" } },
     }),
     prisma.user.count({ where: { contributions: { some: { status: "APPROVED" } } } }),
   ]);
-  return { placeCount, tipCount, contributorCount: 1 + approvedUsers };
+  return { tipCount, contributorCount: 1 + approvedUsers };
 }
 
 export async function getRecentContributorTips(limit: number): Promise<

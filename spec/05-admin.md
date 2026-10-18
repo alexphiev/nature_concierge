@@ -123,8 +123,8 @@ objects.
 **Atomic gate**: every decision first runs an `updateMany` on
 `id + status PENDING (+ type)` (in the same transaction as its effects, except
 for a refusal), and does nothing if no row was updated, so a double click or two tabs cannot
-publish twice. Tip and photo publication and claim edits call
-`updateTag("corpus")`; the decision email is sent after commit and a send
+publish twice. Every approval (tip, photo, correction including « Noter », place draft) calls
+`updateTag("corpus")`, so the contributor count and « Merci à » refresh; the decision email is sent after commit and a send
 failure is only logged (it never rolls the decision back). Decision emails
 and subjects are listed in `08-infra.md`.
 

@@ -135,7 +135,7 @@ its author and date), Tipeee support block, FAQ, final CTA band
 **`/contribuer`**: H1 « Le guide s'écrit à plusieurs »; « Quatre façons
 d'aider » (share a tip, correct a tip via « Corriger » on each place page, add
 photos, propose a place); the place picker (`id="astuce"`, top-level
-ACTIVE places, each with commune, tip count, « À compléter » pill and « Astuce »
+ACTIVE places, each with commune, tip count (omitted when 0), « À compléter » pill and « Astuce »
 / « Photos » links, then « Le lieu n'est pas dans la liste ? Proposez-le »);
 « Comment c'est relu » (three steps; public: display name and commune; private:
 email); the charter (`id="charte"`); « Merci à » (contributor names, only
