@@ -209,10 +209,13 @@ rights) and `/mentions-legales` (`LegalPage`), contact `contact@laciotatnature.f
 ## Shared chrome
 
 - `SiteHeader`: logo + « Guide Nature de La Ciotat », « Tous les lieux »,
-  « Contribuer » (filled pill on desktop, highlighted when on `/contribuer*`),
-  « À propos », « Soutenir » (Tipeee), an initial avatar linking to `/compte`
-  when signed in, or a « Se connecter » link (desktop only) when signed out;
-  `MobileMenu` on small screens (same items plus « Mon compte »).
+  « Contribuer », « À propos » (all plain links, no pill; the current section
+  is underlined in the primary colour via `aria-current`, including « Se
+  connecter » on `/compte` and `/connexion*`), « Soutenir » (Tipeee), an
+  initial avatar linking to `/compte` when signed in, or a « Se connecter »
+  link (desktop only) when signed out. The account slot has a fixed width and
+  fades in, so the session read causes no layout shift; `MobileMenu` on small
+  screens (same items plus « Mon compte », active row has an accent bar).
 - `SiteFooter`: « Un guide écrit par les gens d'ici, relu par Alexandre. »
   with live counts (« {n} conseils · {k} contributeurs »; contributors only
   once k ≥ 2), a Tipeee button, links Contribuer · À propos · Confidentialité

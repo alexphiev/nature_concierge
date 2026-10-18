@@ -2,11 +2,20 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { SITE_NAME } from "../../site";
 import { HeartIcon, LogoIcon } from "../landing/icons";
-import { ABOUT_HREF, ACTIVE_LINK, CONTAINER, FOCUS_RING, TIPEEE_HREF } from "../landing/shared";
+import {
+  ABOUT_HREF,
+  ACTIVE_LINK,
+  CONTAINER,
+  CONTRIBUTE_HREF,
+  FOCUS_RING,
+  GUIDE_HREF,
+  NAV_ACCOUNT_SLOT,
+  NAV_LINK_INACTIVE,
+  TIPEEE_HREF,
+} from "../landing/shared";
 import { AccountLink } from "./AccountLink";
-import { ContributeLink } from "./ContributeLink";
-import { GuideLink } from "./GuideLink";
 import { MobileMenu } from "./MobileMenu";
+import { NavLink } from "./NavLink";
 
 export function SiteHeader() {
   return (
@@ -27,15 +36,30 @@ export function SiteHeader() {
           aria-label="Navigation principale"
           className="flex items-center gap-8 text-[16px] font-medium"
         >
-          <GuideLink className="hidden md:block" activeClassName={ACTIVE_LINK} />
-          <ContributeLink
-            className="hidden rounded-full px-4 py-2 text-white md:block"
-            inactiveClassName="bg-[#0E4B5A] hover:bg-[#0A3843]"
-            activeClassName="bg-[#0A3843] ring-2 ring-[#0E4B5A] ring-offset-2 ring-offset-[#F5EFE4]"
+          <NavLink
+            href={GUIDE_HREF}
+            label="Tous les lieux"
+            match={[GUIDE_HREF]}
+            className="hidden md:block"
+            inactiveClassName={NAV_LINK_INACTIVE}
+            activeClassName={ACTIVE_LINK}
           />
-          <Link href={ABOUT_HREF} className={`hidden text-[#1D2A2E] md:block ${FOCUS_RING}`}>
-            À propos
-          </Link>
+          <NavLink
+            href={CONTRIBUTE_HREF}
+            label="Contribuer"
+            match={[CONTRIBUTE_HREF]}
+            className="hidden md:block"
+            inactiveClassName={NAV_LINK_INACTIVE}
+            activeClassName={ACTIVE_LINK}
+          />
+          <NavLink
+            href={ABOUT_HREF}
+            label="À propos"
+            match={[ABOUT_HREF]}
+            className="hidden md:block"
+            inactiveClassName={NAV_LINK_INACTIVE}
+            activeClassName={ACTIVE_LINK}
+          />
           <a
             href={TIPEEE_HREF}
             className={`hidden items-center gap-1.5 font-semibold text-[#A34A25] md:flex ${FOCUS_RING}`}
@@ -43,7 +67,15 @@ export function SiteHeader() {
             <HeartIcon className="size-4.25" />
             Soutenir
           </a>
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <div className={NAV_ACCOUNT_SLOT}>
+                <span aria-hidden className="invisible">
+                  Se connecter
+                </span>
+              </div>
+            }
+          >
             <AccountLink />
           </Suspense>
           <MobileMenu />
