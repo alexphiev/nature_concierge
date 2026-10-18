@@ -15,7 +15,7 @@ const MOMENT_LABEL = "pt-1 text-[13px] text-[#BFD8D6] md:text-[14px]";
 
 function WaveDivider() {
   return (
-    <div aria-hidden className="h-14 leading-none md:h-24">
+    <div aria-hidden style={{ background: "#0E4B5A" }} className="h-14 leading-none md:h-24">
       <svg
         width="100%"
         height="100%"

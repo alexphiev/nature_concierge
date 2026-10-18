@@ -8,6 +8,7 @@ import {
   GUIDE_HREF,
   TIPEEE_HREF,
 } from "./shared";
+import Image from "next/image";
 
 const COMMITMENTS = [
   "Gratuit, sans publicité. Un compte seulement pour contribuer.",
@@ -39,8 +40,8 @@ const FAQS = [
     q: "Comment savoir si les massifs sont ouverts en été ?",
     a: (
       <>
-        L’accès dépend du risque incendie. La préfecture publie la carte chaque veille au soir. Le
-        guide la rappelle, mais c’est elle qui fait foi :{" "}
+        L’accès dépend du risque incendie. La préfecture publie la carte chaque
+        veille au soir. Le guide la rappelle, mais c’est elle qui fait foi :{" "}
         <a href={ACCESS_MAP_HREF} className="font-semibold">
           carte des accès
         </a>
@@ -69,9 +70,14 @@ const FAQS = [
 export function AboutContent() {
   return (
     <>
-      <section className={`${CONTAINER} grid gap-8 pt-6 pb-10 md:gap-20 md:pt-16 md:pb-24 lg:grid-cols-[7fr_5fr] lg:items-start`}>
+      <section
+        className={`${CONTAINER} grid gap-8 pt-6 pb-10 md:gap-20 md:pt-16 md:pb-24 lg:grid-cols-[7fr_5fr] lg:items-start`}
+      >
         <div className="flex flex-col gap-4 md:gap-5.5">
-          <nav aria-label="Fil d’Ariane" className="flex gap-1.5 text-[13px] text-[#5B6663] md:text-[14px]">
+          <nav
+            aria-label="Fil d’Ariane"
+            className="flex gap-1.5 text-[13px] text-[#5B6663] md:text-[14px]"
+          >
             <Link href="/" className={FOCUS_RING}>
               Accueil
             </Link>
@@ -82,35 +88,42 @@ export function AboutContent() {
             À propos du Guide Nature de La Ciotat
           </h1>
           <p className="text-[17px] leading-[1.5] text-[#3E4A4B] md:text-[21px] md:leading-[1.5]">
-            Un guide gratuit des calanques, criques et sentiers de La Ciotat et de ses environs,
-            écrit par les gens d’ici, relu par Alexandre.
+            Un guide gratuit des calanques, criques et sentiers de La Ciotat et
+            de ses environs, écrit par les gens d’ici, relu par Alexandre.
           </p>
           <figure className="mt-2 flex flex-col gap-2 lg:hidden">
             <div className="flex h-[300px] items-center justify-center rounded-[20px] bg-[#D8CDBA] text-[13px] font-semibold text-[#5B6663]">
               Photo · portrait d’Alexandre
             </div>
-            <figcaption className="text-[13px] text-[#5B6663]">
-              Alexandre, [lieu de la photo].
-            </figcaption>
           </figure>
           <h2 className="mt-2 font-landing-display text-[26px] font-semibold md:mt-6 md:text-[30px]">
-            Qui fait ce guide ?
+            Qui gère ce guide ?
           </h2>
           <div className="flex max-w-[640px] flex-col gap-3.5 text-[17px] leading-[1.6] text-[#2E3A3C] md:gap-4 md:text-[18px] md:leading-[1.65]">
             <p>Je m’appelle Alexandre et j’habite La Ciotat depuis 2025.</p>
             <p>
-              En arrivant, j’ai passé mes week-ends à chercher où aller : quelle calanque éviter
-              le dimanche, laquelle reste à l’abri du mistral, où se garer sans tourner une heure.
-              Les bonnes réponses ne se trouvaient pas en ligne. Elles venaient des voisins et des
+              En arrivant, j’ai passé mes week-ends à chercher où aller : quelle
+              calanque éviter le dimanche, laquelle reste à l’abri du mistral,
+              où se garer sans tourner une heure. Les bonnes réponses ne se
+              trouvaient pas en ligne. Elles venaient des voisins et des
               habitués.
             </p>
             <p>J’ai tout noté. Ce guide, c’est ce carnet, partagé avec vous.</p>
-            <p>Aujourd’hui, tout le monde peut y contribuer. Je relis chaque contribution avant de la publier.</p>
+            <p>
+              Aujourd’hui, tout le monde peut y contribuer. Je relis chaque
+              contribution avant de la publier.
+            </p>
           </div>
         </div>
         <figure className="hidden flex-col gap-3 lg:flex">
-          <div className="flex h-[520px] items-center justify-center rounded-3xl bg-[#D8CDBA] text-[14px] font-semibold text-[#5B6663]">
-            Photo · portrait d’Alexandre en extérieur
+          <div className="relative h-[520px] overflow-hidden rounded-3xl bg-[#D8CDBA]">
+            <Image
+              src="/profile.png"
+              alt="Alexandre Phiev"
+              fill
+              sizes="(min-width: 1024px) 520px, 0px"
+              className="object-cover"
+            />
           </div>
           <figcaption className="text-[14px] text-[#5B6663]">
             Alexandre, [lieu de la photo].
@@ -118,7 +131,9 @@ export function AboutContent() {
         </figure>
       </section>
 
-      <section className={`${CONTAINER} flex flex-col gap-4 pb-10 md:gap-8 md:pb-24`}>
+      <section
+        className={`${CONTAINER} flex flex-col gap-4 pb-10 md:gap-8 md:pb-24`}
+      >
         <h2 className="font-landing-display text-[28px] font-semibold md:text-[40px]">
           Ce que propose le guide
         </h2>
@@ -132,8 +147,8 @@ export function AboutContent() {
                 Des fiches lieux utiles
               </h3>
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px] md:leading-[1.55]">
-                Accès, parking, meilleurs horaires, exposition au mistral. Ce qu’on aimerait
-                savoir avant de partir.
+                Accès, parking, meilleurs horaires, exposition au mistral. Ce
+                qu’on aimerait savoir avant de partir.
               </p>
             </div>
           </div>
@@ -146,8 +161,8 @@ export function AboutContent() {
                 Une recherche par envie
               </h3>
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px] md:leading-[1.55]">
-                Décrivez votre sortie, le guide vous propose les lieux et les conseils qui
-                collent.
+                Décrivez votre sortie, le guide vous propose les lieux et les
+                conseils qui collent.
               </p>
             </div>
           </div>
@@ -161,7 +176,10 @@ export function AboutContent() {
               </h3>
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px] md:leading-[1.55]">
                 Vos lieux et vos astuces enrichissent le guide.{" "}
-                <Link href={CONTRIBUTE_HREF} className="font-semibold text-[#0E4B5A]">
+                <Link
+                  href={CONTRIBUTE_HREF}
+                  className="font-semibold text-[#0E4B5A]"
+                >
                   Contribuer
                 </Link>
               </p>
@@ -170,7 +188,9 @@ export function AboutContent() {
         </div>
       </section>
 
-      <section className={`${CONTAINER} flex flex-col gap-6 pb-10 md:grid md:grid-cols-2 md:items-stretch md:gap-6 md:pb-24`}>
+      <section
+        className={`${CONTAINER} flex flex-col gap-6 pb-10 md:grid md:grid-cols-2 md:items-stretch md:gap-6 md:pb-24`}
+      >
         <div className="flex flex-col gap-4 md:gap-6 md:pr-6">
           <h2 className="font-landing-display text-[28px] font-semibold md:text-[40px]">
             Nos engagements
@@ -207,12 +227,13 @@ export function AboutContent() {
             Soutenir le guide
           </h2>
           <p className="text-[16px] leading-[1.55] text-[#4A3A31] md:text-[17px] md:leading-[1.6]">
-            Le guide restera gratuit. Ce qu’il coûte, c’est du temps : aller voir les lieux,
-            vérifier les accès, relire les contributions.
+            Le guide restera gratuit. Ce qu’il coûte, c’est du temps : aller
+            voir les lieux, vérifier les accès, relire les contributions.
           </p>
           <p className="text-[16px] leading-[1.55] text-[#4A3A31] md:text-[17px] md:leading-[1.6]">
-            Si un conseil vous a fait passer une belle journée, vous pouvez me soutenir sur
-            Tipeee, une fois ou chaque mois, du montant que vous voulez.
+            Si un conseil vous a fait passer une belle journée, vous pouvez me
+            soutenir sur Tipeee, une fois ou chaque mois, du montant que vous
+            voulez.
           </p>
           <div className="flex flex-col gap-2 pt-1 md:flex-row md:items-center md:gap-4 md:pt-1.5">
             <a
@@ -228,7 +249,10 @@ export function AboutContent() {
           </div>
           <div className="mt-1 border-t border-[#EBCDB8] pt-4 text-[14px] leading-[1.6] text-[#4A3A31] md:pt-4.5 md:text-[15px]">
             Autres façons d’aider :{" "}
-            <Link href={CONTRIBUTE_HREF} className="font-semibold text-[#A34A25]">
+            <Link
+              href={CONTRIBUTE_HREF}
+              className="font-semibold text-[#A34A25]"
+            >
               proposer un lieu, partager une astuce
             </Link>
             , ou parler du guide autour de vous.
@@ -236,7 +260,9 @@ export function AboutContent() {
         </div>
       </section>
 
-      <section className={`${CONTAINER} flex flex-col gap-5 pb-10 md:gap-8 md:pb-24`}>
+      <section
+        className={`${CONTAINER} flex flex-col gap-5 pb-10 md:gap-8 md:pb-24`}
+      >
         <h2 className="font-landing-display text-[28px] font-semibold md:text-[40px]">
           Questions fréquentes
         </h2>
