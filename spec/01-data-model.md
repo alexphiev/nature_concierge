@@ -63,7 +63,8 @@ the shade is, what to avoid). The two are shown as separate blocks on the
 place page. New claims get it from the contributor's form (editable at
 review) or, for ingestion and seeding, from `guessClaimKind`
 (`src/corpus/claim-kind.ts`). Existing claims are sorted once with
-`pnpm corpus:split-kinds` (dry run + CSV, `--overrides`, `--apply`).
+`pnpm corpus:split-kinds`, which asks Jev (`CLAIM_IS_PRACTICAL_INFO`) for
+each claim and writes the result directly (it overwrites manual choices).
 
 **Attribution**: `authorId` (→ `User`, `SetNull`) and `authorDeleted`.
 `authorId = null && !authorDeleted` is Alexandre's own tip, credited
