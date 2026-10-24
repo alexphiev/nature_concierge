@@ -57,11 +57,32 @@ function makeClaim(
 }
 
 describe("placeTitle", () => {
-  it("formats name, commune and the standard suffix", () => {
-    const place = makePlace({ name: "Calanque du Mugel", commune: "La Ciotat" });
+  it("names both blocks when the place has practical info and lived tips", () => {
+    const place = makePlace({
+      claims: [
+        makeClaim("ACCESS", "Navette depuis le Port-Vieux.", { kind: "PRACTICAL_INFO" }),
+        makeClaim("CROWDING", "Évitez 11h-17h en été.", { kind: "LOCAL_TIP" }),
+      ],
+    });
     expect(placeTitle(place)).toBe(
-      "Calanque du Mugel (La Ciotat) : ouvert aujourd'hui ? Accès, parking",
+      "Calanque du Mugel (La Ciotat) : infos pratiques et conseils vécus",
     );
+  });
+
+  it("only promises what the page holds", () => {
+    const practicalOnly = makePlace({
+      claims: [makeClaim("ACCESS", "Navette depuis le Port-Vieux.", { kind: "PRACTICAL_INFO" })],
+    });
+    expect(placeTitle(practicalOnly)).toBe("Calanque du Mugel (La Ciotat) : infos pratiques");
+    const tipsOnly = makePlace({
+      claims: [makeClaim("TIP", "Venez tôt.", { kind: "LOCAL_TIP" })],
+    });
+    expect(placeTitle(tipsOnly)).toBe("Calanque du Mugel (La Ciotat) : conseils vécus");
+  });
+
+  it("describes an empty place by its type, without promising access or opening hours", () => {
+    expect(placeTitle(makePlace())).toBe("Calanque du Mugel, calanque à La Ciotat");
+    expect(placeTitle(makePlace())).not.toMatch(/ouvert|parking|accès/i);
   });
 });
 
@@ -82,7 +103,7 @@ describe("placeDescription", () => {
   it("falls back to the generic sentence when no description and no claims", () => {
     const place = makePlace({ name: "Calanque du Mugel", description: null, claims: [] });
     expect(placeDescription(place)).toBe(
-      "Accès et conseils pour Calanque du Mugel.",
+      "Calanque du Mugel à La Ciotat, dans le guide nature de La Ciotat.",
     );
   });
 

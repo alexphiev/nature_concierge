@@ -12,7 +12,7 @@ import { HelpSection } from "@/src/components/landing/HelpSection";
 import { SITE_URL, SITE_NAME, BASE_OPEN_GRAPH } from "@/src/site";
 
 const DESCRIPTION =
-  "Décrivez votre sortie, le guide vous dit où aller. Avec les conseils des gens d’ici, relus avant publication.";
+  "Décrivez votre sortie, le guide vous dit où aller. Avec des infos pratiques vérifiées et des conseils de terrain, relus avant publication.";
 
 export const metadata: Metadata = {
   title: { absolute: "Guide Nature de La Ciotat — calanques, criques et sentiers" },

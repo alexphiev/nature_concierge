@@ -26,6 +26,8 @@ export const ClaimTypeSchema = z.enum([
   "NATURE",
 ]);
 
+export const ClaimKindSchema = z.enum(["PRACTICAL_INFO", "LOCAL_TIP"]);
+
 export const VerdictSchema = z.enum(["GO", "GO_IF", "AVOID", "ALTERNATIVE"]);
 
 export const VerificationSchema = z.enum([

@@ -1,19 +1,11 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Public_Sans, IBM_Plex_Mono } from "next/font/google";
+import { IBM_Plex_Mono } from "next/font/google";
+import { figtree, fraunces } from "@/src/fonts";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL, BASE_OPEN_GRAPH } from "@/src/site";
 
-const bricolageGrotesque = Bricolage_Grotesque({
-  variable: "--font-bricolage-grotesque",
-  subsets: ["latin"],
-});
-
-const publicSans = Public_Sans({
-  variable: "--font-public-sans",
-  subsets: ["latin"],
-});
-
+// Only the admin still uses a monospace font.
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
   subsets: ["latin"],
@@ -27,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s · Guide Nature de La Ciotat",
   },
   description:
-    "Le guide nature de La Ciotat écrit par les gens d’ici : calanques, criques et sentiers, avec des conseils relus avant publication.",
+    "Le guide nature de La Ciotat : calanques, criques et sentiers, avec des infos pratiques vérifiées et des conseils de terrain, relus avant publication.",
   openGraph: BASE_OPEN_GRAPH,
   twitter: {
     card: "summary_large_image",
@@ -42,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${bricolageGrotesque.variable} ${publicSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${figtree.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-calcaire text-encre">
         {children}

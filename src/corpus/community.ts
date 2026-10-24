@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { countLabel } from "./count-label";
 import { prisma } from "./db";
 
 const contributorClaimWhere = {
@@ -87,4 +88,27 @@ export async function getContributors(): Promise<{ name: string; commune: string
     orderBy: { name: "asc" },
     select: { name: true, commune: true },
   });
+}
+
+// Until the guide has this many contributors, the footer says it is only starting.
+export const EARLY_DAYS_CONTRIBUTORS = 10;
+
+// Honest footer line: what the guide holds and how many people wrote it.
+export function communityLine({
+  tipCount,
+  contributorCount,
+}: {
+  tipCount: number;
+  contributorCount: number;
+}): { lead: string | null; counts: string } | null {
+  if (tipCount === 0) return null;
+  const counts = `${countLabel(tipCount, "conseil", "conseils")}, ${countLabel(
+    contributorCount,
+    "contributeur local",
+    "contributeurs locaux",
+  )}`;
+  return {
+    lead: contributorCount < EARLY_DAYS_CONTRIBUTORS ? "Ce n’est que le début :" : null,
+    counts,
+  };
 }

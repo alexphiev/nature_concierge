@@ -43,6 +43,7 @@ vi.mock("@/src/corpus/db", () => ({
     source: {
       create: createSourceMock,
       update: updateSourceMock,
+      findUnique: vi.fn(async () => ({ type: "PERSONAL_VISIT" })),
     },
     claim: {
       create: createClaimMock,

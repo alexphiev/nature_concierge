@@ -10,7 +10,7 @@ export function HelpSection() {
             Un coin ou une astuce qui manque ?
           </h2>
           <p className="text-[16px] leading-normal text-[#4A3A31] md:text-[17px] md:leading-[1.55]">
-            Chaque conseil du guide vient de quelqu’un d’ici. Partagez le vôtre : il sera relu avant
+            Chaque conseil du guide vient de quelqu’un qui y est allé. Partagez le vôtre : il sera relu avant
             publication.
           </p>
         </div>

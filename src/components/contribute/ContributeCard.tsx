@@ -8,15 +8,21 @@ export function ContributeCard({ slug }: { slug: string }) {
           Vous connaissez ce lieu ?
         </h3>
         <p className="text-sm leading-relaxed text-encre/75">
-          Ajoutez une astuce, corrigez une info ou partagez vos photos. Tout est relu avant
-          publication.
+          Partagez ce que vous avez appris sur place, ajoutez une info pratique ou vos photos.
+          Tout est relu avant publication.
         </p>
       </div>
       <Link
         href={`/lieux/${slug}/astuce`}
         className="flex items-center justify-center rounded-xl bg-mediterranee px-5 py-3.5 font-semibold text-calcaire transition-colors hover:bg-mediterranee-deep"
       >
-        Ajouter une astuce
+        Partager un conseil
+      </Link>
+      <Link
+        href={`/lieux/${slug}/info`}
+        className="flex items-center justify-center rounded-xl border border-mediterranee px-5 py-3 font-semibold text-mediterranee transition-colors hover:bg-mediterranee/5"
+      >
+        Ajouter une info pratique
       </Link>
       <div className="flex justify-center gap-5 text-sm">
         <Link href={`/lieux/${slug}/photos`} className="text-mediterranee underline underline-offset-2">

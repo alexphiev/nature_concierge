@@ -5,7 +5,9 @@ import { revalidatePath, updateTag } from "next/cache";
 import { assertAdmin } from "@/src/admin/assert-admin";
 import { prisma } from "@/src/corpus/db";
 import { runBlockExtraction } from "@/src/corpus/run-block-extraction";
+import { guessClaimKind } from "@/src/corpus/claim-kind";
 import {
+  ClaimKindSchema,
   ClaimTypeSchema,
   VerdictSchema,
   VerificationSchema,
@@ -26,6 +28,8 @@ const EditedClaimSchema = z
   .object({
     claimText: z.string().min(1),
     claimType: ClaimTypeSchema,
+    // Absent or empty: guessed from the theme, text and source.
+    kind: z.preprocess((v) => (v === "" ? undefined : v), ClaimKindSchema.optional()),
     conditions: z.array(ConditionSchema),
     audience: z.array(AudienceSchema),
     verdict: VerdictSchema,
@@ -155,11 +159,21 @@ async function approveClaimNoRollup(
   }
 
   const alternativePlaceId = await resolveAlternativePlaceId(parsedClaim.alternativePlaceSlug);
+  const source = await prisma.source.findUnique({ where: { id: sourceId }, select: { type: true } });
+  const kind =
+    parsedClaim.kind ??
+    guessClaimKind({
+      claimType: parsedClaim.claimType,
+      claimText: parsedClaim.claimText,
+      verification: parsedClaim.verification,
+      sourceType: source?.type ?? null,
+    }).kind;
 
   const claim = await prisma.claim.create({
     data: {
       placeId: block.draft.placeId,
       claimText: parsedClaim.claimText,
+      kind,
       claimType: parsedClaim.claimType,
       conditions: parsedClaim.conditions,
       audience: parsedClaim.audience,

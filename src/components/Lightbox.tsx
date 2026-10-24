@@ -92,13 +92,13 @@ export function Lightbox({
         {count > 1 && (
           <span
             aria-live="polite"
-            className="absolute bottom-3 left-3 rounded-full bg-encre/60 px-2.5 py-0.5 font-mono text-[0.7rem] text-calcaire"
+            className="absolute bottom-3 left-3 rounded-full bg-encre/60 px-2.5 py-0.5 font-medium tabular-nums text-[0.7rem] text-calcaire"
           >
             {index + 1} / {count}
           </span>
         )}
         {credit && (
-          <span className="absolute right-3 bottom-3 rounded bg-encre/55 px-2 py-0.5 font-mono text-[0.65rem] text-calcaire">
+          <span className="absolute right-3 bottom-3 rounded bg-encre/55 px-2 py-0.5 font-medium tabular-nums text-[0.65rem] text-calcaire">
             Photo : {credit}
           </span>
         )}

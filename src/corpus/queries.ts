@@ -58,6 +58,7 @@ export async function getGoverningAuthorities(): Promise<string[]> {
 export type PublicClaim = Claim & {
   alternativePlace: Pick<Place, "slug" | "name"> | null;
   author: { name: string; commune: string | null } | null;
+  source: { type: string; urlOrRef: string | null };
 };
 
 export type PlaceWithPublicClaims = Place & {
@@ -74,6 +75,7 @@ const publicClaimsInclude = {
   include: {
     alternativePlace: { select: { slug: true, name: true } },
     author: { select: { name: true, commune: true } },
+    source: { select: { type: true, urlOrRef: true } },
   },
 } as const;
 

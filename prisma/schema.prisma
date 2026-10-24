@@ -86,6 +86,8 @@ model Claim {
   place   Place  @relation("PlaceClaims", fields: [placeId], references: [id])
 
   claimText          String
+  // Practical info (formal, factual, sourced) vs lived tip (a local's informal advice).
+  kind               ClaimKind @default(LOCAL_TIP)
   claimType          ClaimType
   conditions         String[]
   audience           String[]
@@ -111,6 +113,11 @@ model Claim {
   contributions Contribution[]
 
   @@index([placeId, status])
+}
+
+enum ClaimKind {
+  PRACTICAL_INFO
+  LOCAL_TIP
 }
 
 enum ClaimType {
@@ -312,7 +319,9 @@ model Contribution {
   claim   Claim?  @relation(fields: [claimId], references: [id])
 
   text            String?
+  claimKind       ClaimKind?
   claimType       ClaimType?
+  sourceHint      String?
   correctionKind  CorrectionKind?
   placeName       String?
   placeCommune    String?

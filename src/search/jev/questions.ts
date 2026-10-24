@@ -38,3 +38,11 @@ export const CLAIM_IS_USEFUL = noul("`claim` is specific, useful local knowledge
   true: "Precise and actionable: a time, number, named spot, condition or insider trick a visitor could not guess.",
   false: "Generic, vague, obvious or promotional; could be written without knowing the place.",
 });
+
+export const CLAIM_IS_PRACTICAL_INFO = noul(
+  "`claim` is a practical fact about `place`, rather than a local's lived advice.",
+  {
+    true: "A neutral, checkable fact: opening hours, prices, transport, access rules, facilities, bans, distances. Could come from an official source or a sign on site.",
+    false: "Advice from experience: when to go, where to sit, what to avoid, how crowded it gets, what it feels like. Only someone who has been there would say it.",
+  },
+);

@@ -22,13 +22,13 @@ export async function PendingContributions({ placeIds }: { placeIds: string[] })
       aria-label="Vos contributions en relecture"
       className="flex flex-col gap-3 rounded-[14px] border border-dashed border-sable p-4"
     >
-      <h2 className="font-mono text-xs tracking-wider text-pin uppercase">
+      <h2 className="font-semibold text-xs tracking-wider text-pin uppercase">
         En relecture · visible par vous seul
       </h2>
       <ul className="flex flex-col gap-4">
         {items.map((item) => (
           <li key={item.id} className="flex flex-col gap-2">
-            <span className="font-mono text-[0.6875rem] tracking-wider text-encre/65 uppercase">
+            <span className="font-semibold text-[0.6875rem] tracking-wider text-encre/65 uppercase">
               {CONTRIBUTION_TYPE_LABELS[item.type]}
             </span>
             {item.text && <p className="leading-relaxed whitespace-pre-line">{item.text}</p>}

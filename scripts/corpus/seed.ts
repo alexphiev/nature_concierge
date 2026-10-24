@@ -1,6 +1,7 @@
 import { discoverPlaceFiles } from "./discover-places";
 import { validatePlaceFile } from "../../src/corpus/schema";
 import { prisma } from "../../src/corpus/db";
+import { guessClaimKind } from "../../src/corpus/claim-kind";
 
 async function main() {
   const places = await discoverPlaceFiles();
@@ -98,7 +99,14 @@ async function main() {
       if (existing) {
         await prisma.claim.update({ where: { id: existing.id }, data: claimData });
       } else {
-        await prisma.claim.create({ data: { ...claimData, status: "PUBLISHED" as const } });
+        // Kind is only guessed on creation, so a manual choice survives reseeding.
+        const kind = guessClaimKind({
+          claimType: claim.claimType,
+          claimText: claim.claimText,
+          verification: claim.verification,
+          sourceType: place.sources[claim.source]?.type ?? null,
+        }).kind;
+        await prisma.claim.create({ data: { ...claimData, kind, status: "PUBLISHED" as const } });
       }
       claimsUpserted++;
     }

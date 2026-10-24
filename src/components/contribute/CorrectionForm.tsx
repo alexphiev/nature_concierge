@@ -109,7 +109,7 @@ function CorrectionFields({ state, user }: { state: FormState; user: SessionUser
           ) : (
             <span />
           )}
-          <p className="font-mono text-xs text-encre/65" aria-live="off">
+          <p className="font-medium tabular-nums text-xs text-encre/65" aria-live="off">
             {length} / {MAX_LENGTH}
           </p>
         </div>

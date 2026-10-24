@@ -51,7 +51,6 @@ Template in `.env.dist`.
 | `TYPESAFE_API_KEY` | Jev search and quality score |
 | `GOOGLE_PLACES_API_KEY` | Places photos/details and Geocoding (server-only) |
 | `AWS_ENDPOINT_URL_S3`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Neon Object Storage |
-| `SHOW_CONSTRUCTION_BANNER` | `false` hides the banner |
 | `BETTER_AUTH_SECRET` | Better Auth session and token signing |
 | `BETTER_AUTH_URL` | Better Auth base URL (the site URL) |
 | `RESEND_API_KEY` | Resend; empty in dev logs emails to the console |
