@@ -9,7 +9,7 @@ const monthYear = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "Europe/Paris",
 });
 
-function claimMeta(claim: PublicClaim): string {
+export function claimMeta(claim: PublicClaim): string {
   const author = claim.authorDeleted ? null : (claim.author ?? GUIDE_AUTHOR);
   const parts = claim.authorDeleted
     ? ["Un ancien contributeur"]
@@ -25,12 +25,10 @@ function authorInitial(claim: PublicClaim): string {
   return name ? name.charAt(0).toUpperCase() : "A";
 }
 
-const ADD_TIP_LINK =
+export const ADD_TIP_LINK =
   "inline-flex self-start rounded-[10px] border border-sable/70 px-4 py-2.5 text-sm font-medium text-encre transition-colors hover:border-mediterranee hover:text-mediterranee";
-const ADD_TIP_LINK_PROMINENT =
-  "inline-flex self-start rounded-[10px] bg-mediterranee px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90";
 
-const THEME_ORDER: Claim["claimType"][] = [
+export const THEME_ORDER: Claim["claimType"][] = [
   "ACCESS",
   "PRACTICAL",
   "ACTIVITY",
@@ -44,9 +42,9 @@ const THEME_ORDER: Claim["claimType"][] = [
   "DECODING",
 ];
 
-const THEME_LABELS: Record<Claim["claimType"], string> = {
+export const THEME_LABELS: Record<Claim["claimType"], string> = {
   ACCESS: "Accès",
-  PRACTICAL: "Infos pratiques",
+  PRACTICAL: "Horaires & services",
   ACTIVITY: "Activités",
   NATURE: "Faune & flore",
   CROWDING: "Affluence",
@@ -70,7 +68,7 @@ const RISK_ACCENT = {
 };
 
 // Most themes stay neutral; risk and redirect themes get an accent so they stand out.
-const THEME_ACCENTS: Record<
+export const THEME_ACCENTS: Record<
   Claim["claimType"],
   { badge: string; label: string; card: string }
 > = {
@@ -92,7 +90,7 @@ const THEME_ACCENTS: Record<
 };
 
 // Stroke paths for a 24×24 icon, one per claim theme.
-const THEME_ICONS: Record<Claim["claimType"], string> = {
+export const THEME_ICONS: Record<Claim["claimType"], string> = {
   ACCESS: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
   PRACTICAL:
     "M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM10 17V8h3a2.5 2.5 0 0 1 0 5h-3",
@@ -109,117 +107,108 @@ const THEME_ICONS: Record<Claim["claimType"], string> = {
   DECODING: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5M12 8h.01",
 };
 
+export function ThemeIcon({ type, className }: { type: Claim["claimType"]; className: string }) {
+  return (
+    <span className={`flex shrink-0 items-center justify-center rounded-full ${className}`}>
+      <svg
+        aria-hidden
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d={THEME_ICONS[type]} />
+      </svg>
+    </span>
+  );
+}
+
+export function groupByTheme<T extends { claimType: Claim["claimType"] }>(claims: T[]) {
+  return THEME_ORDER.map((type) => ({
+    type,
+    claims: claims.filter((claim) => claim.claimType === type),
+  })).filter((group) => group.claims.length > 0);
+}
+
+// Lived tips: informal, signed advice from people who have been there.
 export function ClaimList({
   claims,
-  title = "Conseils des gens d'ici",
+  title = "Conseils vécus",
+  subtitle,
   addTipHref,
   correctHref,
 }: {
   claims: PublicClaim[];
   title?: string;
+  subtitle?: string;
   addTipHref?: string;
   correctHref?: (claimId: string) => string;
 }) {
-  if (claims.length === 0 && !addTipHref) return null;
+  if (claims.length === 0) return null;
 
-  const groups = THEME_ORDER.map((type) => ({
-    type,
-    claims: claims.filter((claim) => claim.claimType === type),
-  })).filter((group) => group.claims.length > 0);
+  const groups = groupByTheme(claims);
 
   return (
     <section aria-label={title} className="flex flex-col gap-6">
-      <h2 className="font-display text-[1.625rem] leading-tight font-semibold">
-        {title}
-      </h2>
-      {claims.length === 0 && (
-        <p className="leading-relaxed">
-          Aucun conseil pour l&apos;instant. Vous connaissez ce lieu ? Partagez
-          la première astuce.
-        </p>
-      )}
-      {groups.length > 0 && (
-        <div className="@container flex flex-col gap-8">
-          {groups.map(({ type, claims: groupClaims }) => {
-            const accent = THEME_ACCENTS[type];
-            return (
-              <section
-                key={type}
-                aria-label={THEME_LABELS[type]}
-                className="flex flex-col gap-4"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex size-9 shrink-0 items-center justify-center rounded-full ${accent.badge}`}
+      <div className="flex flex-col gap-1.5">
+        <h2 className="font-display text-[1.625rem] leading-tight font-semibold">{title}</h2>
+        {subtitle && <p className="text-sm leading-relaxed text-encre/70">{subtitle}</p>}
+      </div>
+      <div className="@container flex flex-col gap-8">
+        {groups.map(({ type, claims: groupClaims }) => {
+          const accent = THEME_ACCENTS[type];
+          return (
+            <section key={type} aria-label={THEME_LABELS[type]} className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <ThemeIcon type={type} className={`size-9 ${accent.badge}`} />
+                <h3 className={`text-xs font-semibold tracking-wider uppercase ${accent.label}`}>
+                  {THEME_LABELS[type]}
+                  <span className="ml-1.5 text-encre/60">{groupClaims.length}</span>
+                </h3>
+                <span aria-hidden className="h-px flex-1 bg-sable/40" />
+              </div>
+              <ul className="grid grid-cols-1 items-start gap-3 @xl:grid-cols-2">
+                {groupClaims.map((claim) => (
+                  <li
+                    key={claim.id}
+                    className={`flex flex-col gap-4 rounded-[14px] border border-sable/40 p-4 sm:p-5 ${accent.card}`}
                   >
-                    <svg
-                      aria-hidden
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d={THEME_ICONS[type]} />
-                    </svg>
-                  </span>
-                  <h3
-                    className={`font-mono text-[0.6875rem] tracking-wider uppercase ${accent.label}`}
-                  >
-                    {THEME_LABELS[type]}
-                    <span className="ml-1.5 text-encre/60">
-                      {groupClaims.length}
-                    </span>
-                  </h3>
-                  <span aria-hidden className="h-px flex-1 bg-sable/40" />
-                </div>
-                <ul className="grid grid-cols-1 items-start gap-3 @xl:grid-cols-2">
-                  {groupClaims.map((claim) => (
-                    <li
-                      key={claim.id}
-                      className={`flex flex-col gap-4 rounded-[14px] border border-sable/40 p-4 sm:p-5 ${accent.card}`}
-                    >
-                      <p className="max-w-[65ch] text-base leading-relaxed text-pretty">
-                        {claim.claimText}
-                      </p>
-                      <div className="flex items-center gap-2.5 border-t border-sable/30 pt-3">
-                        <span
-                          aria-hidden
-                          className="flex size-7 shrink-0 items-center justify-center rounded-full bg-calcaire-deep font-display text-xs font-semibold text-pin"
+                    <p className="max-w-[65ch] text-base leading-relaxed text-pretty">
+                      {claim.claimText}
+                    </p>
+                    <div className="flex items-center gap-2.5 border-t border-sable/30 pt-3">
+                      <span
+                        aria-hidden
+                        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-calcaire-deep font-display text-xs font-semibold text-pin"
+                      >
+                        {authorInitial(claim)}
+                      </span>
+                      <span className="min-w-0 flex-1 text-xs leading-snug text-encre/70">
+                        {claimMeta(claim)}
+                      </span>
+                      {correctHref && (
+                        <Link
+                          href={correctHref(claim.id)}
+                          className="-my-2 -mr-2 inline-flex min-h-8 shrink-0 items-center rounded-md px-2 text-xs text-mediterranee hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
                         >
-                          {authorInitial(claim)}
-                        </span>
-                        <span className="min-w-0 flex-1 text-xs leading-snug text-encre/70">
-                          {claimMeta(claim)}
-                        </span>
-                        {correctHref && (
-                          <Link
-                            href={correctHref(claim.id)}
-                            className="-my-2 -mr-2 inline-flex min-h-8 shrink-0 items-center rounded-md px-2 text-xs text-mediterranee hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mediterranee"
-                          >
-                            Corriger
-                          </Link>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
-        </div>
-      )}
+                          Corriger
+                        </Link>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
       {addTipHref && (
-        <Link
-          href={addTipHref}
-          className={
-            claims.length === 0 ? ADD_TIP_LINK_PROMINENT : ADD_TIP_LINK
-          }
-        >
-          Ajouter une astuce
+        <Link href={addTipHref} className={ADD_TIP_LINK}>
+          Partager un conseil
         </Link>
       )}
     </section>

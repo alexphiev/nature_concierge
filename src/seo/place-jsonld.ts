@@ -1,6 +1,7 @@
 import type { Claim } from "../../prisma/generated/client";
 import type { PlaceWithPublicClaims } from "../corpus/queries";
 import { SITE_URL } from "../site";
+import { TYPE_LABELS } from "../corpus/place-types";
 
 const MAX_DESCRIPTION_LENGTH = 155;
 
@@ -32,17 +33,27 @@ const FAQ_QUESTIONS: Record<Claim["claimType"], (name: string) => string> = {
   NATURE: (name) => `Quelle faune et quelle flore observer à ${name} ?`,
 };
 
-export function placeTitle(place: Pick<PlaceWithPublicClaims, "name" | "commune">): string {
-  return `${place.name} (${place.commune}) : ouvert aujourd'hui ? Accès, parking`;
+// The title only promises what the page holds.
+export function placeTitle(
+  place: Pick<PlaceWithPublicClaims, "name" | "commune" | "type" | "claims">,
+): string {
+  const hasPractical = place.claims.some((claim) => claim.kind === "PRACTICAL_INFO");
+  const hasTips = place.claims.some((claim) => claim.kind === "LOCAL_TIP");
+  const base = `${place.name} (${place.commune})`;
+  if (hasPractical && hasTips) return `${base} : infos pratiques et conseils vécus`;
+  if (hasPractical) return `${base} : infos pratiques`;
+  if (hasTips) return `${base} : conseils vécus`;
+  const typeLabel = (TYPE_LABELS[place.type] ?? place.type).toLowerCase();
+  return `${place.name}, ${typeLabel} à ${place.commune}`;
 }
 
 export function placeDescription(
-  place: Pick<PlaceWithPublicClaims, "name" | "description" | "claims">,
+  place: Pick<PlaceWithPublicClaims, "name" | "commune" | "description" | "claims">,
 ): string {
   const raw =
     place.description ??
     place.claims[0]?.claimText ??
-    `Accès et conseils pour ${place.name}.`;
+    `${place.name} à ${place.commune}, dans le guide nature de La Ciotat.`;
 
   const collapsed = raw.replace(/\s+/g, " ").trim();
   if (collapsed.length <= MAX_DESCRIPTION_LENGTH) return collapsed;

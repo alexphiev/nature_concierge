@@ -13,7 +13,7 @@ export function ContributionShell({
 }) {
   return (
     <main className={`${CONTAINER} max-w-[720px]! py-10 md:py-14`}>
-      <p className="font-mono text-xs tracking-wide text-encre/65 uppercase">{eyebrow}</p>
+      <p className="font-semibold text-xs tracking-wide text-encre/65 uppercase">{eyebrow}</p>
       <h1 className="mt-2 font-display text-[2rem] leading-tight font-semibold">{title}</h1>
       <p className="mt-4 text-lg">
         Relu par Alexandre avant publication, en général sous quelques jours. Vous recevrez un

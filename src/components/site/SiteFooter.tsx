@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { HeartIcon, Monogram } from "../landing/icons";
-import { getCommunityStats } from "@/src/corpus/community";
-import { countLabel } from "@/src/corpus/count-label";
+import { communityLine, getCommunityStats } from "@/src/corpus/community";
 import { ABOUT_HREF, ACCESS_MAP_HREF, CONTAINER, CONTRIBUTE_HREF, FOCUS_RING, TIPEEE_HREF } from "../landing/shared";
 
 const LINK = `text-[15px] font-semibold text-[#0E4B5A] hover:text-[#0A3843] ${FOCUS_RING}`;
@@ -15,11 +14,7 @@ const NAV_LINKS = [
 ];
 
 export async function SiteFooter() {
-  const { tipCount, contributorCount } = await getCommunityStats();
-  const counts = [
-    ...(tipCount > 0 ? [countLabel(tipCount, "conseil", "conseils")] : []),
-    ...(contributorCount >= 2 ? [countLabel(contributorCount, "contributeur", "contributeurs")] : []),
-  ].join(" · ");
+  const line = communityLine(await getCommunityStats());
 
   return (
     <footer className="grow bg-[#EAE2D3] font-landing-body leading-[normal] text-[#1D2A2E]">
@@ -27,13 +22,12 @@ export async function SiteFooter() {
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-12">
           <div className="flex items-center gap-3.5 md:max-w-[640px] md:gap-4.5">
             <Monogram className="size-16 border-2 border-[#FFFDF8] text-[26px] md:size-19 md:text-[30px]" />
-            <div className="flex flex-col gap-1.5">
+            {line && (
               <p className="text-[15px] leading-[1.45] text-[#3E4A4B] md:text-[16px] md:leading-normal">
-                <strong className="text-[#1D2A2E]">Un guide écrit par les gens d’ici</strong>,
-                relu par Alexandre.
+                {line.lead && <strong className="text-[#1D2A2E]">{line.lead}</strong>}{" "}
+                {line.counts}.
               </p>
-              {counts && <p className="text-[14px] text-[#5B6663]">{counts}</p>}
-            </div>
+            )}
           </div>
           <div className="flex flex-col gap-1 md:hidden">
             <a href={TIPEEE_HREF} className={`flex h-11 items-center gap-2 self-start ${TIPEEE_LINK}`}>

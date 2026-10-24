@@ -29,8 +29,9 @@
   --color-statut-rouge: var(--statut-rouge);
   --color-statut-inconnu: var(--statut-inconnu);
 
-  --font-display: var(--font-bricolage-grotesque), ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-public-sans);
+  /* One type system for the whole site: Fraunces for titles, Figtree for text. */
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body: var(--font-figtree), system-ui, sans-serif;
   --font-mono: var(--font-ibm-plex-mono);
   --font-landing-display: var(--font-fraunces), Georgia, serif;
   --font-landing-body: var(--font-figtree), system-ui, sans-serif;
@@ -39,7 +40,7 @@
 body {
   background: var(--calcaire);
   color: var(--encre);
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-figtree), system-ui, sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {

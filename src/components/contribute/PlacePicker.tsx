@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FOCUS_RING, PROPOSE_PLACE_FORM_HREF } from "@/src/components/landing/shared";
 import { countLabel } from "@/src/corpus/count-label";
+import { FIRST_TIP_WELCOME } from "@/src/corpus/place-needs";
 import type { PlaceWithCover } from "@/src/corpus/queries";
 
 const SECONDARY_LINK = `inline-flex h-11 items-center rounded-full border-[1.5px] border-[#0E4B5A] px-4 text-[15px] font-semibold text-[#0E4B5A] hover:bg-[#0E4B5A]/8 ${FOCUS_RING}`;
@@ -32,7 +33,7 @@ export function PlacePicker({ places }: { places: PlaceWithCover[] }) {
                 )}
                 {place._count.claims === 0 && (
                   <span className="rounded-full bg-[#F3DCCB] px-2.5 py-0.5 text-[13px] font-semibold text-[#8A3D1E]">
-                    À compléter
+                    {FIRST_TIP_WELCOME}
                   </span>
                 )}
               </p>
@@ -42,7 +43,10 @@ export function PlacePicker({ places }: { places: PlaceWithCover[] }) {
                 href={`/lieux/${place.slug}/astuce`}
                 className={`inline-flex h-11 items-center rounded-full bg-[#0E4B5A] px-4 text-[15px] font-semibold text-white hover:bg-[#0A3843] ${FOCUS_RING}`}
               >
-                Astuce
+                Conseil
+              </Link>
+              <Link href={`/lieux/${place.slug}/info`} className={SECONDARY_LINK}>
+                Info pratique
               </Link>
               <Link href={`/lieux/${place.slug}/photos`} className={SECONDARY_LINK}>
                 Photos

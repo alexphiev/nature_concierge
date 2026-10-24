@@ -65,7 +65,7 @@ export function PlaceGallery({
         >
           <PhotoImage photo={slides[0]} sizes="(min-width: 768px) 66vw, 0px" preload />
           {slides[0].credit && (
-            <span className="absolute right-3 bottom-3 rounded bg-encre/55 px-2 py-0.5 font-mono text-[0.65rem] text-calcaire">
+            <span className="absolute right-3 bottom-3 rounded bg-encre/55 px-2 py-0.5 font-medium tabular-nums text-[0.65rem] text-calcaire">
               Photo : {slides[0].credit}
             </span>
           )}

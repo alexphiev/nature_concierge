@@ -16,6 +16,20 @@ export function TipReview({ c, error }: { c: ReviewContribution; error?: string 
     <li id={`c-${c.id}`} className={cardClass}>
       <ReviewHeader c={c} error={error} />
       <form action={publishTip.bind(null, c.id)} className="flex flex-col gap-3">
+        <select
+          name="kind"
+          defaultValue={c.claimKind ?? "LOCAL_TIP"}
+          aria-label="Nature"
+          className={inputClass}
+        >
+          <option value="LOCAL_TIP">Conseil vécu (avis d&apos;habitué)</option>
+          <option value="PRACTICAL_INFO">Info pratique (factuelle)</option>
+        </select>
+        {c.sourceHint && (
+          <p className="text-sm text-encre/70">
+            Source indiquée : <span className="break-words">{c.sourceHint}</span>
+          </p>
+        )}
         <textarea
           name="text"
           defaultValue={c.text ?? ""}

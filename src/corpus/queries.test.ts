@@ -84,6 +84,7 @@ describe("getPlaceBySlug", () => {
       include: {
         alternativePlace: { select: { slug: true, name: true } },
         author: { select: { name: true, commune: true } },
+        source: { select: { type: true, urlOrRef: true } },
       },
     };
     expect(findFirstPlaceMock).toHaveBeenCalledWith({

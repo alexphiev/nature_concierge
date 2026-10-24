@@ -14,6 +14,8 @@ export type ContributionData = Pick<
   | "claimId"
   | "text"
   | "claimType"
+  | "claimKind"
+  | "sourceHint"
   | "correctionKind"
   | "placeName"
   | "placeCommune"

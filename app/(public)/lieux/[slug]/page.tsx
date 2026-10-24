@@ -8,6 +8,9 @@ import { MIN_GALLERY_PHOTOS, buildGallerySlides, resolveCoverPhoto } from "@/src
 import { ContributionBanner } from "@/src/components/contribute/ContributionBanner";
 import { PendingContributions } from "@/src/components/contribute/PendingContributions";
 import { ClaimList } from "@/src/components/ClaimList";
+import { PracticalInfoList } from "@/src/components/PracticalInfoList";
+import { PlaceNeedsCard } from "@/src/components/contribute/PlaceNeedsCard";
+import { placeNeeds } from "@/src/corpus/place-needs";
 import { ContributeCard } from "@/src/components/contribute/ContributeCard";
 import { ContributeBar } from "@/src/components/contribute/ContributeBar";
 import { AlternativeCallout } from "@/src/components/AlternativeCallout";
@@ -91,8 +94,18 @@ export default async function PlaceDetailPage({
     googleAttributions: googleDetails?.photo ? googleDetails.photoAttributions : [],
   });
   const contributorCount = placeContributorCount(place.claims);
+  const practicalInfos = place.claims.filter((claim) => claim.kind === "PRACTICAL_INFO");
+  const localTips = place.claims.filter((claim) => claim.kind === "LOCAL_TIP");
+  const parentPracticalInfos = parent?.claims.filter((claim) => claim.kind === "PRACTICAL_INFO") ?? [];
+  const parentLocalTips = parent?.claims.filter((claim) => claim.kind === "LOCAL_TIP") ?? [];
+  const needs = placeNeeds({ claims: place.claims, ownPhotoCount: place.photos.length });
+  const correctHref = (id: string) => `/lieux/${slug}/corriger/${id}`;
+  // Empty place: the questions come first. Otherwise, after what is already known.
+  const needsCard = <PlaceNeedsCard slug={slug} placeName={place.name} needs={needs} />;
   const metaItems = [
-    place.claims.length > 0 && countLabel(place.claims.length, "conseil", "conseils"),
+    practicalInfos.length > 0 &&
+      countLabel(practicalInfos.length, "info pratique", "infos pratiques"),
+    localTips.length > 0 && countLabel(localTips.length, "conseil vécu", "conseils vécus"),
     contributorCount >= 2 && `${contributorCount} contributeurs`,
     spotCards.length > 0 && `${spotCards.length} spot${spotCards.length > 1 ? "s" : ""}`,
     place.governingAuthority && `Géré par ${place.governingAuthority}`,
@@ -116,7 +129,7 @@ export default async function PlaceDetailPage({
 
       <nav
         aria-label="Fil d'Ariane"
-        className="flex flex-wrap gap-2 font-mono text-xs tracking-wide text-encre/65"
+        className="flex flex-wrap gap-2 text-[13px] text-encre/65"
       >
         <Link href="/lieux" className="underline decoration-dotted underline-offset-2">
           Les lieux
@@ -140,7 +153,7 @@ export default async function PlaceDetailPage({
 
       <header className="mt-6 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div className="flex flex-col gap-3">
-          <p className="font-mono text-xs tracking-widest text-pin uppercase">
+          <p className="font-semibold text-xs tracking-widest text-pin uppercase">
             {typeLabel} · {place.commune} ({place.departement})
           </p>
           <h1 className="font-display text-4xl leading-[1.02] font-semibold tracking-tight text-balance md:text-[3.25rem]">
@@ -184,7 +197,7 @@ export default async function PlaceDetailPage({
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-10 md:mt-12 md:grid-cols-[minmax(0,1fr)_360px] md:items-start md:gap-16">
-        <div className="flex flex-col divide-y divide-sable/40 [&>*]:py-9 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
+        <div className="flex flex-col divide-y divide-sable/40 [&>*]:py-9 [&>*:empty]:hidden [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
           {place.description && (
             <section aria-label="À propos" className="flex flex-col gap-3">
               <h2 className={SECTION_TITLE}>À propos</h2>
@@ -197,18 +210,36 @@ export default async function PlaceDetailPage({
               <ContributionBanner />
               <PendingContributions placeIds={[place.id, ...place.children.map((c) => c.id)]} />
             </Suspense>
-            <ClaimList
-              claims={place.claims}
-              addTipHref={`/lieux/${slug}/astuce`}
-              correctHref={(id) => `/lieux/${slug}/corriger/${id}`}
-            />
+            {place.claims.length === 0 && needsCard}
           </div>
+
+          <PracticalInfoList
+            claims={practicalInfos}
+            addHref={`/lieux/${slug}/info`}
+            correctHref={correctHref}
+          />
+
+          <ClaimList
+            claims={localTips}
+            addTipHref={`/lieux/${slug}/astuce`}
+            correctHref={correctHref}
+          />
+
+          {place.claims.length > 0 && needsCard}
+
+          {parent && (
+            <PracticalInfoList
+              claims={parentPracticalInfos}
+              title={`Infos pratiques pour tout ${parent.name}`}
+              correctHref={correctHref}
+            />
+          )}
 
           {parent && (
             <ClaimList
-              claims={parent.claims}
-              title={`Valable pour tout ${parent.name}`}
-              correctHref={(id) => `/lieux/${slug}/corriger/${id}`}
+              claims={parentLocalTips}
+              title={`Conseils pour tout ${parent.name}`}
+              correctHref={correctHref}
             />
           )}
 
