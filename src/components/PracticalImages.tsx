@@ -32,7 +32,7 @@ export function PracticalImages({ images }: { images: PracticalImage[] }) {
                 className="size-full object-cover transition-transform duration-150 group-hover:scale-105"
               />
               {image.source && (
-                <span className="absolute right-2 bottom-2 max-w-[calc(100%-1rem)] truncate rounded bg-encre/55 px-2 py-0.5 font-mono text-[0.65rem] text-calcaire">
+                <span className="absolute right-2 bottom-2 max-w-[calc(100%-1rem)] truncate rounded bg-encre/55 px-2 py-0.5 font-medium tabular-nums text-[0.65rem] text-calcaire">
                   Source : {image.source}
                 </span>
               )}
@@ -54,7 +54,7 @@ export function PracticalImages({ images }: { images: PracticalImage[] }) {
             className="max-h-full max-w-full rounded-[10px] object-contain"
           />
           {zoomed.source && (
-            <span className="absolute right-4 bottom-4 rounded bg-encre/60 px-2.5 py-1 font-mono text-xs text-calcaire">
+            <span className="absolute right-4 bottom-4 rounded bg-encre/60 px-2.5 py-1 font-medium tabular-nums text-xs text-calcaire">
               Source : {zoomed.source}
             </span>
           )}

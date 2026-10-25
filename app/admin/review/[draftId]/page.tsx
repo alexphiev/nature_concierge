@@ -206,6 +206,15 @@ function ClaimFields({ prefix, claim }: { prefix: string; claim: DraftClaim }) {
       </label>
 
       <label className="flex flex-col gap-1">
+        <span className="text-xs text-encre/70">Nature</span>
+        <select name={`${prefix}-kind`} defaultValue="" className={inputClass}>
+          <option value="">Automatique (selon thème, texte et source)</option>
+          <option value="PRACTICAL_INFO">Info pratique (factuelle, sourcée)</option>
+          <option value="LOCAL_TIP">Conseil vécu (avis d&apos;habitué)</option>
+        </select>
+      </label>
+
+      <label className="flex flex-col gap-1">
         <span className="text-xs text-encre/70">Conditions</span>
         <select
           name={`${prefix}-conditions`}
@@ -291,6 +300,7 @@ function readEditedClaimFromForm(claimId: string, formData: FormData) {
   return {
     claimText: String(formData.get(`${prefix}-claimText`) ?? ""),
     claimType: String(formData.get(`${prefix}-claimType`) ?? ""),
+    kind: String(formData.get(`${prefix}-kind`) ?? ""),
     conditions: formData.getAll(`${prefix}-conditions`).map(String),
     audience: formData.getAll(`${prefix}-audience`).map(String),
     verdict: String(formData.get(`${prefix}-verdict`) ?? ""),

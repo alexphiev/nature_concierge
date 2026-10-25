@@ -10,7 +10,7 @@ const CARD = "flex flex-col gap-3 rounded-[14px] border border-[#E4DACA] bg-[#FF
 const CARD_LINK = `mt-auto inline-flex h-11 items-center self-start font-semibold text-[#0E4B5A] underline underline-offset-4 ${FOCUS_RING}`;
 
 const REVIEW_STEPS = [
-  "Vous envoyez une astuce, une correction, un lieu ou des photos.",
+  "Vous envoyez un conseil, une info pratique, une correction, un lieu ou des photos.",
   "Alexandre relit, en général sous quelques jours.",
   "C’est en ligne, avec votre nom. Vous recevez un email.",
 ];
@@ -56,10 +56,10 @@ export async function ContributePage() {
       <section className={`${CONTAINER} pt-6 pb-10 md:pt-16 md:pb-16`}>
         <div className="flex max-w-[760px] flex-col gap-4 md:gap-5.5">
           <h1 className="font-landing-display text-[34px] leading-[1.1] font-semibold tracking-[-0.01em] md:text-[56px] md:leading-[1.08]">
-            Le guide s’écrit à plusieurs
+            Écrivons la suite à plusieurs
           </h1>
           <p className="text-[17px] leading-[1.55] text-[#3E4A4B] md:text-[19px]">
-            Chaque conseil vient de quelqu’un qui connaît le lieu. Ajoutez le vôtre : Alexandre
+            Chaque conseil vient de quelqu’un qui y est allé. Ajoutez le vôtre : Alexandre
             relit tout avant publication.
           </p>
         </div>
@@ -71,17 +71,24 @@ export async function ContributePage() {
         </h2>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <li className={CARD}>
-            <h3 className="text-[18px] font-semibold">Partager une astuce</h3>
-            <p className="text-[#3E4A4B]">L’heure à viser, où se garer, ce qu’on emporte.</p>
+            <h3 className="text-[18px] font-semibold">Partager un conseil</h3>
+            <p className="text-[#3E4A4B]">
+              Ce que vous avez appris sur place : l’heure à viser, le coin à l’ombre, ce qu’on
+              aurait aimé savoir.
+            </p>
             <Link href="#astuce" className={CARD_LINK}>
               Choisir un lieu
             </Link>
           </li>
           <li className={CARD}>
-            <h3 className="text-[18px] font-semibold">Corriger une info</h3>
+            <h3 className="text-[18px] font-semibold">Ajouter une info pratique</h3>
             <p className="text-[#3E4A4B]">
-              Sur chaque fiche, cliquez Corriger sous le conseil concerné.
+              Horaires, tarifs, accès, équipements. Une info fausse ? Cliquez Corriger juste
+              en dessous.
             </p>
+            <Link href="#astuce" className={CARD_LINK}>
+              Choisir un lieu
+            </Link>
           </li>
           <li className={CARD}>
             <h3 className="text-[18px] font-semibold">Ajouter des photos</h3>

@@ -9,14 +9,14 @@ export type LlmsTxtPlace = Pick<
 
 const HEADER = `# ${SITE_NAME}
 
-> Le guide local pour la nature entre Marseille et Bandol : des conseils écrits par les gens d'ici et relus avant publication, lieu par lieu.
+> Le guide local pour la nature entre Marseille et Bandol : des infos pratiques vérifiées et des conseils de terrain, relus avant publication, lieu par lieu.
 
 ## Mission
 
 Le guide local pour la nature entre Marseille et Bandol : structurellement
 neutre, inter-communes, opinionated, et attentif aux conditions du jour.
-Chaque lieu a sa propre page avec des conseils écrits par les gens d'ici, tous
-relus avant publication — pas un résumé du web.
+Chaque lieu a sa propre page avec des infos pratiques vérifiées et des conseils
+de terrain, tous relus avant publication — pas un résumé du web.
 
 ## Territoire couvert
 

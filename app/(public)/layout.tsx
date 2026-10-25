@@ -1,5 +1,3 @@
-import { figtree, fraunces } from "@/src/fonts";
-import { ConstructionBanner } from "@/src/components/landing/ConstructionBanner";
 import { SiteHeader } from "@/src/components/site/SiteHeader";
 import { SiteFooter } from "@/src/components/site/SiteFooter";
 
@@ -9,8 +7,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${fraunces.variable} ${figtree.variable} flex flex-1 flex-col`}>
-      <ConstructionBanner />
+    <div className="flex flex-1 flex-col">
       <SiteHeader />
       {children}
       <SiteFooter />

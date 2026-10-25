@@ -14,7 +14,7 @@ const COMMITMENTS = [
   "Gratuit, sans publicité. Un compte seulement pour contribuer.",
   "Aucun lieu ne paie pour apparaître.",
   "Chaque contribution est relue avant publication.",
-  "Chaque conseil affiche son auteur et sa date.",
+  "Chaque info pratique est datée, chaque conseil est signé et daté.",
   "Quand on ne sait pas, on le dit.",
   "Pour les fermetures de massifs, on renvoie toujours vers la source officielle.",
 ];
@@ -71,9 +71,9 @@ export function AboutContent() {
   return (
     <>
       <section
-        className={`${CONTAINER} grid gap-8 pt-6 pb-10 md:gap-20 md:pt-16 md:pb-24 lg:grid-cols-[7fr_5fr] lg:items-start`}
+        className={`${CONTAINER} pt-6 pb-10 md:pt-16 md:pb-24`}
       >
-        <div className="flex flex-col gap-4 md:gap-5.5">
+        <div className="flex max-w-[760px] flex-col gap-4 md:gap-5.5">
           <nav
             aria-label="Fil d’Ariane"
             className="flex gap-1.5 text-[13px] text-[#5B6663] md:text-[14px]"
@@ -88,17 +88,22 @@ export function AboutContent() {
             À propos du Guide Nature de La Ciotat
           </h1>
           <p className="text-[17px] leading-[1.5] text-[#3E4A4B] md:text-[21px] md:leading-[1.5]">
-            Un guide gratuit des calanques, criques et sentiers de La Ciotat et
-            de ses environs, écrit par les gens d’ici, relu par Alexandre.
+            Un guide gratuit des calanques, criques et sentiers de La Ciotat. Je
+            l’ai commencé seul, carnet en main ; il est ouvert à tous ceux qui
+            connaissent un coin.
           </p>
-          <figure className="mt-2 flex flex-col gap-2 lg:hidden">
-            <div className="flex h-[300px] items-center justify-center rounded-[20px] bg-[#D8CDBA] text-[13px] font-semibold text-[#5B6663]">
-              Photo · portrait d’Alexandre
-            </div>
-          </figure>
-          <h2 className="mt-2 font-landing-display text-[26px] font-semibold md:mt-6 md:text-[30px]">
-            Qui gère ce guide ?
-          </h2>
+          <div className="mt-2 flex items-center gap-4 md:mt-6">
+            <Image
+              src="/profile.png"
+              alt="Portrait d’Alexandre"
+              width={72}
+              height={72}
+              className="size-16 shrink-0 rounded-full object-cover ring-2 ring-[#E4DACA] md:size-18"
+            />
+            <h2 className="font-landing-display text-[26px] font-semibold md:text-[30px]">
+              Qui gère ce guide ?
+            </h2>
+          </div>
           <div className="flex max-w-[640px] flex-col gap-3.5 text-[17px] leading-[1.6] text-[#2E3A3C] md:gap-4 md:text-[18px] md:leading-[1.65]">
             <p>Je m’appelle Alexandre et j’habite La Ciotat depuis 2025.</p>
             <p>
@@ -115,20 +120,6 @@ export function AboutContent() {
             </p>
           </div>
         </div>
-        <figure className="hidden flex-col gap-3 lg:flex">
-          <div className="relative h-[520px] overflow-hidden rounded-3xl bg-[#D8CDBA]">
-            <Image
-              src="/profile.png"
-              alt="Alexandre Phiev"
-              fill
-              sizes="(min-width: 1024px) 520px, 0px"
-              className="object-cover"
-            />
-          </div>
-          <figcaption className="text-[14px] text-[#5B6663]">
-            Alexandre, [lieu de la photo].
-          </figcaption>
-        </figure>
       </section>
 
       <section
@@ -172,7 +163,7 @@ export function AboutContent() {
             </div>
             <div className="flex flex-col gap-1.5">
               <h3 className="font-landing-display text-[19px] font-semibold md:text-[22px]">
-                Un guide écrit à plusieurs
+                Un guide ouvert à tous
               </h3>
               <p className="text-[15px] leading-[1.5] text-[#3E4A4B] md:text-[16px] md:leading-[1.55]">
                 Vos lieux et vos astuces enrichissent le guide.{" "}
@@ -288,7 +279,7 @@ export function AboutContent() {
               Vous connaissez un coin ?
             </h2>
             <p className="text-[16px] text-[#D6E6E8] md:text-[18px]">
-              Le guide s’écrit avec les gens d’ici.
+              Le guide grandit avec ceux qui y vont.
             </p>
           </div>
           <div className="flex flex-col gap-2.5 md:flex-row md:shrink-0 md:gap-3">

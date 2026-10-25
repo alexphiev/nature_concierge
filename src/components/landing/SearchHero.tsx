@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, use, useRef, useState, useTransition, type FormEvent } from "react";
+import {
+  Suspense,
+  use,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+  type RefObject,
+} from "react";
 import { searchPlaces } from "@/app/(landing)/actions";
 import type { SearchResult, SearchResultPlace, ShortcutSuggestions } from "@/src/search/types";
 import { PhotoImage } from "../PhotoImage";
@@ -12,6 +21,10 @@ const BADGE_GRID = "grid w-full grid-cols-2 gap-2 md:flex md:w-auto md:flex-nowr
 const BADGE_SHAPE =
   "flex min-h-15 items-center justify-center gap-2.5 rounded-2xl border-3 px-3.5 py-2 text-[14px] leading-[1.25] md:min-h-auto md:h-12.5 md:justify-start md:rounded-full md:px-5 md:text-[15px]";
 const MOMENT_LABEL = "pt-1 text-[13px] text-[#BFD8D6] md:text-[14px]";
+
+function scrollBehavior(): ScrollBehavior {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
 
 function WaveDivider() {
   return (
@@ -134,26 +147,51 @@ function ResultCard({ place }: { place: SearchResultPlace }) {
   );
 }
 
+function LoadingResults() {
+  return (
+    <div className="flex flex-col gap-5 border-t border-[#E4DACA] pt-7 md:pt-10">
+      <p className="font-landing-display text-[24px] font-semibold md:text-[32px]">
+        Le guide cherche les bons coins…
+      </p>
+      <div aria-hidden className="grid grid-cols-1 gap-3.5 md:grid-cols-3 md:gap-5">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="h-24 animate-pulse rounded-2xl border border-[#E4DACA] bg-[#FFFDF8] md:h-[300px] md:rounded-[20px]"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Results({
   result,
   pending,
+  sectionRef,
+  headingRef,
   onClear,
   onRefine,
 }: {
-  result: SearchResult;
+  result: SearchResult | null;
   pending: boolean;
+  sectionRef: RefObject<HTMLElement | null>;
+  headingRef: RefObject<HTMLHeadingElement | null>;
   onClear: () => void;
   onRefine: () => void;
 }) {
   return (
     <section
+      ref={sectionRef}
       aria-live="polite"
       aria-busy={pending}
-      className={`mx-auto flex max-w-[1200px] flex-col gap-6 px-4 pb-10 transition-opacity md:gap-6 md:px-8 md:pb-24 ${
-        pending ? "opacity-60" : ""
+      className={`mx-auto flex w-full max-w-[1200px] scroll-mt-4 flex-col gap-6 px-4 pb-10 transition-opacity md:gap-6 md:px-8 md:pb-24 ${
+        pending && result ? "opacity-60" : ""
       }`}
     >
-      {result.status === "error" ? (
+      {!result ? (
+        <LoadingResults />
+      ) : result.status === "error" ? (
         <div className="flex flex-col gap-2.5 border-t border-[#E4DACA] pt-7 md:pt-10">
           <p className="text-[17px] leading-[1.5] text-[#1D2A2E] md:text-[19px]">
             La recherche est indisponible pour le moment.{" "}
@@ -167,7 +205,13 @@ function Results({
         <>
           <div className="flex flex-col gap-2.5 border-t border-[#E4DACA] pt-7 md:pt-10">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="font-landing-display text-[24px] font-semibold md:text-[32px]">{result.title}</h2>
+              <h2
+                ref={headingRef}
+                tabIndex={-1}
+                className="font-landing-display text-[24px] font-semibold outline-none md:text-[32px]"
+              >
+                {result.title}
+              </h2>
               <button
                 type="button"
                 onClick={onClear}
@@ -176,7 +220,7 @@ function Results({
                 Effacer
               </button>
             </div>
-            <span className="text-[13px] leading-[1.4] text-[#6A7472]">Conseils des gens d’ici, relus avant publication</span>
+            <span className="text-[13px] leading-[1.4] text-[#6A7472]">Conseils vérifiés</span>
             <p className="mt-1 max-w-[820px] text-[17px] leading-[1.5] text-[#1D2A2E] md:text-[19px]">
               {result.intro}
             </p>
@@ -234,6 +278,39 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
   const inputRef = useRef<HTMLInputElement>(null);
   // Only the latest search may update the results (older, slower ones are dropped).
   const latestRequest = useRef(0);
+  const resultsRef = useRef<HTMLElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  // Typed searches jump to the results; shortcut taps only offer to, so
+  // several shortcuts can be combined without the page moving.
+  const [scrollRequest, setScrollRequest] = useState(0);
+  const [showJump, setShowJump] = useState(false);
+  const searchedFromSubmit = useRef(false);
+
+  useEffect(() => {
+    if (scrollRequest === 0) return;
+    resultsRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+  }, [scrollRequest]);
+
+  useEffect(() => {
+    if (!result || result.status === "error") return;
+    if (searchedFromSubmit.current) {
+      headingRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    const section = resultsRef.current;
+    if (!section) return;
+    const offscreen = section.getBoundingClientRect().top > window.innerHeight - 120;
+    setShowJump(offscreen);
+    if (!offscreen) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setShowJump(false);
+        observer.disconnect();
+      }
+    });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [result]);
 
   function runSearch(nextText: string, nextSelected: string[]) {
     const requestId = ++latestRequest.current;
@@ -256,12 +333,24 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
   function toggleShortcut(id: string) {
     const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
     setSelected(next);
+    searchedFromSubmit.current = false;
     runSearch(text, next);
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!text.trim() && selected.length === 0) return;
+    searchedFromSubmit.current = true;
+    setShowJump(false);
+    inputRef.current?.blur();
     runSearch(text, selected);
+    setScrollRequest((n) => n + 1);
+  }
+
+  function jumpToResults() {
+    setShowJump(false);
+    resultsRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+    headingRef.current?.focus({ preventScroll: true });
   }
 
   function refine() {
@@ -271,6 +360,7 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
 
   function clear() {
     latestRequest.current++;
+    setShowJump(false);
     setText("");
     setSelected([]);
     setResult(null);
@@ -281,7 +371,7 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
       <div style={{ background: "#0E4B5A" }} className="text-white">
         <section className="mx-auto flex max-w-[800px] flex-col items-center gap-4 px-4 pt-10 pb-7 md:gap-5 md:px-0 md:pt-24 md:pb-14">
           <p className="text-[13px] font-semibold tracking-[0.08em] text-[#BFD8D6] uppercase md:text-[14px]">
-            Écrit par les gens d’ici
+            Un carnet de terrain, ouvert à tous
           </p>
           <h1 className="text-center font-landing-display text-[36px] leading-[1.08] font-semibold tracking-[-0.015em] md:text-[64px] md:leading-[1.06]">
             Où aller en nature autour de La Ciotat ?
@@ -328,7 +418,29 @@ export function SearchHero({ shortcuts }: { shortcuts: Promise<ShortcutSuggestio
       </div>
       <WaveDivider />
 
-      {result && <Results result={result} pending={pending} onClear={clear} onRefine={refine} />}
+      {(result || pending) && (
+        <Results
+          result={result}
+          pending={pending}
+          sectionRef={resultsRef}
+          headingRef={headingRef}
+          onClear={clear}
+          onRefine={refine}
+        />
+      )}
+
+      {showJump && (
+        <button
+          type="button"
+          onClick={jumpToResults}
+          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-[#A34A25] px-5 text-[15px] font-semibold text-white shadow-[0_10px_30px_rgba(4,26,32,0.3)] animate-fade-in"
+        >
+          {result?.status === "ok"
+            ? `Voir ${result.places.length > 1 ? `les ${result.places.length} lieux` : "le lieu"}`
+            : "Voir la réponse"}
+          <span aria-hidden>↓</span>
+        </button>
+      )}
     </>
   );
 }

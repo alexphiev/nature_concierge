@@ -27,8 +27,7 @@ Design record of the community rework:
 | `/places/*` | 308 → `/lieux/*` |
 
 Route groups: `app/(landing)` (landing, About, `/contribuer`, legal pages) and
-`app/(public)` (places, forms, account) share `SiteHeader`, `SiteFooter` and
-`ConstructionBanner` (hidden when `SHOW_CONSTRUCTION_BANNER=false`).
+`app/(public)` (places, forms, account) share `SiteHeader` and `SiteFooter`.
 
 ## Rendering
 

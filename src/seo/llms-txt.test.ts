@@ -20,11 +20,11 @@ describe("buildLlmsTxt", () => {
   it("includes the header, mission, territoire and contact sections verbatim", () => {
     const result = buildLlmsTxt([], SITE_URL);
     expect(result).toContain(
-      "> Le guide local pour la nature entre Marseille et Bandol : des conseils écrits par les gens d'ici et relus avant publication, lieu par lieu.",
+      "> Le guide local pour la nature entre Marseille et Bandol : des infos pratiques vérifiées et des conseils de terrain, relus avant publication, lieu par lieu.",
     );
     expect(result).toContain("## Mission");
     expect(result).toContain(
-      "Le guide local pour la nature entre Marseille et Bandol : structurellement\nneutre, inter-communes, opinionated, et attentif aux conditions du jour.\nChaque lieu a sa propre page avec des conseils écrits par les gens d'ici, tous\nrelus avant publication — pas un résumé du web.",
+      "Le guide local pour la nature entre Marseille et Bandol : structurellement\nneutre, inter-communes, opinionated, et attentif aux conditions du jour.\nChaque lieu a sa propre page avec des infos pratiques vérifiées et des conseils\nde terrain, tous relus avant publication — pas un résumé du web.",
     );
     expect(result).toContain("## Territoire couvert");
     expect(result).toContain(

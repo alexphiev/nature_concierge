@@ -51,8 +51,10 @@ export async function publishTip(contributionId: string, formData: FormData): Pr
   }
 
   const parsed = TipInputSchema.safeParse({
+    kind: formData.get("kind") ?? contribution.claimKind ?? undefined,
     text: formData.get("text"),
     claimType: formData.get("claimType"),
+    sourceHint: contribution.sourceHint ?? undefined,
   });
   if (!parsed.success) {
     failWith(parsed.error.issues[0]?.path[0] === "claimType" ? "theme" : "texte", contribution.id);
@@ -72,11 +74,13 @@ export async function publishTip(contributionId: string, formData: FormData): Pr
         urlOrRef: contribution.id,
         dateCollected: contribution.createdAt,
         reliability: 2,
+        notes: parsed.data.sourceHint,
       },
     });
     await tx.claim.create({
       data: {
         claimText: parsed.data.text,
+        kind: parsed.data.kind,
         claimType: parsed.data.claimType,
         placeId: contribution.place!.id,
         sourceId: source.id,

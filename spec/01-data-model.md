@@ -56,6 +56,16 @@ SUITABILITY, TIP, SAFETY, AVOID, ALTERNATIVE, DECODING), `conditions[]`,
 (DRAFT, PUBLISHED, RETIRED), `qualityScore` (0–10, from the Jev usefulness
 question, see `02-corpus-ops.md`).
 
+**Kind**: `kind` (PRACTICAL_INFO | LOCAL_TIP, default LOCAL_TIP) separates
+practical info (formal, factual, checkable against a source: hours, prices,
+rules, access) from lived tips (a local's informal advice: when to go, where
+the shade is, what to avoid). The two are shown as separate blocks on the
+place page. New claims get it from the contributor's form (editable at
+review) or, for ingestion and seeding, from `guessClaimKind`
+(`src/corpus/claim-kind.ts`). Existing claims are sorted once with
+`pnpm corpus:split-kinds`, which asks Jev (`CLAIM_IS_PRACTICAL_INFO`) for
+each claim and writes the result directly (it overwrites manual choices).
+
 **Attribution**: `authorId` (→ `User`, `SetNull`) and `authorDeleted`.
 `authorId = null && !authorDeleted` is Alexandre's own tip, credited
 « Alexandre · La Ciotat » from `GUIDE_AUTHOR` in `src/site.ts` (existing claims
@@ -107,7 +117,9 @@ accounts never grant admin access.
   signed-out submit until the magic link is clicked.
 - `placeId` (TIP, CORRECTION, PHOTOS), `claimId` (CORRECTION of a tip; null =
   correction of the place itself).
-- `text`, `claimType` (TIP theme), `correctionKind` (OUTDATED | WRONG |
+- `text`, `claimType` (TIP theme), `claimKind` (TIP: practical info or lived
+  tip, chosen by the form used), `sourceHint` (TIP: where a practical info
+  comes from, free text), `correctionKind` (OUTDATED | WRONG |
   MISSING_DETAIL), `placeName`, `placeCommune`, `locationHint` (PLACE),
   `photosConsentAt` (PHOTOS).
 - `reviewNote` (quoted in the decision email), `reviewedAt`, `createdAt`.

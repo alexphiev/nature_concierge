@@ -1,20 +1,13 @@
 import Link from "next/link";
-import type { Place } from "../../prisma/generated/client";
 import { countLabel } from "../corpus/count-label";
 import type { PlaceWithCover } from "../corpus/queries";
 import type { DisplayPhoto } from "../corpus/place-photos";
 import { PhotoImage } from "./PhotoImage";
+import { FIRST_TIP_WELCOME } from "../corpus/place-needs";
 
-export const TYPE_LABELS: Record<Place["type"], string> = {
-  CALANQUE: "Calanque",
-  PLAGE: "Plage",
-  MASSIF: "Massif",
-  SENTIER: "Sentier",
-  SOMMET: "Sommet",
-  SITE: "Site",
-  ISLAND: "Île",
-  SCENIC_ROAD: "Route touristique",
-};
+import { TYPE_LABELS } from "../corpus/place-types";
+
+export { TYPE_LABELS };
 
 export function PlaceCard({
   place,
@@ -48,7 +41,7 @@ export function PlaceCard({
         {cover && (
           <div className="absolute inset-0 bg-gradient-to-t from-encre/30 to-transparent to-55%" />
         )}
-        <span className="relative rounded-full border border-sable/50 bg-calcaire/90 px-2.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-wide text-pin">
+        <span className="relative rounded-full border border-sable/50 bg-calcaire/90 px-2.5 py-0.5 font-semibold text-[0.7rem] uppercase tracking-wide text-pin">
           {TYPE_LABELS[place.type]}
         </span>
       </div>
@@ -59,13 +52,13 @@ export function PlaceCard({
           {place.commune} · {place.departement}
         </p>
         {place._count.claims > 0 ? (
-          <p className="mt-3 border-t border-sable/35 pt-3 font-mono text-[0.7rem] uppercase tracking-wide text-pin">
+          <p className="mt-3 border-t border-sable/35 pt-3 font-semibold text-[0.7rem] uppercase tracking-wide text-pin">
             {countLabel(place._count.claims, "conseil", "conseils")}
           </p>
         ) : (
           <p className="mt-3 border-t border-sable/35 pt-3">
-            <span className="rounded-full border border-sable/50 px-2.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-wide text-encre/70">
-              À compléter
+            <span className="rounded-full bg-[#F3DCCB] px-2.5 py-0.5 text-[0.75rem] font-semibold text-[#8A3D1E]">
+              {FIRST_TIP_WELCOME}
             </span>
           </p>
         )}
